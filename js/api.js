@@ -1,0 +1,426 @@
+/*jslint this: true, browser: true, for: true, long: true */
+/*global window $ console Sessions Version Settings Instruments Quotes Accounts Balances Performances Positions Orders Transactions */
+
+/**
+ * The API to connect with Binck
+ *
+ * Example account for T4:
+ * TOPLIN11652300 (Fundcoach)
+ * TOPLIN11464300, TOPLIN11745300 (Binck IT)
+ * TOPLIN11361500 (Binck NL)
+ * TOPLIN11880800 (Binck BE)
+ * TOPLIN11836300 (Binck FR)
+ *
+ * The application must be registered. You can do this here:
+ * https://t4apimgtwso2:9443/store/site/pages/applications.jag
+ *
+ * Registration includes the URL which is called after the authentication took place and the user agreed to the consent.
+ * Changing this URL afterwards, needs a reboot of OpenAM, so better to do this right the first time.
+ *
+ * It is important that the registered application is subscribed to the desired API.
+ *
+ * @constructor
+ * @param {function()} getConfiguration
+ */
+function Api(getConfiguration) {
+    "use strict";
+
+    /** @type {Object} */
+    var apiObject = this;
+    /** @type {string} */
+    var accessToken = "";
+    /** @type {string} */
+    var refreshToken = "";
+    /** @type {Date} */
+    var accessTokenExpirationTime;
+    /** @type {number} */
+    var accessTokenExpirationTimer;
+    /** @type {number} */
+    var accessTokenRefreshTimer;
+    // Token is optional but highly recommended. You should store the value of this (CSRF) token in the user’s session to be validated when they return.
+    // This should be a random unique per session token and put on the session/cookie/localStorage.
+    /** @type {number} */
+    var csrfToken = Math.random();
+
+    /**
+     * This function is used to do the calls.
+     * @param {string} method
+     * @param {string} urlParams
+     * @param {Object} data
+     * @param {function(Object)} successCallback When successful, this function is called.
+     * @param {function(string)} errorCallback The function to be called in case of a failed request.
+     * @return {Object}
+     */
+    function requestCallback(method, urlParams, data, successCallback, errorCallback) {
+
+        /**
+         * Return the authorization header with the Bearer token.
+         * If the token is expired, the login page will be shown instead.
+         * @return {Object}
+         */
+        function getAccessHeader() {
+            if (accessToken === "" && urlParams !== "version") {
+                throw "Not logged in.";
+            }
+            if (new Date() > accessTokenExpirationTime) {
+                console.log("Token has been expired.");
+                window.clearInterval(accessTokenExpirationTimer);
+                window.clearTimeout(accessTokenRefreshTimer);
+                apiObject.navigateToLoginPage(apiObject.getState().realm);
+            }
+            return {
+                "Accept": "application/json; charset=utf-8",
+                "Authorization": "Bearer " + accessToken
+            };
+        }
+
+        /**
+         * If an error was returned from an ajax call, this function translates the xhr object to a "human readable" error text.
+         * @param {Object} jqXhr The returned xhr object.
+         * @return {void}
+         */
+        function getExtendedErrorInfo(jqXhr) {
+            var errorOrigin = method + " /" + urlParams;
+            console.log(errorOrigin + ": " + JSON.stringify(jqXhr));
+            if (jqXhr.responseJSON !== undefined && jqXhr.responseJSON.hasOwnProperty("endUserMessage") && jqXhr.responseJSON.endUserMessage !== "") {
+                errorCallback(jqXhr.status + " - " + jqXhr.responseJSON.endUserMessage + " (" + errorOrigin + ")");
+            } else if (jqXhr.responseJSON !== undefined && jqXhr.responseJSON.hasOwnProperty("developerMessage")) {
+                errorCallback(jqXhr.status + " - " + jqXhr.responseJSON.developerMessage + " (" + errorOrigin + ")");
+            } else if (jqXhr.responseJSON !== undefined && jqXhr.responseJSON.hasOwnProperty("message")) {
+                errorCallback(jqXhr.status + " - " + jqXhr.responseJSON.message + " (" + errorOrigin + ")");
+            } else {
+                errorCallback("Error in " + errorOrigin + ": " + jqXhr.status + " (" + jqXhr.statusText + ")");
+            }
+        }
+
+        return $.ajax({
+            "dataType": "json",
+            "type": method,
+            "url": getConfiguration().apiUrl + urlParams,
+            "data": data,
+            "headers": getAccessHeader(),
+            "success": successCallback,
+            "error": function (jqXhr) {
+                getExtendedErrorInfo(jqXhr);
+            }
+        });
+    }
+
+    /**
+     * This function is used to start a download.
+     * @param {string} method
+     * @param {string} urlParams
+     * @param {Object} data
+     * @param {function((Object|null|string))} successCallback When successful, this function is called.
+     * @param {function(string)} errorCallback The function to be called in case of a failed request.
+     * @return {void}
+     */
+    function requestCallbackDownload(method, urlParams, data, successCallback, errorCallback) {
+        // Use plain httpRequest, since jQuery fails doing this.
+        var req = new XMLHttpRequest();
+        req.open(method, getConfiguration().apiUrl + urlParams, true);
+        req.responseType = "blob";
+        req.setRequestHeader("Authorization", "Bearer " + accessToken);
+        req.onreadystatechange = function () {
+            if (req.readyState === 4 && req.status === 200) {
+                successCallback(req.response);
+            } else if (req.status !== 200) {
+                console.log(req);
+                errorCallback(req.status.toString());
+            }
+        };
+        req.send(data);
+    }
+
+    /**
+     * Get argument from the URL
+     * @param {string} name
+     * @return {string}
+     */
+    function getUrlParameterByName(name) {
+        // Get an argument of the URL like www.test.org/?arg=value
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+        var results = regex.exec(window.location.href);
+        return results === null
+            ? ""
+            : decodeURIComponent(results[1].replace(/\+/g, " "));
+    }
+
+    /**
+     * Read a cookie.
+     * @param {string} key
+     * @return {string}
+     */
+    function getCookie(key) {
+        var name = key + "=";
+        var decodedCookie = decodeURIComponent(document.cookie);
+        var cookieArray = decodedCookie.split(";");
+        var i;
+        var c;
+        for (i = 0; i < cookieArray.length; i += 1) {
+            c = cookieArray[i];
+            while (c.charAt(0) === " ") {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) === 0) {
+                return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
+
+    /**
+     * Insert a cookie. In order to delete it, make value empty.
+     * @param {string} key
+     * @param {string} value
+     * @return {void}
+     */
+    function setCookie(key, value) {
+        var expires = new Date();
+        // Cookie is valid for 360 days.
+        expires.setTime(expires.getTime() + (360 * 24 * 60 * 60 * 1000));
+        document.cookie = key + "=" + value + ";expires=" + expires.toUTCString();
+    }
+
+    /**
+     * Get the state from the redirect URL.
+     * @return {*}
+     */
+    this.getState = function () {
+        var stateString = getUrlParameterByName("state");
+        var stateStringDecoded = window.atob(stateString);
+        try {
+            return JSON.parse(stateStringDecoded);
+        } catch (error) {
+            console.log(error);
+            throw "State returned in the URL parameter is invalid.";
+        }
+    };
+
+    /**
+     * The state is used to validate the response and to add the desired opening account, if multiple accounts are available and if this account type is one of them.
+     * @param {string} accountType
+     * @param {string} realm
+     * @return {string}
+     */
+    function createState(accountType, realm) {
+        var stateObject = {
+            // Token is a random number
+            "csrfToken": csrfToken,
+            // Remember realm, to get token
+            "realm": realm,
+            "account": accountType
+        };
+        // Convert the object to a base64 encoded string:
+        var stateString = JSON.stringify(stateObject);
+        return window.btoa(stateString);
+    }
+
+    /**
+     * Construct the URL to navigate to the login dialog.
+     * @param {string} realm
+     * @return {string}
+     */
+    this.getLogonUrl = function (realm) {
+        var configurationObject = getConfiguration();
+        var responseType = "code";
+        return configurationObject.authenticationProviderUrl +
+                "authorize?realm=" + encodeURIComponent(realm) +
+                "&ui_locales=" + encodeURIComponent(configurationObject.language) +
+                "&client_id=" + encodeURIComponent(configurationObject.clientId) +
+                "&scope=" + encodeURIComponent(configurationObject.scope) +
+                "&state=" + encodeURIComponent(createState(configurationObject.accountType, realm)) +
+                "&response_type=" + encodeURIComponent(responseType) +
+                "&redirect_uri=" + encodeURIComponent(configurationObject.redirectUrl);
+    };
+
+    /**
+     * This function loads the page where the user enters the credentials and agreed to the consent.
+     * When authorized, the browser will navigate to the given redirect URL (which must be registered as "Callback URL" in WSO2).
+     * @param {string} realm
+     * @return {void}
+     */
+    this.navigateToLoginPage = function (realm) {
+        // The login page needs to be a redirect, using GET to supply landing page and client id.
+        // Save the state, to compare after the login.
+        setCookie("csrfToken", csrfToken.toString());
+        console.log("Loading login or consent page..");
+        window.location = this.getLogonUrl(realm);
+    };
+
+    /**
+     * This function calculates the time until which the token is valid.
+     * @param {number} expiresInSeconds
+     * @return {void}
+     */
+    function updateTokenExpirationTime(expiresInSeconds) {
+        accessTokenExpirationTime = new Date();
+        accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + expiresInSeconds);
+        console.log("New token will expire at: " + accessTokenExpirationTime.toLocaleString());
+        // Start a timer, to log the time until expiration - for debug purposes, not for production.
+        accessTokenExpirationTimer = window.setInterval(
+            function () {
+                var difference = accessTokenExpirationTime - new Date();
+                if (difference > 0) {
+                    console.log("Token expires in " + Math.floor((difference / 1000) / 60) + " minutes.");
+                } else {
+                    console.log("Token expired.");
+                    window.clearInterval(accessTokenExpirationTimer);
+                }
+            },
+            60 * 1000
+        );
+    }
+
+    /**
+     * If authentication was successful, we validate the response by comparing states. Ideally the state is stored in a cookie or localStorage.
+     * @param {function(string)} errorCallback Callback function to invoke in case of an error
+     * @return {void}
+     */
+    function verifyCsrfToken(errorCallback) {
+        var csrfTokenBefore = parseFloat(getCookie("csrfToken"));
+        var csrfTokenAfter = apiObject.getState().csrfToken;
+        console.log("Comparing stored CSFR code " + csrfTokenBefore + " with retrieved code " + csrfTokenAfter + "..");
+        if (csrfTokenAfter !== csrfTokenBefore) {
+            errorCallback("CSRF error: The state supplied when logging in, is not the same as the state from the response.");
+        }
+    }
+
+    /**
+     * If authentication was successful, the token can be requested using the code supplied by the authentication provider.
+     * @param {Object} data The token object returned
+     * @param {function(Object)} successCallback Callback function when successful
+     * @param {function(string)} errorCallback Callback function to invoke in case of an error
+     * @return {void}
+     */
+    function tokenReceivedCallback(data, successCallback, errorCallback) {
+        /* {
+            access_token: "7819a965-6858-4db9-8583-864d66d80911",
+            refresh_token: "4a4b125f-e5a2-439d-abac-3e85ef40cc37",
+            scope: "read write",
+            token_type: "Bearer",
+            expires_in: 3599
+        } */
+        var nextSessionRefresh = data.expires_in - 60;  // Refresh one minute before expiration
+        var nextSessionRefreshTime = new Date();
+        nextSessionRefreshTime.setSeconds(nextSessionRefreshTime.getSeconds() + nextSessionRefresh);
+        console.log(data);
+        accessToken = data.access_token;
+        refreshToken = data.refresh_token;
+        updateTokenExpirationTime(data.expires_in);
+        // Start a timer, to refresh the token before it expires.
+        console.log("Session will be refreshed at: " + nextSessionRefreshTime.toLocaleString());
+        accessTokenRefreshTimer = window.setTimeout(
+            function () {
+                apiObject.getRefreshToken(
+                    function () {
+                        console.log("Session has been extended with " + data.expires_in / 60 + " minutes");
+                    },
+                    errorCallback
+                );
+            },
+            nextSessionRefresh * 1000  // Do the refresh just before the token will expire
+        );
+        successCallback(data);
+    }
+
+    /**
+     * If authentication was successful, the token can be requested using the code supplied by the authentication provider.
+     * @param {string} code The code from the URL
+     * @param {function(Object)} successCallback Callback function when successful
+     * @param {function(string)} errorCallback Callback function to invoke in case of an error
+     * @return {void}
+     */
+    function getAccessToken(code, successCallback, errorCallback) {
+        var configurationObject = getConfiguration();
+        console.log("Requesting token..");
+        $.ajax({
+            "dataType": "json",
+            "type": "GET",
+            "url": configurationObject.appServerUrl + "token.php?realm=" + encodeURIComponent(apiObject.getState().realm) + "&code=" + encodeURIComponent(code) + "&redirect_uri=" + encodeURIComponent(configurationObject.redirectUrl),
+            "cache": false,
+            "success": function (data) {
+                tokenReceivedCallback(data, successCallback, errorCallback);
+            },
+            "error": function (jqXhr) {
+                if (jqXhr.hasOwnProperty("responseJSON") && jqXhr.responseJSON.hasOwnProperty("error") && jqXhr.responseJSON.hasOwnProperty("error_description")) {
+                    if (jqXhr.responseJSON.error === "invalid_grant") {
+                        apiObject.navigateToLoginPage(apiObject.getState().realm);
+                    } else {
+                        errorCallback(jqXhr.responseJSON.error_description);
+                    }
+                } else {
+                    errorCallback("Communication error in getAccessToken: " + jqXhr.status);
+                }
+            }
+        });
+    }
+
+    /**
+     * Retrieve a new accessToken, if the current one is almost expired.
+     * @param {function(Object)} successCallback Callback function when successful
+     * @param {function(string)} errorCallback Callback function to invoke in case of an error
+     * @return {void}
+     */
+    this.getRefreshToken = function (successCallback, errorCallback) {
+        var configurationObject = getConfiguration();
+        console.log("Requesting token refresh..");
+        $.ajax({
+            "dataType": "json",
+            "type": "GET",
+            "url": configurationObject.appServerUrl + "token.php?realm=" + encodeURIComponent(apiObject.getState().realm) + "&refresh_token=" + encodeURIComponent(refreshToken) + "&redirect_uri=" + encodeURIComponent(configurationObject.redirectUrl),
+            "cache": false,
+            "success": function (data) {
+                tokenReceivedCallback(data, successCallback, errorCallback);
+            },
+            "error": function (jqXhr) {
+                if (jqXhr.hasOwnProperty("responseJSON") && jqXhr.responseJSON.hasOwnProperty("error") && jqXhr.responseJSON.hasOwnProperty("error_description")) {
+                    if (jqXhr.responseJSON.error === "invalid_grant") {
+                        apiObject.navigateToLoginPage(apiObject.getState().realm);
+                    } else {
+                        errorCallback(jqXhr.responseJSON.error_description);
+                    }
+                } else {
+                    errorCallback("Communication error in getAccessToken: " + jqXhr.status);
+                }
+            }
+        });
+    };
+
+    /**
+     * This is the function to use for a single page application.
+     * The URL is checked. If it contains a code, the token is requested and the user is authenticated.
+     * If there is no code yet, the login page will be shown.
+     * @param {function()} notAuthenticatedCallback If not authenticated, this callback will be invoked, along with the login page
+     * @param {function(Object)} authenticatedCallback If the user is authenticated, this function is invoked
+     * @param {function(string)} errorCallback Callback function to invoke in case of an error
+     * @return {void}
+     */
+    this.checkState = function (notAuthenticatedCallback, authenticatedCallback, errorCallback) {
+        var code = getUrlParameterByName("code");
+        if (code === "") {
+            notAuthenticatedCallback();
+            if (getUrlParameterByName("error") !== "") {
+                // An error occurred. User might not have authorized the request.
+                errorCallback("Login failed: \n" + getUrlParameterByName("error_description"));
+            }
+        } else {
+            console.log("Received scope: " + getUrlParameterByName("scope"));
+            verifyCsrfToken(errorCallback);
+            getAccessToken(code, authenticatedCallback, errorCallback);
+        }
+    };
+
+    this.accounts = new Accounts(requestCallback);
+    this.settings = new Settings(requestCallback);
+    this.balances = new Balances(requestCallback);
+    this.instruments = new Instruments(requestCallback, requestCallbackDownload);
+    this.quotes = new Quotes(requestCallback);
+    this.orders = new Orders(requestCallback);
+    this.performances = new Performances(requestCallback);
+    this.positions = new Positions(requestCallback);
+    this.sessions = new Sessions(requestCallback);
+    this.transactions = new Transactions(requestCallback);
+    this.version = new Version(requestCallback);
+}
