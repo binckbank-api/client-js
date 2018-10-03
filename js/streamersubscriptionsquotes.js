@@ -30,7 +30,7 @@ function SubscriptionsForQuotes() {
     /**
      * Finds the instrument in the array. If not found, -1 is returned.
      * @param {string} instrumentId The instrument to find
-     * @return {number}
+     * @return {number} Position in subscription. If not found: -1
      */
     function findPosition(instrumentId) {
         var i;
@@ -47,7 +47,7 @@ function SubscriptionsForQuotes() {
      * @param {Object} subscription The subscription to modify
      * @param {QuoteSubscriptionLevel} subscriptionLevel Level to increment
      * @param {number} incrementation Increment with 1, or -1?
-     * @return {number}
+     * @return {number} Number of active subscriptions
      */
     function changeSubscriptionCount(subscription, subscriptionLevel, incrementation) {
         switch (subscriptionLevel) {
@@ -69,7 +69,7 @@ function SubscriptionsForQuotes() {
      * Create a new subscription.
      * @param {string} instrumentId The instrument to add
      * @param {QuoteSubscriptionLevel} subscriptionLevel Count
-     * @return {Object}
+     * @return {Object} Object with active subscriptions
      */
     function createSubscription(instrumentId, subscriptionLevel) {
         var subscription = {
@@ -138,21 +138,6 @@ function SubscriptionsForQuotes() {
     };
 
     /**
-     * Counts the number of subscriptions.
-     * @return {number}
-     */
-    function countSubscriptions() {
-        var i;
-        var subscription;
-        var result = 0;
-        for (i = 0; i < subscriptions.length; i += 1) {
-            subscription = subscriptions[i];
-            result += subscription.countLevelBook + subscription.countLevelTopOfBook + subscription.countLevelTrades;
-        }
-        return result;
-    }
-
-    /**
      * Activate the delayed subscriptions.
      * @param {Object} connection The connection with the server
      * @param {string} accountNumber Account number for which the subscription is activated
@@ -170,38 +155,36 @@ function SubscriptionsForQuotes() {
                 }
             }
             if (instrumentIds.length > 0) {
-                connection.invoke("Subscribe", accountNumber, instrumentIds, subscriptionLevel)
-                    .then(function (result) {
-                        if (result.success) {
-                            console.log("Subscribe succeeded, number of subscribed instruments is now " + result.subcount);
-                            console.log("Number of subscribed instruments locally is now " + countSubscriptions());
-                        } else {
-                            console.log("Subscribe failed");
-                        }
-                    })
-                    .catch(function (error) {
-                        console.error(error);
-                        errorCallback("500", "Something went wrong subscribing to instrument(s): " + instrumentIds.join(", ") + ".");
-                    });
+                connection.invoke("SubscribeQuotes", accountNumber, instrumentIds, subscriptionLevel)
+                .then(function (result) {
+                    if (result.success) {
+                        console.log("Quote subscribe succeeded, number of subscribed instruments is now: " + result.subcount);
+                    } else {
+                        console.log("Quote subscribe failed");
+                    }
+                })
+                .catch(function (error) {
+                    console.error(error);
+                    errorCallback("500", "Something went wrong subscribing to instrument(s): " + instrumentIds.join(", ") + ".");
+                });
                 console.log("Instrument(s) " + instrumentIds.join(", ") + " subscribed.");
             }
         }
 
         function processUnsubscribe() {
             if (instrumentsToUnsubscribe.length > 0) {
-                connection.invoke("UnSubscribe", instrumentsToUnsubscribe)
-                    .then(function (result) {
-                        if (result.success) {
-                            console.log("Unsubscribe succeeded, number of subscribed instruments is now " + result.subcount);
-                            console.log("Number of subscribed instruments locally is now " + countSubscriptions());
-                        } else {
-                            console.log("Unsubscribe failed");
-                        }
-                    })
-                    .catch(function (error) {
-                        console.error(error);
-                        errorCallback("500", "Something went wrong when deleting the subscription to instrument(s): " + instrumentsToUnsubscribe.join(", ") + ".");
-                    });
+                connection.invoke("UnSubscribeQuotes", instrumentsToUnsubscribe)
+                .then(function (result) {
+                    if (result.success) {
+                        console.log("Quote unsubscribe succeeded, number of subscribed instruments is now: " + result.subcount);
+                    } else {
+                        console.log("Quote unsubscribe failed");
+                    }
+                })
+                .catch(function (error) {
+                    console.error(error);
+                    errorCallback("500", "Something went wrong when deleting the subscription to instrument(s): " + instrumentsToUnsubscribe.join(", ") + ".");
+                });
                 console.log("Instrument(s) " + instrumentsToUnsubscribe.join(", ") + " deleted.");
             }
         }
@@ -216,7 +199,7 @@ function SubscriptionsForQuotes() {
 
     /**
      * If connection was disconnected, subscriptions must be activated again.
-     * @return {boolean}
+     * @return {boolean} Yes, if there are subscriptions to be activated again
      */
     this.hasSubscriptionsToBeActivated = function () {
         var i;

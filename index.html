@@ -22,6 +22,7 @@
     <script type="text/javascript" src="js/sessions.js" defer></script>
     <script type="text/javascript" src="js/instruments.js" defer></script>
     <script type="text/javascript" src="js/quotes.js" defer></script>
+    <script type="text/javascript" src="js/news.js" defer></script>
     <script type="text/javascript" src="js/balances.js" defer></script>
     <script type="text/javascript" src="js/performances.js" defer></script>
     <script type="text/javascript" src="js/positions.js" defer></script>
@@ -33,19 +34,19 @@
 <body>
     <label for="idEdtAccountType">Account: </label>
     <select id="idEdtAccountType">
-        <option value="globalAssetManagement">Asset management</option>
-        <option value="binckComplete" selected>Self investing</option>
+        <option value="globalAssetManagement">Asset Management</option>
+        <option value="binckComplete" selected>Binck Complete (self investing)</option>
         <option value="fundCoach">Fund Coach</option>
         <option value="planEpargneAction">PEA</option>
         <option value="planEpargneActionPme">PEA-PME</option>
         <option value="savings">Savings</option>
-        <option value="savingsBroker">Savings broker</option>
+        <option value="savingsBroker">Savings Broker</option>
     </select>
     <label for="idEdtCulture">Culture: </label>
     <select id="idEdtCulture">
-        <option value="it">it</option>
         <option value="fr" selected>fr</option>
         <option value="frBE">fr-BE</option>
+        <option value="it">it</option>
         <option value="nl">nl</option>
         <option value="nlBE">nl-BE</option>
     </select>
@@ -57,13 +58,13 @@
         Login URL:<div id="idLoginUrl"></div><br />
         API URL:<div id="idEnvironment"></div><br />
         Documentation URL:<div><a href="https://developers.binck.com" target="_blank">https://developers.binck.com</a></div><br />
-        <p>
-            <span id="idIpServer"></span>
-            <span id="idIpClient"></span> <span id="idTestConnectionFromClient"></span><br />
-        </p>
+        <span id="idTestConnectionFromClient"></span><br />
     </div>
     <div id="idAuthenticatedPart">
-        <h2>We are in! API can now be used to get accounts and positions for the customer. If modification is allowed, ordering is enabled.</h2>
+        <h2>We are in! API can now be used to get accounts and positions for the customer. If write scope has been granted, ordering is enabled.</h2>
+        <p>
+            <input type="button" id="idRefreshToken" value="Refresh token"/>
+        </p>
         <p>
             The account(s):
             <div id="idAccounts"></div>
@@ -121,6 +122,11 @@
             </div>
         </p>
         <p>
+            News:
+            <input type="button" id="idBtnNewsFeed" value="Activate streaming news"/>
+            <div id="idNews"></div>
+        </p>
+        <p>
             Option sheet:
             <div id="idOptionSheet"></div>
         </p>
@@ -143,27 +149,43 @@
         </p>
         <p>
             <input type="button" id="idBtnOrders" value="Get pending orders"/>
-            <input type="button" id="idBtnOrder" value="Buy something.."/>
-            <input type="button" id="idBtnOrderOption" value="Buy option"/>
-            <input type="button" id="idBtnOrderMultiLegOption" value="Buy option strategy"/>
-            <input type="button" id="idBtnOrderFuture" value="Buy future"/>
-            <input type="button" id="idBtnOrderSrd" value="Buy SRD"/>
+            <input type="button" id="idBtnOrdersFeed" value="Activate streaming order updates"/>
             <div id="idOrders"></div>
         </p>
         <p>
-            <input type="text" id="idEdtInstrumentName" value="Aex"/>
+            Find an instrument: <input type="text" id="idEdtInstrumentName" value="Binck" />
             <input type="button" id="idBtnFind" value="Find" /><br />
-            <input type="text" id="idEdtInstrumentIsin" value="NL0000235190"/>
-            <input type="button" id="idBtnFindIsin" value="Find by ISIN" /><br />
+            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeAll" value="all" /><label for="idInstrumentSearchTypeAll">All</label>
+            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeBonds" value="bond" checked /><label for="idInstrumentSearchTypeBonds">Bonds</label>
+            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeEquities" value="equity" checked /><label for="idInstrumentSearchTypeEquities">Equities</label>
+            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeFutures" value="future" /><label for="idInstrumentSearchTypeFutures">Futures</label>
+            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeOptions" value="option" /><label for="idInstrumentSearchTypeOptions">Options</label>
+            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeSRDs" value="srd" /><label for="idInstrumentSearchTypeSRDs">SRDs</label>
+            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeTrackers" value="tracker" /><label for="idInstrumentSearchTypeTrackerss">Trackers</label>
+            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeTurbos" value="turbo" /><label for="idInstrumentSearchTypeTurbos">Turbos</label>
+            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeWarrants" value="warrant" /><label for="idInstrumentSearchTypeWarrants">Warrants</label>
+            <br />
             <div id="idSearchResults"></div><br />
+            <input type="radio" name="orderType" id="idOrderTypeMarket" value="market" checked /><label for="idOrderTypeMarket">Market</label>
+            <input type="radio" name="orderType" id="idOrderTypeLimit" value="limit" /><label for="idOrderTypeLimit">Limit</label>
+            <input type="radio" name="orderType" id="idOrderTypeStop" value="stop" /><label for="idOrderTypeStop">Stop</label>
+            <input type="radio" name="orderType" id="idOrderTypeStopLimit" value="stopLimit" /><label for="idOrderTypeStopLimit">Stop limit</label>
+            <div>
+                <textarea id="idEdtOrderModel" rows="15" cols="150"></textarea><br />
+                <input type="button" id="idBtnOrderCosts" value="Order costs"/>
+                <input type="button" id="idBtnOrderKID" value="KID document(s)"/>
+                <input type="button" id="idBtnOrder" value="Order"/>
+                <div id="idOrderWarningsToShow"></div>
+                <div id="idOrderWarningsToConfirm"></div>
+            </div>
+            <br />
             Click on found instrument for the order book:
             <div id="idOrderBook">
                 <div><span class="price">Orders</span><span class="price">Volume</span><span class="price">Bid</span><span class="price">Ask</span><span class="price">Volume</span><span class="price">Orders</span></div>
             </div>
-        </p>
-        <p>
-            <input type="button" id="idRefreshToken" value="Refresh token"/>
+            <div id="idNewsForInstrument"></div>
         </p>
     </div>
+    <img id="idQrCode" src="" width="500" height="500">
 </body>
 </html>

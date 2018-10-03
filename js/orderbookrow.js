@@ -21,9 +21,11 @@ function OrderBookRow(streamer, containerElm, id, depth, priceDecimals) {
     var askCell;
     var askVolumeCell;
     var askOrdersCell;
-    var cellTypePostfix = (depth === 1
+    var cellTypePostfix = (
+        (depth === 1)
         ? ""
-        : depth.toString());
+        : depth.toString()
+    );
 
     /**
      * Initialize the row, by creating the cells and append them to the container.

@@ -1,23 +1,19 @@
 <?php
 
-// error_reporting(E_ALL);
-// ini_set('display_errors', 1);
-
 // This is the file token.php, used to retrieve a token for using the API.
 // The token can be requested with a code, supplied as parameter of the redirect URI.
 
-// Example: http://www.domain.com/binck/token.php?code=05f8d801-8399-4b1a-a66d-cadda65523a6&realm=bincknlapi&redirect_uri=http%3A%2F%2Fwww.domain.com%2Fbinck%2Fdemo.php
+// Example: http://www.domain.com/binck/server/prod/token.php?code=05f8d801-8399-4b1a-a66d-cadda65523a6&realm=bincknlapi&redirect_uri=http%3A%2F%2Fwww.domain.com%2Fbinck%2Fdemo.php
 
 // Set your return content type
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Origin: http://localhost');
 
 $clientId = 'enter_client_id';
 $clientSecret = 'p@ssw0rd';
 
 // Production:
-$authenticationProviderUrl = 'https://oauth2.binck.com/openam/oauth2/';
-$apiUrl = 'https://api.binck.com/api/v1/';
+$authenticationProviderUrl = 'https://login.binck.com/am/oauth2/';
 
 function handleError($message) {
     http_response_code(500);
@@ -33,70 +29,12 @@ function handleError($message) {
     );
 }
 
-function tryAddToArray($value, &$array) {
-    if ((trim($value) != '') && (!in_array($value, $array))) {
-        $array[] = $value;
-    }
-}
-
-function getMyIp() {
-    $ip_array = [];
-    $ip = @file_get_contents('http://www.basement.nl/ip.php');
-    if (!$ip) {
-        // Something went wrong..
-    } else {
-        tryAddToArray(json_decode($ip) -> ip, $ip_array);
-    }
-    tryAddToArray(gethostbyname(gethostname()), $ip_array);
-    try {
-        tryAddToArray(getenv('SERVER_ADDR'), $ip_array);
-    } catch (Exception $e) {
-        // Ignore
-    }
-    try {
-        tryAddToArray(getenv('LOCAL_ADDR'), $ip_array);
-    } catch (Exception $e) {
-        // Ignore
-    }
-
-    return implode(', ', $ip_array);
-}
-
-function doDefaultResponse() {
-    // This function just returns the two IP addresses which are used in the connection.
-    
-    global $apiUrl;
-    ini_set('default_socket_timeout', 5);
-    $options = array(
-        // Hack to disable unsafe certificate checking. Not meant for production!
-        'ssl' => array(
-            'verify_peer' => false,
-            'verify_peer_name' => false
-        )
-    );
-    $context  = stream_context_create($options);
-
-    $version = @file_get_contents($apiUrl.'version', false, $context);
-    if (!$version) {
-        $connection = error_get_last()['message'];
-    } else {
-        $connection = 'OK';
-    }
-    $info_array = array(
-        'ip-client' => getenv('REMOTE_ADDR'),
-        'ip-server' => getMyIp(),
-        'connection' => $connection
-    );
-    echo json_encode($info_array);
-}
-
 function doAuthenticationResponse($isRefresh, $realm, $code, $redirect_uri) {
     global $authenticationProviderUrl;
     global $clientId;
     global $clientSecret;
     if ($isRefresh == true) {
         // Refresh the token with a refresh_token
-        error_log('Refresh token with code ' . $code);
         $data = array(
             'client_id' => $clientId,
             'client_secret' => $clientSecret,
@@ -104,7 +42,6 @@ function doAuthenticationResponse($isRefresh, $realm, $code, $redirect_uri) {
             'refresh_token' => $code);
     } else {
         // Initial request for a token with a code
-        error_log('Request token with code ' . $code);
         $data = array(
             'client_id' => $clientId,
             'client_secret' => $clientSecret,
@@ -119,20 +56,18 @@ function doAuthenticationResponse($isRefresh, $realm, $code, $redirect_uri) {
             'content' => http_build_query($data),
             'ignore_errors' => true
         ),
-        // Hack to disable unsafe certificate checking. Not meant for production!
         'ssl' => array(
-            'verify_peer' => false,
-            'verify_peer_name' => false
+            // This Mozilla CA certificate store is downloaded from:
+            // https://curl.haxx.se/docs/caextract.html
+            // This bundle was generated at Wed Jun 20 03:12:06 2018 GMT.
+            'cafile' => 'cacert.pem',
+            'verify_peer' => true,
+            'verify_peer_name' => true
         )
     );
-
     $context  = stream_context_create($options);
-
     $url = $authenticationProviderUrl.'access_token?realm='.urlencode($realm);
-    error_log('Used URL ' . $url);
-
     $result = @file_get_contents($url, false, $context);
-
     if (!$result) {
         handleError(error_get_last()['message']);
     }
@@ -157,5 +92,5 @@ if (isset($_GET['realm']) && isset($_GET['code']) && isset($_GET['redirect_uri']
         filter_input(INPUT_GET, 'redirect_uri', FILTER_SANITIZE_STRING)
     );
 } else {
-    doDefaultResponse();
+    handleError('Parameters are missing. Required are "realm", "redirect_uri" and "code" or "refresh_token".');
 }

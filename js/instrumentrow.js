@@ -27,7 +27,7 @@ function InstrumentRow(streamer, containerElm, id, name, priceDecimals) {
 
     /**
      * Get the given title, which is probably the instrument name.
-     * @return {string}
+     * @return {string} Title - Contents of the first column
      */
     this.getTitle = function () {
         return elmMain.find("span.instrumentName").text().toString();

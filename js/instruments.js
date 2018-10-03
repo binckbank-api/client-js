@@ -35,17 +35,19 @@ function Instruments(requestCallback, requestCallbackDownload) {
      * This function tries to find a stock by (part of) its name.
      * @param {string} q The search text.
      * @param {null|string} instrumentType The type of instrument (eg. equity, option, tracker, or index).
+     * @param {number} count The maximum number of instruments in the response.
      * @param {string} accountNumber The account number.
      * @param {function(Object)} successCallback When successful, this function is called.
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
      * @return {void}
      */
-    this.findByName = function (q, instrumentType, accountNumber, successCallback, errorCallback) {
-        console.log("Searching for instrument '" + q + "' of account number " + accountNumber + "..");
+    this.findByName = function (q, instrumentType, count, accountNumber, successCallback, errorCallback) {
         var data = {
             "searchText": q,
-            "accountNumber": accountNumber
+            "accountNumber": accountNumber,
+            "range": "0-" + (count - 1)
         };
+        console.log("Searching " + count + " result for instrument '" + q + "' with account number " + accountNumber + "..");
         if (instrumentType !== null) {
             data.instrumentType = instrumentType;
         }
@@ -135,7 +137,7 @@ function Instruments(requestCallback, requestCallbackDownload) {
      * @param {string} accountNumber The account number.
      * @param {function(Object)} successCallback When successful, this function is called.
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
-     * @return {Object}
+     * @return {Object} The ajax request
      */
     this.getKidDocumentLink = function (instrumentId, accountNumber, successCallback, errorCallback) {
         console.log("Requesting instrument documentation link for instrument " + instrumentId + "..");

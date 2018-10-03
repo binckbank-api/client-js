@@ -1,28 +1,14 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window $ console Sessions Version Settings Instruments Quotes Accounts Balances Performances Positions Orders Transactions */
+/*global window $ console Sessions Version Settings Instruments Quotes News Accounts Balances Performances Positions Orders Transactions */
 
 /**
  * The API to connect with Binck
  *
- * Example account for T4:
- * TOPLIN11652300 (Fundcoach)
- * TOPLIN11464300, TOPLIN11745300 (Binck IT)
- * TOPLIN11361500 (Binck NL)
- * TOPLIN11880800 (Binck BE)
- * TOPLIN11836300 (Binck FR)
- *
- * The application must be registered. You can do this here:
- * https://t4apimgtwso2:9443/store/site/pages/applications.jag
- *
- * Registration includes the URL which is called after the authentication took place and the user agreed to the consent.
- * Changing this URL afterwards, needs a reboot of OpenAM, so better to do this right the first time.
- *
- * It is important that the registered application is subscribed to the desired API.
- *
  * @constructor
- * @param {function()} getConfiguration
+ * @param {function()} getConfiguration The function used to retrieve the configuration object
+ * @param {function(Object)} newTokenCallback When a token has been acquired, this function is called
  */
-function Api(getConfiguration) {
+function Api(getConfiguration, newTokenCallback) {
     "use strict";
 
     /** @type {Object} */
@@ -34,29 +20,29 @@ function Api(getConfiguration) {
     /** @type {Date} */
     var accessTokenExpirationTime;
     /** @type {number} */
-    var accessTokenExpirationTimer;
+    var accessTokenExpirationTimer;  // Show the time left the token is active, for debug purposes.
     /** @type {number} */
-    var accessTokenRefreshTimer;
-    // Token is optional but highly recommended. You should store the value of this (CSRF) token in the user’s session to be validated when they return.
+    var accessTokenRefreshTimer;  // Request a new token just before the token expires
+    // CSRF-token is optional but highly recommended. You should store the value of this (CSRF) token in the user’s session to be validated when they return.
     // This should be a random unique per session token and put on the session/cookie/localStorage.
     /** @type {number} */
     var csrfToken = Math.random();
 
     /**
      * This function is used to do the calls.
-     * @param {string} method
-     * @param {string} urlParams
-     * @param {Object} data
+     * @param {string} method The HTTP method, for example 'POST'
+     * @param {string} urlParams Specify the endpoint, like 'version'
+     * @param {Object} data Data to submit
      * @param {function(Object)} successCallback When successful, this function is called.
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
-     * @return {Object}
+     * @return {Object} Returns the ajax request, for optional triggering
      */
     function requestCallback(method, urlParams, data, successCallback, errorCallback) {
 
         /**
          * Return the authorization header with the Bearer token.
          * If the token is expired, the login page will be shown instead.
-         * @return {Object}
+         * @return {Object} The constructed header, to be sent with a request
          */
         function getAccessHeader() {
             if (accessToken === "" && urlParams !== "version") {
@@ -108,9 +94,9 @@ function Api(getConfiguration) {
 
     /**
      * This function is used to start a download.
-     * @param {string} method
-     * @param {string} urlParams
-     * @param {Object} data
+     * @param {string} method The HTTP method, for example 'POST'
+     * @param {string} urlParams Specify the endpoint, like 'version'
+     * @param {Object} data Data to submit
      * @param {function((Object|null|string))} successCallback When successful, this function is called.
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
      * @return {void}
@@ -134,8 +120,8 @@ function Api(getConfiguration) {
 
     /**
      * Get argument from the URL
-     * @param {string} name
-     * @return {string}
+     * @param {string} name Name of query parameter
+     * @return {string} Value
      */
     function getUrlParameterByName(name) {
         // Get an argument of the URL like www.test.org/?arg=value
@@ -143,14 +129,14 @@ function Api(getConfiguration) {
         var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
         var results = regex.exec(window.location.href);
         return results === null
-            ? ""
-            : decodeURIComponent(results[1].replace(/\+/g, " "));
+        ? ""
+        : decodeURIComponent(results[1].replace(/\+/g, " "));
     }
 
     /**
      * Read a cookie.
-     * @param {string} key
-     * @return {string}
+     * @param {string} key Name of the cookie
+     * @return {string} Value
      */
     function getCookie(key) {
         var name = key + "=";
@@ -172,8 +158,8 @@ function Api(getConfiguration) {
 
     /**
      * Insert a cookie. In order to delete it, make value empty.
-     * @param {string} key
-     * @param {string} value
+     * @param {string} key Name of the cookie
+     * @param {string} value Value to store
      * @return {void}
      */
     function setCookie(key, value) {
@@ -185,42 +171,44 @@ function Api(getConfiguration) {
 
     /**
      * Get the state from the redirect URL.
-     * @return {*}
+     * @return {*} The object saved in the state parameter
      */
     this.getState = function () {
         var stateString = getUrlParameterByName("state");
         var stateStringDecoded = window.atob(stateString);
         try {
             return JSON.parse(stateStringDecoded);
-        } catch (error) {
-            console.log(error);
-            throw "State returned in the URL parameter is invalid.";
+        } catch (ignore) {
+            console.error("State returned in the URL parameter is invalid.");
         }
     };
 
     /**
      * The state is used to validate the response and to add the desired opening account, if multiple accounts are available and if this account type is one of them.
-     * @param {string} accountType
-     * @param {string} realm
-     * @return {string}
+     * @param {string} accountType The requested account type to show
+     * @param {string} instrumentId The instrument to display initially
+     * @param {string} realm The realm to use
+     * @return {string} The encoded state object, including the CSRF token
      */
-    function createState(accountType, realm) {
+    function createState(accountType, instrumentId, realm) {
         var stateObject = {
             // Token is a random number
             "csrfToken": csrfToken,
             // Remember realm, to get token
             "realm": realm,
-            "account": accountType
+            "account": accountType,
+            "instrument": instrumentId
         };
         // Convert the object to a base64 encoded string:
         var stateString = JSON.stringify(stateObject);
+        console.log("Creating state object with instrument " + instrumentId);
         return window.btoa(stateString);
     }
 
     /**
      * Construct the URL to navigate to the login dialog.
-     * @param {string} realm
-     * @return {string}
+     * @param {string} realm Realm used by the client
+     * @return {string} URL to redirect to
      */
     this.getLogonUrl = function (realm) {
         var configurationObject = getConfiguration();
@@ -230,7 +218,7 @@ function Api(getConfiguration) {
                 "&ui_locales=" + encodeURIComponent(configurationObject.language) +
                 "&client_id=" + encodeURIComponent(configurationObject.clientId) +
                 "&scope=" + encodeURIComponent(configurationObject.scope) +
-                "&state=" + encodeURIComponent(createState(configurationObject.accountType, realm)) +
+                "&state=" + encodeURIComponent(createState(configurationObject.accountType, getUrlParameterByName("instrument"), realm)) +
                 "&response_type=" + encodeURIComponent(responseType) +
                 "&redirect_uri=" + encodeURIComponent(configurationObject.redirectUrl);
     };
@@ -238,7 +226,7 @@ function Api(getConfiguration) {
     /**
      * This function loads the page where the user enters the credentials and agreed to the consent.
      * When authorized, the browser will navigate to the given redirect URL (which must be registered as "Callback URL" in WSO2).
-     * @param {string} realm
+     * @param {string} realm Identification for the type of login
      * @return {void}
      */
     this.navigateToLoginPage = function (realm) {
@@ -251,19 +239,19 @@ function Api(getConfiguration) {
 
     /**
      * This function calculates the time until which the token is valid.
-     * @param {number} expiresInSeconds
+     * @param {number} expiresInSeconds Seconds until expiration
      * @return {void}
      */
     function updateTokenExpirationTime(expiresInSeconds) {
         accessTokenExpirationTime = new Date();
         accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + expiresInSeconds);
-        console.log("New token will expire at: " + accessTokenExpirationTime.toLocaleString());
+        console.log("New token will expire at " + accessTokenExpirationTime.toLocaleString());
         // Start a timer, to log the time until expiration - for debug purposes, not for production.
         accessTokenExpirationTimer = window.setInterval(
             function () {
                 var difference = accessTokenExpirationTime - new Date();
                 if (difference > 0) {
-                    console.log("Token expires in " + Math.floor((difference / 1000) / 60) + " minutes.");
+                    console.log("Token expires in " + Math.floor(difference / 1000 / 60) + " minutes.");
                 } else {
                     console.log("Token expired.");
                     window.clearInterval(accessTokenExpirationTimer);
@@ -281,7 +269,7 @@ function Api(getConfiguration) {
     function verifyCsrfToken(errorCallback) {
         var csrfTokenBefore = parseFloat(getCookie("csrfToken"));
         var csrfTokenAfter = apiObject.getState().csrfToken;
-        console.log("Comparing stored CSFR code " + csrfTokenBefore + " with retrieved code " + csrfTokenAfter + "..");
+        console.log("Comparing stored CSRF code " + csrfTokenBefore + " with retrieved code " + csrfTokenAfter + "..");
         if (csrfTokenAfter !== csrfTokenBefore) {
             errorCallback("CSRF error: The state supplied when logging in, is not the same as the state from the response.");
         }
@@ -310,7 +298,7 @@ function Api(getConfiguration) {
         refreshToken = data.refresh_token;
         updateTokenExpirationTime(data.expires_in);
         // Start a timer, to refresh the token before it expires.
-        console.log("Session will be refreshed at: " + nextSessionRefreshTime.toLocaleString());
+        console.log("Session will be refreshed at " + nextSessionRefreshTime.toLocaleString());
         accessTokenRefreshTimer = window.setTimeout(
             function () {
                 apiObject.getRefreshToken(
@@ -323,6 +311,7 @@ function Api(getConfiguration) {
             nextSessionRefresh * 1000  // Do the refresh just before the token will expire
         );
         successCallback(data);
+        newTokenCallback(data);
     }
 
     /**
@@ -417,6 +406,7 @@ function Api(getConfiguration) {
     this.balances = new Balances(requestCallback);
     this.instruments = new Instruments(requestCallback, requestCallbackDownload);
     this.quotes = new Quotes(requestCallback);
+    this.news = new News(requestCallback);
     this.orders = new Orders(requestCallback);
     this.performances = new Performances(requestCallback);
     this.positions = new Positions(requestCallback);

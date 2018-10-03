@@ -1,12 +1,27 @@
 /*jslint this: true, browser: true, for: true, single: true, long: true */
-/*global window $ alert confirm console Api Streamer InstrumentRow OrderBookRow QuoteSubscriptionLevel */
+/*global window $ console Api Streamer InstrumentRow OrderBookRow QuoteSubscriptionLevel */
 
 $(function () {
     "use strict";
 
+    /** @type {string} */
+    var activeAccountNumber;
+    /** @type {boolean} */
+    var isActiveAccountReadonly = true;
+    /** @type {Object} */
+    var api;
+    /** @type {Date} */
+    var nextDelayLogTime = new Date();  // Log the delay on the connection every minute
+    /** @type {Array<Object>} */
+    var instrumentList;
+    /** @type {Object} */
+    var streamer;
+    /** @type {boolean} */
+    var isFirstSearch = true;
+
     /**
      * Get the selected realm.
-     * @return {string}
+     * @return {string} Realm selected when login page was loaded
      */
     function getRealm() {
         return $("#idEdtRealm").val().toString();
@@ -14,7 +29,7 @@ $(function () {
 
     /**
      * Get the language for the login dialog and exception if login is not successful
-     * @return {string}
+     * @return {string} Culture code selected when login page was loaded
      */
     function getCultureForLogin() {
         return $("#idEdtCulture").val().toString();
@@ -28,31 +43,27 @@ $(function () {
         // scope is depending on Application rights, password or just what is desired.
 
         // Sandbox
-        var selectedAuthenticationProviderUrl = "https://oauth2.sandbox.binck.com/openam/oauth2/";  // This is the URL of the authentication provider to be used.
-        //var selectedAuthenticationProviderUrl = "https://login.sandbox.binck.com/am/";  // This is the URL of the authentication provider to be used.
-        var selectedApiUrl = "https://api.sandbox.binck.com/api/v1/"; // This is the URL to the API of Binck sandbox.
+        var selectedAuthenticationProviderUrl = "https://login.sandbox.binck.com/am/oauth2/";  // This is the URL of the authentication provider to be used.
+        var selectedApiUrl = "https://api.sandbox.binck.com/api/v1/"; // This is the URL to the API of Binck production.
         var selectedClientId = "enter_client_id";
-        // HTTPS is required for production use!
+        // HTTPS is required for real production use!
         var selectedRedirectUrl = "http://localhost/";
-        // HTTPS is required for production use!
+        // HTTPS is required for real production use!
         var selectedAppServerUrl = "http://localhost/server/sandbox/";
-        var selectedStreamingQuotesUrl = "http://localhost:61821/quotes";
+        var selectedStreamerUrl = "http://localhost:61821/stream/v1";
 
         /*
         // Production
-        var selectedAuthenticationProviderUrl = "https://oauth2.binck.com/openam/oauth2/";  // This is the URL of the authentication provider to be used.
-        //var selectedAuthenticationProviderUrl = "https://login.binck.com/am/";  // This is the URL of the authentication provider to be used.
+        var selectedAuthenticationProviderUrl = "https://login.sandbox.binck.com/am/oauth2/";  // This is the URL of the authentication provider to be used.
         var selectedApiUrl = "https://api.binck.com/api/v1/"; // This is the URL to the API of Binck production.
         var selectedClientId = "enter_client_id";
         // HTTPS is required for real production use!
         var selectedRedirectUrl = "http://localhost/";
         // HTTPS is required for real production use!
         var selectedAppServerUrl = "http://localhost/server/prod/";
-        var selectedStreamingQuotesUrl = "http://localhost:61821/quotes";
+        var selectedStreamerUrl = "http://localhost:61821/stream/v1";
         */
-
-        // THE VALUES BELOW ARE REWRITTEN BY IMAGE/RUNTIME.SH AT STARTUP OF THE EXAMPLE SITE CONTAINER.
-        // PLEASE KEEP THE KEYS THE SAME!
+        
         var configurationObject = {
             "clientId": selectedClientId,
             "accountType": $("#idEdtAccountType").val(),
@@ -61,7 +72,7 @@ $(function () {
             "authenticationProviderUrl": selectedAuthenticationProviderUrl,
             "apiUrl": selectedApiUrl,
             "appServerUrl": selectedAppServerUrl,
-            "streamingQuotesUrl": selectedStreamingQuotesUrl,
+            "streamerUrl": selectedStreamerUrl,
             "language": getCultureForLogin(),
             "scope": $("#idEdtScope").val()
         };
@@ -70,39 +81,12 @@ $(function () {
     }
 
     /**
-     * Detect the IP addresses to be white listed (requirement for phase 1).
-     * @return {void}
-     */
-    function getIpToWhitelist() {
-        console.log("Requesting IP from server");
-        $.ajax({
-            "dataType": "json",
-            "type": "GET",
-            "url": getConfiguration().appServerUrl + "token.php",
-            "cache": false,
-            "success": function (data) {
-                $("#idIpServer").html("IP server: <b>" + data["ip-server"] + "</b> Test connection from server: " + data.connection + "<br />");
-            }
-        });
-        console.log("Requesting IP from client");
-        $.ajax({
-            "dataType": "json",
-            "type": "GET",
-            "url": "http://www.basement.nl/ip.php",
-            "cache": false,
-            "success": function (data) {
-                $("#idIpClient").html("IP client: <b>" + data.ip + "</b>");
-            }
-        });
-    }
-
-    /**
      * This is the callback when communication errors appear.
      * @param {string} error The error to be shown.
      * @return {void}
      */
     function apiErrorCallback(error) {
-        alert("Something went wrong: " + error);
+        window.alert("Something went wrong: " + error);
     }
 
     /**
@@ -112,26 +96,17 @@ $(function () {
      * @return {void}
      */
     function apiStreamerErrorCallback(errorCode, description) {
-        alert("Something went wrong: " + description + " (" + errorCode + ")");
-        if (errorCode === "disconnected") {
+        window.alert("Something went wrong: " + description + " (" + errorCode + ")");
+        if (errorCode === "disconnected" && window.confirm("Restart streamer?")) {
             streamer.start(function () {
                 console.log("Reconnected to the streamer.");
             });
         }
     }
 
-    /** @type {string} */
-    var activeAccountNumber;
-    /** @type {Object} */
-    var api = new Api(getConfiguration);
-    /** @type {Date} */
-    var nextDelayLogTime = new Date();  // Log the delay on the connection every minute
-    /** @type {Array<Object>} */
-    var instrumentList;
-
     /**
      * The streamer needs the account and token, to validate the subscription.
-     * @return {Object}
+     * @return {Object} Json object with account and token
      */
     function getSubscription() {
         return {
@@ -142,7 +117,7 @@ $(function () {
 
     /**
      * Publish the received quote object
-     * @param {Object} quoteMessagesObject
+     * @param {Object} quoteMessagesObject The object received by the streamer
      * @return {void}
      */
     function quoteCallback(quoteMessagesObject) {
@@ -159,8 +134,36 @@ $(function () {
         }
     }
 
-    /** @type {Object} */
-    var streamer = new Streamer(getConfiguration, getSubscription, quoteCallback, apiStreamerErrorCallback);
+    /**
+     * Showcase of the streaming news API.
+     * @param {Object} newsObject The object received by the streamer
+     * @return {void}
+     */
+    function newsCallback(newsObject) {
+        var currentNewsHtml = $("#idNews").html();
+        var newsBody = (
+            newsObject.hasOwnProperty("body")
+            ? newsObject.body
+            : ""
+        );
+        console.log(newsObject);
+        if (newsObject.fmt !== "html") {
+            // The body might be formatted in plain text. Make line breaks visible in HTML.
+            newsBody.replace(/\\r\\n/g, "<br />");
+        }
+        $("#idNews").html("<p>" + new Date(newsObject.dt).toLocaleString() + ": <b>" + newsObject.head + "</b><br />" + newsBody + "</p>" + currentNewsHtml);
+    }
+
+    /**
+     * Showcase of the streaming order updates API.
+     * @param {Object} orderObject The object received by the streamer
+     * @return {void}
+     */
+    function ordersCallback(orderObject) {
+        //var currentNewsHtml = $("#idNews").html();
+        console.log(orderObject);
+        //$("#idNews").html("<p>" + new Date(newsObject.dt).toLocaleString() + ": <b>" + newsObject.head + "</b><br />" + newsBody + "</p>" + currentNewsHtml);
+    }
 
     /**
      * Do something with requested instruments.
@@ -175,9 +178,11 @@ $(function () {
             function (data) {
                 var instrument = data.instrumentsCollection.instruments[0];
                 // Not all instruments have ISIN codes:
-                alert("Name: " + instrument.name + (instrument.hasOwnProperty("isincode")
+                window.alert("Name: " + instrument.name + (
+                    instrument.hasOwnProperty("isincode")
                     ? "\nISIN code: " + instrument.isincode
-                    : ""));
+                    : ""
+                ));
             },
             apiErrorCallback
         );
@@ -212,7 +217,7 @@ $(function () {
     }
 
     /**
-     * Showcase of the streaming API.
+     * Showcase of the streaming quotes API.
      * @param {Object} instruments Instruments collection.
      * @return {void}
      */
@@ -291,7 +296,7 @@ $(function () {
             instrumentId,
             function (data) {
                 var position = data.positionsCollection.positions[0];
-                alert("Position: " + position.instrument.name);
+                window.alert("Position: " + position.instrument.name);
             },
             apiErrorCallback
         );
@@ -355,7 +360,7 @@ $(function () {
                     derivativesHtml = $("#idOptionSheet").html().toString();
                 }
                 if (data.derivativesCollection.classes.length === 0) {
-                    alert("Derivative symbol " + symbol + " not found for this account type.");
+                    window.alert("Derivative symbol " + symbol + " not found for this account type.");
                     return;
                 }
                 for (i = 0; i < data.derivativesCollection.classes[0].series.length; i += 1) {
@@ -523,7 +528,7 @@ $(function () {
                         symbols += classData.symbol + "\n";
                     }
                 }
-                alert(symbols);
+                window.alert(symbols);
             },
             apiErrorCallback
         );
@@ -546,22 +551,94 @@ $(function () {
     }
 
     /**
-     * Display the instruments returned in the search response.
+     * Display recent news of an instrument.
+     * @param {string} instrumentId instrument for which to show the streaming order book.
+     * @return {void}
+     */
+    function displayNews(instrumentId) {
+        // Get the last 10 news items
+        api.news.getNews(
+            activeAccountNumber,
+            instrumentId,
+            "0-9",
+            function (data) {
+                var i;
+                var newsItem;
+                var newsHtml = "";
+                for (i = 0; i < data.newsCollection.news.length; i += 1) {
+                    newsItem = data.newsCollection.news[i];
+                    newsHtml += "<p>" + new Date(newsItem.publishedDateTime).toLocaleString() + ": <b>" + newsItem.headline + "</b></p>";
+                }
+                $("#idNewsForInstrument").html(newsHtml);
+            },
+            apiErrorCallback
+        );
+    }
+
+    /**
+     * Populate the order object with the found instrument from the search response.
      * @param {Object} instrumentsData The response of the instruments endpoint.
      * @return {void}
      */
-    function displayInstruments(instrumentsData) {
+    function prepareOrder(instrumentsData) {
         var instrument;
-        var i;
-        var instrumentsHtml;
+        var instrumentsHtml = "";
+        var orderType = $("input[name=orderType]:checked").val();
+        var newOrderObject = {
+            "type": orderType,
+            "quantity": 1,
+            "duration": "day"
+        };
         if (instrumentsData.instrumentsCollection.instruments.length === 0) {
-            alert("No instrument found");
+            window.alert("No instrument found with the name '" + $("#idEdtInstrumentName").val().toString() + "'.\n\nMaybe the instrument is not available for the selected account type?");
         } else {
-            instrumentsHtml = "Found " + instrumentsData.count + " instruments. First " + (instrumentsData.paging.limit + 1) + ":";
-            for (i = 0; i < instrumentsData.instrumentsCollection.instruments.length; i += 1) {
-                instrument = instrumentsData.instrumentsCollection.instruments[i];
-                instrumentsHtml += '<br /><a href="#" data-code="' + instrument.id + '" data-decimals="' + instrument.priceDecimals + '">' + instrument.name + "</a> (mic " + instrument.marketIdentificationCode + ")";
+            switch (orderType) {
+            case "stop":
+                newOrderObject.stopPrice = 5;
+                break;
+            case "stopLimit":
+                newOrderObject.stopPrice = 5;
+                newOrderObject.limitPrice = 5;
+                break;
+            case "limit":
+                newOrderObject.limitPrice = 5;
+                break;
             }
+            // We found one result
+            instrument = instrumentsData.instrumentsCollection.instruments[0];
+            // Populate the newOrderObject
+            switch (instrument.type) {
+            case "option":
+                newOrderObject.option = {
+                    "leg1": {
+                        "side": "buy",
+                        "instrumentId": instrument.id
+                    }
+                };
+                break;
+            case "future":
+                newOrderObject.future = {
+                    "side": "buy",
+                    "instrumentId": instrument.id
+                };
+                break;
+            case "srd":
+                newOrderObject.srd = {
+                    "side": "buy",
+                    "instrumentId": instrument.id
+                };
+                break;
+            default:
+                newOrderObject.cash = {
+                    "side": "buy",
+                    "instrumentId": instrument.id
+                };
+            }
+            $("#idEdtOrderModel").val(JSON.stringify(newOrderObject));
+            // Get recent news updates about this instrument
+            displayNews(instrument.id);
+            // And show the instrument
+            instrumentsHtml += '<a href="#" data-code="' + instrument.id + '" data-decimals="' + instrument.priceDecimals + '">' + instrument.name + "</a> (mic " + instrument.marketIdentificationCode + ")";
             // Remove previously bound events.
             $("#idSearchResults a[href]").off("click");
             $("#idSearchResults").html(instrumentsHtml);
@@ -587,29 +664,32 @@ $(function () {
      */
     function displayInstrumentSearchResults() {
         var searchText = $("#idEdtInstrumentName").val().toString();
-        api.instruments.findByName(
-            searchText,
-            null,
-            activeAccountNumber,
-            displayInstruments,
-            apiErrorCallback
-        );
-    }
-
-    /**
-     * Search for an instrument by ISIN code.
-     * @return {void}
-     */
-    function displayInstrumentIsinResults() {
-        var isin = $("#idEdtInstrumentIsin").val().toString();
-        api.instruments.findByIsin(
-            isin,
-            null,
-            null,
-            activeAccountNumber,
-            displayInstruments,
-            apiErrorCallback
-        );
+        var instrumentType = $("input[name=instrumentSearchType]:checked").val();
+        var instrumentIds = [];
+        if (instrumentType === "all") {
+            instrumentType = null;
+        }
+        if (isFirstSearch && api.getState().instrument !== "") {
+            isFirstSearch = false;
+            instrumentIds[0] = api.getState().instrument;
+            $("#idEdtInstrumentName").val("");
+            // An instrument was supplied when loading this site. Search for this instrument.
+            api.instruments.getInstrument(
+                instrumentIds,
+                activeAccountNumber,
+                prepareOrder,
+                apiErrorCallback
+            );
+        } else {
+            api.instruments.findByName(
+                searchText,
+                instrumentType,
+                1,
+                activeAccountNumber,
+                prepareOrder,
+                apiErrorCallback
+            );
+        }
     }
 
     /**
@@ -622,6 +702,7 @@ $(function () {
             function (data) {
                 var account = data.accountsCollection.accounts[0];
                 document.title = account.iban;
+                isActiveAccountReadonly = account.isReadOnly;
                 // This call requires an account type:
                 displaySettings();
                 displayPositions();
@@ -692,10 +773,20 @@ $(function () {
             activeAccountNumber,
             orderNumber,
             function (data) {
-                alert("Number of legs in order " + orderNumber + ": " + data.ordersCollection.orders.length);
+                window.alert("Number of legs in order " + orderNumber + ": " + data.ordersCollection.orders.length);
             },
             apiErrorCallback
         );
+    }
+
+    /**
+     * If the write scope is not available, some endpoints are not available. Display a warning if this is the case.
+     * @return {void}
+     */
+    function alertIfActiveAccountIsReadonly() {
+        if (isActiveAccountReadonly) {
+            window.alert("You are not authorized to access this endpoint with the granted scope.");
+        }
     }
 
     /**
@@ -705,6 +796,7 @@ $(function () {
      * @return {void}
      */
     function modifyOrder(modifyOrderModel, successCallback) {
+        alertIfActiveAccountIsReadonly();
         api.orders.validateModifyOrder(
             activeAccountNumber,
             modifyOrderModel,
@@ -724,11 +816,11 @@ $(function () {
                 }
                 if (dataFromValidateOrder.previewOrder.orderCanBeRegistered === true) {
                     // First, let the user explicitly confirm the order warnings.
-                    if (warningsToBeConfirmed !== "" && !confirm(warningsToBeConfirmed)) {
+                    if (warningsToBeConfirmed !== "" && !window.confirm(warningsToBeConfirmed)) {
                         isAllOrderConfirmationsApprovedByUser = false;
                     }
                     // Second, if there are general warnings, show them to the user. Can be in a dialog, or just on the order ticket window.
-                    if (!confirm(warningsToBeShown + "Order can be placed. Do you want to continue?")) {
+                    if (!window.confirm(warningsToBeShown + "Order can be placed. Do you want to continue?")) {
                         isAllOrderConfirmationsApprovedByUser = false;
                     }
                     if (isAllOrderConfirmationsApprovedByUser) {
@@ -743,7 +835,7 @@ $(function () {
                         );
                     }
                 } else {
-                    alert("Order cannot be placed!\n\n" + warningsToBeShown);
+                    window.alert("Order cannot be placed!\n\n" + warningsToBeShown);
                 }
             },
             apiErrorCallback
@@ -769,17 +861,19 @@ $(function () {
                 } else {
                     for (i = 0; i < data.ordersCollection.orders.length; i += 1) {
                         order = data.ordersCollection.orders[i];
-                        orderHtml = '<a href="#order" data-code="' + order.number + '">' + order.number + "</a> " + (order.hasOwnProperty("side")
+                        orderHtml = '<a href="#order" data-code="' + order.number + '">' + order.number + "</a> " + (
+                            order.hasOwnProperty("side")
                             ? order.side + " "
-                            : "") + order.quantity + " x " + order.instrument.name + " (expires " + new Date(order.expirationDate).toLocaleDateString() + ") state: " + order.lastStatus;
+                            : ""
+                        ) + order.quantity + " x " + order.instrument.name + " (expires " + new Date(order.expirationDate).toLocaleDateString() + ") state: " + order.lastStatus;
                         if (order.lastStatus === "placed") {
                             orderHtml += ' <a href="#cancel" data-code="' + order.number + '">cancel</a>';
                         } else if (order.lastStatus === "placementConfirmed" || order.lastStatus === "modified") {
                             orderHtml += ' <a href="#modify" data-code="' + order.number + '">modify</a>';
                             orderHtml += ' <a href="#cancel" data-code="' + order.number + '">cancel</a>';
                         }
+                        ordersHtml += orderHtml + "<br />";
                     }
-                    ordersHtml += orderHtml + "<br />";
                 }
                 $("#idOrders").html(ordersHtml);
                 $("#idOrders a[href='#order']").on("click", function (e) {
@@ -794,7 +888,7 @@ $(function () {
                         parseInt($(this).data("code"), 10),
                         function () {
                             displayOrders();
-                            alert("Order has been canceled");
+                            window.alert("Order has been canceled.");
                         },
                         apiErrorCallback
                     );
@@ -809,7 +903,7 @@ $(function () {
                         },
                         function () {
                             displayOrders();
-                            alert("Order has been modified");
+                            window.alert("Order has been modified.");
                         }
                     );
                 });
@@ -819,29 +913,51 @@ $(function () {
     }
 
     /**
-     * Download documentation about an instrument, to comply with PRIIPs.
-     * @param {string} instrumentId Identification of the instrument.
-     * @param {string} kidId Identification of the document.
-     * @param {string} fileName Name of the document, with extension.
+     * Check if the order can be placed, considering the the existing portfolio of the account, rights and risk appetite of the customer.
+     * @param {Object} newOrderObject The order model, without validationCode.
+     * @param {function(Object)} successCallback When successful, this function is called.
      * @return {void}
      */
-    function downloadKidDocument(instrumentId, kidId, fileName) {
-        console.log("Preparing download for document " + fileName);
-        api.instruments.getKidDocument(
-            instrumentId,
-            kidId,
+    function previewOrder(newOrderObject, successCallback) {
+        api.orders.validateNewOrder(
             activeAccountNumber,
-            function (data) {
-                // Old browsers have sometimes handy features:
-                if (typeof window.navigator.msSaveBlob === "function") {
-                    window.navigator.msSaveBlob(data, fileName);
+            newOrderObject,
+            function (dataFromValidateOrder) {
+                var isAllOrderConfirmationsApprovedByUser = true;  // Stay positive!
+                var warningsToBeShown;
+                var warningsToBeConfirmed;
+                if (dataFromValidateOrder.previewOrder.warningsToBeShown.length > 0) {
+                    warningsToBeShown = "Warning(s):<br />" + dataFromValidateOrder.previewOrder.warningsToBeShown.join("<br />" + "<br />");
                 } else {
-                    var blob = data;
-                    var link = document.createElement("a");
-                    link.href = window.URL.createObjectURL(blob);
-                    link.download = fileName;
-                    document.body.appendChild(link);
-                    link.click();
+                    warningsToBeShown = "No warnings.<br />";
+                }
+                if (dataFromValidateOrder.previewOrder.warningsToBeConfirmed.length > 0) {
+                    warningsToBeConfirmed = "By continuing you'll approve the contents of the following warning(s):<br />" + dataFromValidateOrder.previewOrder.warningsToBeConfirmed.join("<br />") + "<br />";
+                } else {
+                    warningsToBeConfirmed = "";
+                }
+                $("#idOrderWarningsToShow").html(warningsToBeShown);
+                $("#idOrderWarningsToConfirm").html(warningsToBeConfirmed);
+                if (dataFromValidateOrder.previewOrder.orderCanBeRegistered === true) {
+                    // First, let the user explicitly confirm the order warnings.
+                    if (warningsToBeConfirmed !== "" && !window.confirm($("#idOrderWarningsToConfirm").text())) {
+                        isAllOrderConfirmationsApprovedByUser = false;
+                    }
+                    // Second, if there are general warnings, show them to the user. Can be in a dialog, or just on the order ticket window.
+                    if (!window.confirm($("#idOrderWarningsToShow").text() + "Order can be placed. Do you want to continue?")) {
+                        isAllOrderConfirmationsApprovedByUser = false;
+                    }
+                    if (isAllOrderConfirmationsApprovedByUser) {
+                        // Copy the validationCode into the newOrderObject, to proceed with the order
+                        console.log("Validation code: " + dataFromValidateOrder.previewOrder.validationCode);
+                        newOrderObject.validationCode = dataFromValidateOrder.previewOrder.validationCode;
+                        // Replace the object with the one containing the validationCode
+                        $("#idEdtOrderModel").val(JSON.stringify(newOrderObject));
+                        // ..and continue
+                        successCallback(newOrderObject);
+                    }
+                } else {
+                    window.alert("Order cannot be placed!");
                 }
             },
             apiErrorCallback
@@ -849,19 +965,143 @@ $(function () {
     }
 
     /**
+     * Create an order object, from the textarea input.
+     * @return {Object}
+     */
+    function createNewOrderObject() {
+        var inputText = $("#idEdtOrderModel").val().toString();
+        /** @type {Object} */
+        var newOrderObject = JSON.parse(inputText);
+        if (newOrderObject !== null && typeof newOrderObject === 'object') {
+            return newOrderObject;
+        }
+        throw "Invalid input: " + inputText;
+    }
+
+    /**
      * Validate an order to the portfolio and risk appetite of the customer and if warning is accepted, place the order.
-     * @param {Array<string>} instrumentIds The instrument identification. If strategy, multiple instrument ids are involved.
-     * @param {Object} newOrderModel The order to place.
-     * @param {function()} successCallback When successful, this function is called.
      * @return {void}
      */
-    function placeOrder(instrumentIds, newOrderModel, successCallback) {
+    function placeOrder() {
+
+        function internalPlaceOrder(newOrderObject) {
+            api.orders.placeOrder(
+                activeAccountNumber,
+                newOrderObject,
+                function (dataFromPlaceOrder) {
+                    console.log("Placed order with number: " + dataFromPlaceOrder.ordersCollection.orders[0].number);
+                    delete newOrderObject.validationCode;
+                    // Replace the object with one without the validationCode
+                    $("#idEdtOrderModel").val(JSON.stringify(newOrderObject));
+                    displayOrders();
+                },
+                function (error) {
+                    // Something went wrong, for example, there is no money to buy something.
+                    // However, show the list of orders.
+                    displayOrders();
+                    apiErrorCallback(error);
+                }
+            );
+        }
+
+        var newOrderObject = createNewOrderObject();
+        alertIfActiveAccountIsReadonly();
+        if (newOrderObject.hasOwnProperty("validationCode")) {
+            internalPlaceOrder(newOrderObject);
+        } else {
+            previewOrder(newOrderObject, internalPlaceOrder);
+        }
+    }
+
+    /**
+     * Get the instrumentId from the order object. Multiple, if it is a multi leg order.
+     * @param {Object} newOrderObject The order model.
+     * @return {Array<string>} Returns an array of instrumentIds
+     */
+    function getInstrumentsFromOrderObject(newOrderObject) {
+        var instrumentIds = [];
+        // Extract the instrument(s) from the order object
+        if (newOrderObject.hasOwnProperty("cash")) {
+            instrumentIds[instrumentIds.length] = newOrderObject.cash.instrumentId;
+        } else if (newOrderObject.hasOwnProperty("srd")) {
+            instrumentIds[instrumentIds.length] = newOrderObject.srd.instrumentId;
+        } else if (newOrderObject.hasOwnProperty("future")) {
+            instrumentIds[instrumentIds.length] = newOrderObject.future.instrumentId;
+        } else if (newOrderObject.hasOwnProperty("option")) {
+            instrumentIds[instrumentIds.length] = newOrderObject.option.leg1.instrumentId;
+            if (newOrderObject.option.hasOwnProperty("leg2")) {
+                instrumentIds[instrumentIds.length] = newOrderObject.option.leg2.instrumentId;
+            }
+        }
+        return instrumentIds;
+    }
+
+    /**
+     * Display the price breakdown of an order.
+     * @return {void}
+     */
+    function displayOrderCosts() {
+
+        function internalDisplayOrderCosts(newOrderObject) {
+
+            function convertCostsToText(dataFromOrderCosts) {
+                var result = "";
+                var legCounter;  // Normally 1, 2 of option combination.
+                var leg;
+                var categoryCounter;
+                var category;
+                var subCategoryCounter;
+                var subCategory;
+                for (legCounter = 0; legCounter < dataFromOrderCosts.costsCollection.legs.length; legCounter += 1) {
+                    leg = dataFromOrderCosts.costsCollection.legs[legCounter];
+                    result += "Leg " + (legCounter + 1) + ":\n";
+                    for (categoryCounter = 0; categoryCounter < leg.categories.length; categoryCounter += 1) {
+                        category = leg.categories[categoryCounter];
+                        result += category.type + " (" + category.valueInEuro.toFixed(2) + "):\n";
+                        for (subCategoryCounter = 0; subCategoryCounter < category.subCategories.length; subCategoryCounter += 1) {
+                            subCategory = category.subCategories[subCategoryCounter];
+                            result += "- " + (
+                                subCategory.type === "other"
+                                ? subCategory.costCategory
+                                : subCategory.type
+                            ) + " (" + subCategory.valueInEuro.toFixed(2) + ")\n";
+                        }
+                    }
+                }
+                return result;
+            }
+
+            delete newOrderObject.validationCode;
+            api.orders.getCosts(
+                activeAccountNumber,
+                newOrderObject,
+                function (dataFromOrderCosts) {
+                    window.alert(convertCostsToText(dataFromOrderCosts));
+                },
+                apiErrorCallback
+            );
+        }
+
+        var newOrderObject = createNewOrderObject();
+        alertIfActiveAccountIsReadonly();
+        if (newOrderObject.hasOwnProperty("validationCode")) {
+            internalDisplayOrderCosts(newOrderObject);
+        } else {
+            previewOrder(newOrderObject, internalDisplayOrderCosts);
+        }
+    }
+
+    /**
+     * Display the price breakdown of an order.
+     * @return {void}
+     */
+    function displayOrderKid() {
 
         /**
          * Although KID is applicable, we are not sure if there is actually a document is the correct language. Search for it.
          * @param {string} instrumentId The instrumentId where to find documents for.
          * @param {Array<Object>} resultsArray The list of documents which can be downloaded.
-         * @return {Object}
+         * @return {Object} The ajax request
          */
         function getKidDocumentLink(instrumentId, resultsArray) {
             return api.instruments.getKidDocumentLink(
@@ -880,63 +1120,38 @@ $(function () {
         }
 
         /**
-         * Check if the order can be placed, looking at the existing portfolio and risk appetite. And if so, place the order.
+         * Download documentation about an instrument, to comply with PRIIPs.
+         * @param {string} instrumentId Identification of the instrument.
+         * @param {string} kidId Identification of the document.
+         * @param {string} fileName Name of the document, with extension.
          * @return {void}
          */
-        function validateAndPlaceOrder() {
-            api.orders.validateNewOrder(
+        function downloadKidDocument(instrumentId, kidId, fileName) {
+            console.log("Preparing download for document " + fileName);
+            api.instruments.getKidDocument(
+                instrumentId,
+                kidId,
                 activeAccountNumber,
-                newOrderModel,
-                function (dataFromValidateOrder) {
-                    var isAllOrderConfirmationsApprovedByUser = true;  // Stay positive!
-                    var warningsToBeShown;
-                    var warningsToBeConfirmed;
-                    if (dataFromValidateOrder.previewOrder.warningsToBeShown.length > 0) {
-                        warningsToBeShown = "Warning(s):\n\n" + dataFromValidateOrder.previewOrder.warningsToBeShown.join("\n") + "\n\n";
+                function (data) {
+                    // Old browsers have sometimes handy features:
+                    if (typeof window.navigator.msSaveBlob === "function") {
+                        window.navigator.msSaveBlob(data, fileName);
                     } else {
-                        warningsToBeShown = "No warnings.\n\n";
-                    }
-                    if (dataFromValidateOrder.previewOrder.warningsToBeConfirmed.length > 0) {
-                        warningsToBeConfirmed = "By continuing you'll approve with the contents of the following warning(s):\n\n" + dataFromValidateOrder.previewOrder.warningsToBeConfirmed.join("\n") + "\n\n";
-                    } else {
-                        warningsToBeConfirmed = "";
-                    }
-                    if (dataFromValidateOrder.previewOrder.orderCanBeRegistered === true) {
-                        // First, let the user explicitly confirm the order warnings.
-                        if (warningsToBeConfirmed !== "" && !confirm(warningsToBeConfirmed)) {
-                            isAllOrderConfirmationsApprovedByUser = false;
-                        }
-                        // Second, if there are general warnings, show them to the user. Can be in a dialog, or just on the order ticket window.
-                        if (!confirm(warningsToBeShown + "Order can be placed. Do you want to continue?")) {
-                            isAllOrderConfirmationsApprovedByUser = false;
-                        }
-                        if (isAllOrderConfirmationsApprovedByUser) {
-                            // Copy the validationCode into the newOrderModel, to proceed with the order
-                            console.log("Validation code: " + dataFromValidateOrder.previewOrder.validationCode);
-                            newOrderModel.validationCode = dataFromValidateOrder.previewOrder.validationCode;
-                            api.orders.placeOrder(
-                                activeAccountNumber,
-                                newOrderModel,
-                                function (dataFromPlaceOrder) {
-                                    console.log("Placed order with number: " + dataFromPlaceOrder.ordersCollection.orders[0].number);
-                                    successCallback();
-                                },
-                                function (error) {
-                                    // Something went wrong, for example, there is no money to buy something.
-                                    // However, show the list of orders.
-                                    displayOrders();
-                                    apiErrorCallback(error);
-                                }
-                            );
-                        }
-                    } else {
-                        alert("Order cannot be placed!\n\n" + warningsToBeShown);
+                        var blob = data;
+                        var link = document.createElement("a");
+                        link.href = window.URL.createObjectURL(blob);
+                        link.download = fileName;
+                        document.body.appendChild(link);
+                        link.click();
                     }
                 },
                 apiErrorCallback
             );
         }
 
+        var newOrderObject = createNewOrderObject();
+        var instrumentIds = getInstrumentsFromOrderObject(newOrderObject);
+        alertIfActiveAccountIsReadonly();
         // First, we need to know if the KID regime applies for one or more instruments
         api.instruments.getInstrument(
             instrumentIds,
@@ -953,7 +1168,7 @@ $(function () {
                     }
                 }
                 if (kidApplicableInstruments.length > 0) {
-                    if (confirm("There might be documentation available about the instrument(s) to trade. Do you want to search for documentation?")) {
+                    if (window.confirm("There might be documentation available about the instrument(s) to trade. Do you want to search for documentation?")) {
                         // Build the promise
                         for (i = 0; i < kidApplicableInstruments.length; i += 1) {
                             promises[promises.length] = getKidDocumentLink(kidApplicableInstruments[i], resultsArray);
@@ -967,17 +1182,14 @@ $(function () {
                                 downloadKidDocument(resultsArray[j].instrumentId, resultsArray[j].id, resultsArray[j].name);
                             }
                             if (documentsList.length > 0) {
-                                alert("Document(s) available for reading:\n\n" + documentsList.join("\n"));
+                                window.alert("Document(s) available for reading:\n\n" + documentsList.join("\n"));
                             } else {
-                                alert("No documents found");
+                                window.alert("No documents found.");
                             }
-                            validateAndPlaceOrder();
                         });
-                    } else {
-                        validateAndPlaceOrder();
                     }
                 } else {
-                    validateAndPlaceOrder();
+                    window.alert("This instrument has no KID documentation (not KID applicable).");
                 }
             },
             apiErrorCallback
@@ -985,119 +1197,29 @@ $(function () {
     }
 
     /**
-     * Find a stock using the search text box. Buy 1 piece of it.
+     * Start listening to the news feed.
      * @return {void}
      */
-    function orderSomething() {
-        var searchText = $("#idEdtInstrumentName").val().toString();
-        api.instruments.findByName(
-            searchText,
-            "equity",
-            activeAccountNumber,
-            function (data) {
-                var instrument;
-                var newOrderModel = {
-                    "type": "limit",
-                    "quantity": 1,
-                    "duration": "day",
-                    "limitPrice": 4,
-                    "cash": {
-                        "side": "buy",
-                        "instrumentId": ""
-                    }
-                };
-                if (data.instrumentsCollection.instruments.length === 0) {
-                    alert("No stock found with name " + searchText);
-                } else {
-                    // We pick the first instrument from the search results. This is probably the one we want to buy.
-                    instrument = data.instrumentsCollection.instruments[0];
-                    console.log("Found instrument. Placing order in " + instrument.name);
-                    newOrderModel.cash.instrumentId = instrument.id;
-                    placeOrder([instrument.id], newOrderModel, displayOrders);
-                }
-            },
-            apiErrorCallback
+    function displayNewsFeed() {
+        $("#idBtnNewsFeed").hide();
+        streamer.start(
+            function () {
+                streamer.activateNews();
+            }
         );
     }
 
     /**
-     * Buy 1 option.
+     * Start listening to the order updates feed.
      * @return {void}
      */
-    function orderOption() {
-        var newOrderModel = {
-            "type": "limit",
-            "limitPrice": 10.05,
-            "quantity": 1,
-            "duration": "day",
-            "option": {
-                "leg1": {
-                    "side": "sell",
-                    "instrumentId": "BAqlx"  // IBM C JAN 2019
-                }
+    function displayOrdersFeed() {
+        $("#idBtnOrdersFeed").hide();
+        streamer.start(
+            function () {
+                streamer.activateOrders();
             }
-        };
-        placeOrder(["BAqlx"], newOrderModel, displayOrders);
-    }
-
-    /**
-     * Buy 1 future.
-     * @return {void}
-     */
-    function orderFuture() {
-        var newOrderModel = {
-            "type": "limit",
-            "limitPrice": 10.00,
-            "quantity": 1,
-            "duration": "day",
-            "future": {
-                "side": "sell",
-                "instrumentId": "OMAJP"  // FDAX SEP 2018
-            }
-        };
-        placeOrder(["OMAJP"], newOrderModel, displayOrders);
-    }
-
-    /**
-     * Buy 1 SRD.
-     * @return {void}
-     */
-    function orderSrd() {
-        var newOrderModel = {
-            "type": "limit",
-            "limitPrice": 10.05,
-            "quantity": 1,
-            "duration": "day",
-            "srd": {
-                "side": "sell",
-                "instrumentId": "nmyRj"  // C BCK DEC 2018 8.00
-            }
-        };
-        placeOrder(["nmyRj"], newOrderModel, displayOrders);
-    }
-
-    /**
-     * Buy 1 option strategy.
-     * @return {void}
-     */
-    function orderMultiLegOption() {
-        var newOrderModel = {
-            "type": "limit",
-            "limitPrice": 10.05,
-            "quantity": 1,
-            "duration": "day",
-            "option": {
-                "leg1": {
-                    "side": "buy",
-                    "instrumentId": "nmyRj"  // C BCK DEC 2018 8.00
-                },
-                "leg2": {
-                    "side": "buy",
-                    "instrumentId": "lVD1M"  // P BCK DEC 2018 7.00
-                }
-            }
-        };
-        placeOrder(["nmyRj", "lVD1M"], newOrderModel, displayOrders);
+        );
     }
 
     /**
@@ -1112,10 +1234,10 @@ $(function () {
                 if (document.title !== newTitle) {
                     document.title = newTitle;
                 }
-                $("#idTestConnectionFromClient").html("Test connection from client: OK");
+                $("#idTestConnectionFromClient").text("Test connection from client: OK");
             },
             function (error) {
-                $("#idTestConnectionFromClient").html("Test connection from client: " + error);
+                $("#idTestConnectionFromClient").text("Test connection from client: " + error);
             }
         );
     }
@@ -1125,16 +1247,45 @@ $(function () {
      * @return {void}
      */
     function populateLoginUrl() {
+        switch (getCultureForLogin()) {
+        case "fr":
+            $("#idEdtRealm").val("binckfrapi");
+            break;
+        case "frBE":
+        case "nlBE":
+            $("#idEdtRealm").val("binckbeapi");
+            break;
+        case "it":
+            $("#idEdtRealm").val("binckitapi");
+            break;
+        case "nl":
+            $("#idEdtRealm").val("bincknlapi");
+            break;
+        }
         $("#idLoginUrl").text(api.getLogonUrl(getRealm()));
     }
 
+    /**
+     * This callback is triggered when a new token is available.
+     * @param {Object} tokenObject If the user is authenticated, this function is invoked
+     * @return {void}
+     */
+    function newTokenCallback(tokenObject) {
+        console.log("New token received: " + tokenObject.access_token);
+        $("#idBearerToken").text(tokenObject.access_token);
+        streamer.extendSubscriptions();
+    }
+
+    api = new Api(getConfiguration, newTokenCallback);
+    streamer = new Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback, ordersCallback, apiStreamerErrorCallback);
     // Not authenticated yet. Hide login stuff.
     $("#idAuthenticatedPart").hide();
+    // Show QR Code, for demo purposes
+    document.getElementById("idQrCode").src = "https://chart.googleapis.com/chart?cht=qr&chs=500x500&chl=" + encodeURIComponent(window.location.href);
     // Authorize.
     api.checkState(
         function () {
             // Not authenticated
-            getIpToWhitelist();
             $("#idEdtRealm").val(getConfiguration().realm);
             $("#idEnvironment").text(getConfiguration().apiUrl);
             populateLoginUrl();
@@ -1153,9 +1304,10 @@ $(function () {
             $("#idAuthenticatedPart").show();
             $("#idBtnLoginOrLogout").on("click", function (evt) {
                 evt.preventDefault();
+                streamer.stop();
                 api.sessions.abortSession(
-                    function (data) {
-                        alert(data.message);
+                    function (dataFromAbortSession) {
+                        window.alert(dataFromAbortSession.message);
                     },
                     apiErrorCallback
                 );
@@ -1164,20 +1316,21 @@ $(function () {
             $("#idEdtScope").val(data.scope);
             $("#idEdtRealm").val(api.getState().realm);
             $("#idRefreshToken").on("click", function () {
-                api.getRefreshToken(function (data) {
-                    $("#idBearerToken").text(data.access_token);
+                api.getRefreshToken(function (dataFromRefreshToken) {
+                    console.log("Token refresh completed: " + dataFromRefreshToken.access_token);
                 }, apiErrorCallback);
             });
             $("#idEdtAccountType").val(api.getState().account);
             $("#idBtnOrders").on("click", displayOrders);
-            $("#idBtnOrder").on("click", orderSomething);
-            $("#idBtnOrderOption").on("click", orderOption);
-            $("#idBtnOrderMultiLegOption").on("click", orderMultiLegOption);
-            $("#idBtnOrderFuture").on("click", orderFuture);
-            $("#idBtnOrderSrd").on("click", orderSrd);
+            $("#idBtnOrder").on("click", placeOrder);
+            $("#idBtnOrderCosts").on("click", displayOrderCosts);
+            $("#idBtnOrderKID").on("click", displayOrderKid);
             $("#idBtnUpdatePositions").on("click", displayPositions);
             $("#idBtnFind").on("click", displayInstrumentSearchResults);
-            $("#idBtnFindIsin").on("click", displayInstrumentIsinResults);
+            $("input[type=radio][name=instrumentSearchType]").on("change", displayInstrumentSearchResults);
+            $("input[type=radio][name=orderType]").on("change", displayInstrumentSearchResults);
+            $("#idBtnOrdersFeed").on("click", displayOrdersFeed);
+            $("#idBtnNewsFeed").on("click", displayNewsFeed);
             $("#idTransactionsFilter a[href]").on("click", function (e) {
                 e.preventDefault();
                 displayTransactions($(this).data("code").toString());

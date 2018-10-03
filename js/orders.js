@@ -38,6 +38,19 @@ function Orders(requestCallback) {
     };
 
     /**
+     * See what an order costs, before placing the order.
+     * @param {string} accountNumber The identifier of the account.
+     * @param {Object} orderObject The order object.
+     * @param {function(Object)} successCallback When successful, this function is called.
+     * @param {function(string)} errorCallback The function to be called in case of a failed request.
+     * @return {void}
+     */
+    this.getCosts = function (accountNumber, orderObject, successCallback, errorCallback) {
+        console.log("Requesting order costs for account " + accountNumber + "..");
+        requestCallback("POST", "accounts/" + accountNumber + "/orders/costs", orderObject, successCallback, errorCallback);
+    };
+
+    /**
      * This function is used to validate an order, before actually sending it to Binck.
      * @param {string} accountNumber The account to display the orders for.
      * @param {Object} orderObject The order object.

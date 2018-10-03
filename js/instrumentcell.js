@@ -119,7 +119,7 @@ function InstrumentCell(containerElm, cellType, infoToShow, priceDecimals, hasHi
      * Determine if update must be highlighted (red or green).
      * @param {Object} quoteMessage The new data to display.
      * @param {number} priceAsNumber The new price.
-     * @return {boolean}
+     * @return {boolean} Yes, if applicable for highlighting
      */
     function isHighlightingRequired(quoteMessage, priceAsNumber) {
         // Only highlight updates
@@ -129,7 +129,7 @@ function InstrumentCell(containerElm, cellType, infoToShow, priceDecimals, hasHi
     /**
      * A message can have certain tags, if there is a special meaning.
      * @param {Object} quoteMessage The new data to display.
-     * @return {boolean}
+     * @return {boolean} Yes, if tagged for a special reason, like 'Cancel'
      */
     function isTaggedAndNeedsNoFurtherProcessing(quoteMessage) {
 
@@ -165,7 +165,7 @@ function InstrumentCell(containerElm, cellType, infoToShow, priceDecimals, hasHi
     /**
      * Validate if the price is generated today.
      * @param {Date} updateDateTime The timestamp.
-     * @return {boolean}
+     * @return {boolean} Yes, if it is a quote of today
      */
     function isQuoteFromToday(updateDateTime) {
         var today = new Date();
@@ -175,7 +175,7 @@ function InstrumentCell(containerElm, cellType, infoToShow, priceDecimals, hasHi
     /**
      * Get time as a locale string. Add date if different day.
      * @param {Date} updateDateTime The timestamp.
-     * @return {string}
+     * @return {string} Formatted time, in format of the browser (might differ from the language of the customer!)
      */
     function getTimeString(updateDateTime) {
         var timeString;
@@ -246,8 +246,8 @@ function InstrumentCell(containerElm, cellType, infoToShow, priceDecimals, hasHi
         } else if (infoToShow === "orders") {
             // Some instruments don't have the order count enabled
             price = quoteMessage.ord !== 0
-                ? quoteMessage.ord
-                : "";
+            ? quoteMessage.ord
+            : "";
             priceAsNumber = quoteMessage.ord;
         } else {
             price = quoteMessage.prc.toFixed(priceDecimals);

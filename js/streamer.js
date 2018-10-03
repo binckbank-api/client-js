@@ -25,9 +25,11 @@ var QuoteSubscriptionLevel = {
  * @param {function()} getConfiguration Connection configuration
  * @param {function()} getSubscription Subscription, with account and access token
  * @param {function(Object)} quoteCallback Callback to be called when a quote is received
+ * @param {function(Object)} newsCallback Callback to be called when news is received
+ * @param {function(Object)} ordersCallback Callback to be called when an order update is received
  * @param {function(string, string)} errorCallback Callback that will be called on an error situation
  */
-function Streamer(getConfiguration, getSubscription, quoteCallback, errorCallback) {
+function Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback, ordersCallback, errorCallback) {
     "use strict";
 
     /** @type {Object} */
@@ -36,7 +38,10 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, errorCallbac
     var connection = null;
     /** @type {boolean} */
     this.isConnected = false;
-
+    /** @type {boolean} */
+    var isNewsActivated = false;
+    /** @type {boolean} */
+    var isOrdersActivated = false;
     var subscriptionsForQuotes = new SubscriptionsForQuotes();
 
     /**
@@ -54,26 +59,28 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, errorCallbac
             }
         };
         connection = new signalR.HubConnectionBuilder()
-            .withUrl(getConfiguration().streamingQuotesUrl, options)
-            .configureLogging(signalR.LogLevel.Information)  // Might be 'Trace' for testing
-            .build();
+        .withUrl(getConfiguration().streamerUrl, options)
+        .configureLogging(signalR.LogLevel.Information)  // Might be 'Trace' for testing
+        .build();
         // Do something with an incoming quote:
         connection.on("Quote", quoteCallback);
-        // More in the future, like "news", "order", "position"
+        // Do something with incoming news:
+        connection.on("News", newsCallback);
+        // More in the future, like "order" and "transaction"
         connection.onclose(function () {
             console.log("The connection has been closed.");
             streamerObject.isConnected = false;
-            errorCallback("disconnected", "The connection has been closed.");
+            errorCallback("disconnected", "The streamer connection has been closed.");
         });
     }
 
     /**
-     * Start the connection.
+     * Start the connection. Can be used to re-start after a disconnect.
      * @param {function()} startedCallback When successful, this function is called.
      * @return {void}
      */
     this.start = function (startedCallback) {
-        console.log("Starting");
+        console.log("Starting streamer..");
         if (connection === null) {
             createConnection();
         }
@@ -81,21 +88,54 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, errorCallbac
             startedCallback();
         } else {
             connection.start()
-                .then(function () {
-                    streamerObject.isConnected = true;
-                    if (subscriptionsForQuotes.hasSubscriptionsToBeActivated()) {
-                        streamerObject.activateSubscriptions();
-                    }
-                    startedCallback();
-                })
-                .catch(function (error) {
-                    console.error(error);
-                    if ($.trim(error.message) !== "") {
-                        errorCallback("404", error.message);
-                    } else {
-                        errorCallback("404", "Something went wrong creating a connection. Is quotes endpoint configured on " + getConfiguration().streamingQuotesUrl + "?");
-                    }
-                });
+            .then(function () {
+                streamerObject.isConnected = true;
+                if (subscriptionsForQuotes.hasSubscriptionsToBeActivated()) {
+                    streamerObject.activateSubscriptions();
+                }
+                if (isNewsActivated) {
+                    streamerObject.activateNews();
+                }
+                if (isOrdersActivated) {
+                    streamerObject.activateOrders();
+                }
+                startedCallback();
+            })
+            .catch(function (error) {
+                console.error(error);
+                if ($.trim(error.message) !== "") {
+                    errorCallback("404", error.message);
+                } else {
+                    errorCallback("404", "Something went wrong creating a connection. Is the streamer endpoint configured on " + getConfiguration().streamerUrl + "?");
+                }
+            });
+        }
+    };
+
+    /**
+     * When a new token is granted, make sure the connection doesn't get a timeout, by calling this function with the new token.
+     * @return {void}
+     */
+    this.extendSubscriptions = function () {
+        console.log("Extending streamer subscription..");
+        if (streamerObject.isConnected) {
+            connection.invoke("ExtendSubscriptions", getSubscription().accessToken)
+            .then(function () {
+                var currentTime = new Date();
+                // Session is extended with 60 minutes
+                currentTime.setTime(currentTime.getTime() + (1 * 60 * 60 * 1000));
+                console.log("Subscriptions are extended to " + currentTime.toLocaleString());
+            })
+            .catch(function (error) {
+                console.error(error);
+                if (error.message !== "") {
+                    errorCallback("500", error.message);
+                } else {
+                    errorCallback("500", "Something went wrong stopping the connection.");
+                }
+            });
+        } else {
+            console.log("Streamer is not connected.");
         }
     };
 
@@ -104,9 +144,13 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, errorCallbac
      * @return {void}
      */
     this.stop = function () {
-        console.log("Stopping");
-        connection.stop()
+        console.log("Stopping streamer..");
+        if (connection !== null) {
+            connection.stop()
             .then(function () {
+                console.log("Streamer stopped.");
+                isNewsActivated = false;
+                isOrdersActivated = false;
                 streamerObject.isConnected = false;
             })
             .catch(function (error) {
@@ -117,6 +161,7 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, errorCallbac
                     errorCallback("500", "Something went wrong stopping the connection.");
                 }
             });
+        }
     };
 
     /**
@@ -157,6 +202,50 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, errorCallbac
             return;
         }
         subscriptionsForQuotes.processQueue(connection, getSubscription().activeAccountNumber, errorCallback);
+    };
+
+    /**
+     * Activates the news feed
+     * @return {void}
+     */
+    this.activateNews = function () {
+        var accountNumber = getSubscription().activeAccountNumber;
+        if (streamerObject.isConnected === false) {
+            console.log("Start the connection first, before starting the news feed.");
+            return;
+        }
+        console.log("Subscribe to news feed with account " + accountNumber);
+        connection.invoke("SubscribeNews", accountNumber)
+        .then(function () {
+            isNewsActivated = true;
+            console.log("Subscribe to the news feed succeeded.");
+        })
+        .catch(function (error) {
+            console.error(error);
+            errorCallback("500", "Something went wrong subscribing to the news feed.");
+        });
+    };
+
+    /**
+     * Activates the order updates feed
+     * @return {void}
+     */
+    this.activateOrders = function () {
+        var accountNumber = getSubscription().activeAccountNumber;
+        if (streamerObject.isConnected === false) {
+            console.log("Start the connection first, before starting the order updates feed.");
+            return;
+        }
+        console.log("Subscribe to order updates feed with account " + accountNumber);
+        connection.invoke("SubscribeOrders", accountNumber)
+        .then(function () {
+            isOrdersActivated = true;
+            console.log("Subscribe to the order updates feed succeeded.");
+        })
+        .catch(function (error) {
+            console.error(error);
+            errorCallback("500", "Something went wrong subscribing to the order updates feed.");
+        });
     };
 
 }
