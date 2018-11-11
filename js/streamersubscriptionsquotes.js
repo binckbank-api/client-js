@@ -156,11 +156,11 @@ function SubscriptionsForQuotes() {
             }
             if (instrumentIds.length > 0) {
                 connection.invoke("SubscribeQuotes", accountNumber, instrumentIds, subscriptionLevel)
-                .then(function (result) {
-                    if (result.success) {
-                        console.log("Quote subscribe succeeded, number of subscribed instruments is now: " + result.subcount);
+                .then(function (subscriptionResponse) {
+                    if (subscriptionResponse.isSucceeded) {
+                        console.log("Quote subscribe succeeded, number of subscribed instruments is now: " + subscriptionResponse.subcount);
                     } else {
-                        console.log("Quote subscribe failed");
+                        console.log("Something went wrong with the subscription. Probably the accoumntNumber is not valid.");
                     }
                 })
                 .catch(function (error) {
@@ -174,10 +174,12 @@ function SubscriptionsForQuotes() {
         function processUnsubscribe() {
             if (instrumentsToUnsubscribe.length > 0) {
                 connection.invoke("UnSubscribeQuotes", instrumentsToUnsubscribe)
-                .then(function (result) {
-                    if (result.success) {
-                        console.log("Quote unsubscribe succeeded, number of subscribed instruments is now: " + result.subcount);
+                .then(function (subscriptionResponse) {
+                    if (subscriptionResponse.success) {
+                        // todo: must change to isActivated
+                        console.log("Quote unsubscribe succeeded, number of subscribed instruments is now: " + subscriptionResponse.subcount);
                     } else {
+                        // Internal issue - should never occur
                         console.log("Quote unsubscribe failed");
                     }
                 })

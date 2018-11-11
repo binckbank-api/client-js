@@ -128,9 +128,11 @@ function Api(getConfiguration, newTokenCallback) {
         name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
         var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
         var results = regex.exec(window.location.href);
-        return results === null
-        ? ""
-        : decodeURIComponent(results[1].replace(/\+/g, " "));
+        return (
+            results === null
+            ? ""
+            : decodeURIComponent(results[1].replace(/\+/g, " "))
+        );
     }
 
     /**
@@ -186,22 +188,19 @@ function Api(getConfiguration, newTokenCallback) {
     /**
      * The state is used to validate the response and to add the desired opening account, if multiple accounts are available and if this account type is one of them.
      * @param {string} accountType The requested account type to show
-     * @param {string} instrumentId The instrument to display initially
      * @param {string} realm The realm to use
      * @return {string} The encoded state object, including the CSRF token
      */
-    function createState(accountType, instrumentId, realm) {
+    function createState(accountType, realm) {
         var stateObject = {
             // Token is a random number
             "csrfToken": csrfToken,
             // Remember realm, to get token
             "realm": realm,
-            "account": accountType,
-            "instrument": instrumentId
+            "account": accountType
         };
         // Convert the object to a base64 encoded string:
         var stateString = JSON.stringify(stateObject);
-        console.log("Creating state object with instrument " + instrumentId);
         return window.btoa(stateString);
     }
 
@@ -218,7 +217,7 @@ function Api(getConfiguration, newTokenCallback) {
                 "&ui_locales=" + encodeURIComponent(configurationObject.language) +
                 "&client_id=" + encodeURIComponent(configurationObject.clientId) +
                 "&scope=" + encodeURIComponent(configurationObject.scope) +
-                "&state=" + encodeURIComponent(createState(configurationObject.accountType, getUrlParameterByName("instrument"), realm)) +
+                "&state=" + encodeURIComponent(createState(configurationObject.accountType, realm)) +
                 "&response_type=" + encodeURIComponent(responseType) +
                 "&redirect_uri=" + encodeURIComponent(configurationObject.redirectUrl);
     };

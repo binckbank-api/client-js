@@ -16,8 +16,6 @@ $(function () {
     var instrumentList;
     /** @type {Object} */
     var streamer;
-    /** @type {boolean} */
-    var isFirstSearch = true;
 
     /**
      * Get the selected realm.
@@ -44,26 +42,22 @@ $(function () {
 
         // Sandbox
         var selectedAuthenticationProviderUrl = "https://login.sandbox.binck.com/am/oauth2/";  // This is the URL of the authentication provider to be used.
-        var selectedApiUrl = "https://api.sandbox.binck.com/api/v1/"; // This is the URL to the API of Binck production.
+        var selectedApiUrl = "https://api.sandbox.binck.com/api/v1/"; // This is the URL to the API of Binck sandbox.
         var selectedClientId = "enter_client_id";
-        // HTTPS is required for real production use!
-        var selectedRedirectUrl = "http://localhost/";
-        // HTTPS is required for real production use!
-        var selectedAppServerUrl = "http://localhost/server/sandbox/";
-        var selectedStreamerUrl = "http://localhost:61821/stream/v1";
+        var selectedRedirectUrl = "https://your.host.here/";
+        var selectedAppServerUrl = "https://your.host.here/server/sandbox/";
+        var selectedStreamerUrl = "https://realtime.sandbox.binck.com/stream/v1";
 
         /*
         // Production
-        var selectedAuthenticationProviderUrl = "https://login.sandbox.binck.com/am/oauth2/";  // This is the URL of the authentication provider to be used.
+        var selectedAuthenticationProviderUrl = "https://login.binck.com/am/oauth2/";  // This is the URL of the authentication provider to be used.
         var selectedApiUrl = "https://api.binck.com/api/v1/"; // This is the URL to the API of Binck production.
         var selectedClientId = "enter_client_id";
-        // HTTPS is required for real production use!
-        var selectedRedirectUrl = "http://localhost/";
-        // HTTPS is required for real production use!
-        var selectedAppServerUrl = "http://localhost/server/prod/";
-        var selectedStreamerUrl = "http://localhost:61821/stream/v1";
+        var selectedRedirectUrl = "https://your.host.here/";
+        var selectedAppServerUrl = "https://your.host.here/server/prod/";
+        var selectedStreamerUrl = "https://realtime.binck.com/stream/v1";
         */
-        
+
         var configurationObject = {
             "clientId": selectedClientId,
             "accountType": $("#idEdtAccountType").val(),
@@ -152,17 +146,6 @@ $(function () {
             newsBody.replace(/\\r\\n/g, "<br />");
         }
         $("#idNews").html("<p>" + new Date(newsObject.dt).toLocaleString() + ": <b>" + newsObject.head + "</b><br />" + newsBody + "</p>" + currentNewsHtml);
-    }
-
-    /**
-     * Showcase of the streaming order updates API.
-     * @param {Object} orderObject The object received by the streamer
-     * @return {void}
-     */
-    function ordersCallback(orderObject) {
-        //var currentNewsHtml = $("#idNews").html();
-        console.log(orderObject);
-        //$("#idNews").html("<p>" + new Date(newsObject.dt).toLocaleString() + ": <b>" + newsObject.head + "</b><br />" + newsBody + "</p>" + currentNewsHtml);
     }
 
     /**
@@ -272,9 +255,9 @@ $(function () {
                 var settingsHtml;
                 var i;
                 if (data.settingsCollection.settings[0].tradingAllowed.length === 0) {
-                    settingsHtml = "Trading in advanced instruments is not allowed";
+                    settingsHtml = "Trading is not allowed";
                 } else {
-                    settingsHtml = "Advanced instruments allowed:";
+                    settingsHtml = "Trading allowed for instrument types:";
                     for (i = 0; i < data.settingsCollection.settings[0].tradingAllowed.length; i += 1) {
                         settingsHtml += " " + data.settingsCollection.settings[0].tradingAllowed[i].tradingType;
                     }
@@ -665,31 +648,17 @@ $(function () {
     function displayInstrumentSearchResults() {
         var searchText = $("#idEdtInstrumentName").val().toString();
         var instrumentType = $("input[name=instrumentSearchType]:checked").val();
-        var instrumentIds = [];
         if (instrumentType === "all") {
             instrumentType = null;
         }
-        if (isFirstSearch && api.getState().instrument !== "") {
-            isFirstSearch = false;
-            instrumentIds[0] = api.getState().instrument;
-            $("#idEdtInstrumentName").val("");
-            // An instrument was supplied when loading this site. Search for this instrument.
-            api.instruments.getInstrument(
-                instrumentIds,
-                activeAccountNumber,
-                prepareOrder,
-                apiErrorCallback
-            );
-        } else {
-            api.instruments.findByName(
-                searchText,
-                instrumentType,
-                1,
-                activeAccountNumber,
-                prepareOrder,
-                apiErrorCallback
-            );
-        }
+        api.instruments.findByName(
+            searchText,
+            instrumentType,
+            1,
+            activeAccountNumber,
+            prepareOrder,
+            apiErrorCallback
+        );
     }
 
     /**
@@ -843,6 +812,51 @@ $(function () {
     }
 
     /**
+     * Add the new HTML to the list of pending orders and attach the onClick events.
+     * @param {string} ordersHtml The list of orders.
+     * @param {function()} refreshCallback This is what to do when a modification or cancel was executed, if streaming is not active.
+     * @return {void}
+     */
+    function populateOrdersList(ordersHtml, refreshCallback) {
+        $("#idOrders").html(ordersHtml);
+        $("#idOrders a[href='#order']").on("click", function (e) {
+            var orderNumber = parseInt($(this).data("code"), 10);
+            e.preventDefault();
+            displayOrder(orderNumber);
+        });
+        $("#idOrders a[href='#cancel']").on("click", function (e) {
+            e.preventDefault();
+            api.orders.cancelOrder(
+                activeAccountNumber,
+                parseInt($(this).data("code"), 10),
+                function () {
+                    if (streamer.isOrdersActivated) {
+                        refreshCallback();
+                    }
+                    window.alert("Order has been canceled.");
+                },
+                apiErrorCallback
+            );
+        });
+        $("#idOrders a[href='#modify']").on("click", function (e) {
+            e.preventDefault();
+            modifyOrder(
+                {
+                    "orderNumber": parseInt($(this).data("code"), 10),
+                    "orderLineNumber": 1,
+                    "limitPrice": 5.05
+                },
+                function () {
+                    if (streamer.isOrdersActivated) {
+                        refreshCallback();
+                    }
+                    window.alert("Order has been modified.");
+                }
+            );
+        });
+    }
+
+    /**
      * Display orders. Highlight the new order.
      * @return {void}
      */
@@ -875,41 +889,40 @@ $(function () {
                         ordersHtml += orderHtml + "<br />";
                     }
                 }
-                $("#idOrders").html(ordersHtml);
-                $("#idOrders a[href='#order']").on("click", function (e) {
-                    var orderNumber = parseInt($(this).data("code"), 10);
-                    e.preventDefault();
-                    displayOrder(orderNumber);
-                });
-                $("#idOrders a[href='#cancel']").on("click", function (e) {
-                    e.preventDefault();
-                    api.orders.cancelOrder(
-                        activeAccountNumber,
-                        parseInt($(this).data("code"), 10),
-                        function () {
-                            displayOrders();
-                            window.alert("Order has been canceled.");
-                        },
-                        apiErrorCallback
-                    );
-                });
-                $("#idOrders a[href='#modify']").on("click", function (e) {
-                    e.preventDefault();
-                    modifyOrder(
-                        {
-                            "orderNumber": parseInt($(this).data("code"), 10),
-                            "orderLineNumber": 1,
-                            "limitPrice": 5.05
-                        },
-                        function () {
-                            displayOrders();
-                            window.alert("Order has been modified.");
-                        }
-                    );
-                });
+                populateOrdersList(ordersHtml, displayOrders);
             },
             apiErrorCallback
         );
+    }
+
+    /**
+     * Showcase of the streaming order updates API.
+     * @param {Object} orderObject The object received by the streamer
+     * @return {void}
+     */
+    function ordersCallback(orderObject) {
+        var currentOrdersHtml;
+        var orderHtml;
+        console.log(orderObject);
+        if (orderObject.accountNumber === activeAccountNumber) {
+            // Add the incoming order to the list
+            currentOrdersHtml = $("#idOrders").html();
+            orderHtml = '<a href="#order" data-code="' + orderObject.number + '">' + orderObject.number + "</a> " + (
+                orderObject.hasOwnProperty("side")
+                ? orderObject.side + " "
+                : ""
+            ) + orderObject.quantity + " x " + orderObject.instrument.id + " /refresh to get full name/ (expires " + new Date(orderObject.expirationDate).toLocaleDateString() + ") state: " + orderObject.status;
+            if (orderObject.status === "placed") {
+                orderHtml += ' <a href="#cancel" data-code="' + orderObject.number + '">cancel</a>';
+            } else if (orderObject.status === "placementConfirmed" || orderObject.status === "modified") {
+                orderHtml += ' <a href="#modify" data-code="' + orderObject.number + '">modify</a>';
+                orderHtml += ' <a href="#cancel" data-code="' + orderObject.number + '">cancel</a>';
+            }
+            currentOrdersHtml = orderHtml + "<br />" + currentOrdersHtml;
+            populateOrdersList(currentOrdersHtml, displayOrders);
+        } else {
+            window.alert("You just received an order update for another account: " + orderObject.accountNumber);
+        }
     }
 
     /**
@@ -1200,26 +1213,38 @@ $(function () {
      * Start listening to the news feed.
      * @return {void}
      */
-    function displayNewsFeed() {
-        $("#idBtnNewsFeed").hide();
-        streamer.start(
-            function () {
-                streamer.activateNews();
-            }
-        );
+    function activateRealtimeNews() {
+        if (!streamer.isNewsActivated) {
+            // Activate the realtime news feed
+            $("#idBtnActivateRealtimeNews").val("Turn off news");
+            streamer.start(
+                function () {
+                    streamer.activateNews();
+                }
+            );
+        } else {
+            streamer.deActivateNews();
+            $("#idBtnActivateRealtimeNews").val("Activate realtime news");
+        }
     }
 
     /**
      * Start listening to the order updates feed.
      * @return {void}
      */
-    function displayOrdersFeed() {
-        $("#idBtnOrdersFeed").hide();
-        streamer.start(
-            function () {
-                streamer.activateOrders();
-            }
-        );
+    function activateRealtimeOrderUpdates() {
+        if (!streamer.isOrdersActivated) {
+            // Activate the realtime order update feed
+            $("#idBtnActivateRealtimeOrderUpdates").val("Turn off order updates");
+            streamer.start(
+                function () {
+                    streamer.activateOrders();
+                }
+            );
+        } else {
+            streamer.deActivateOrders();
+            $("#idBtnActivateRealtimeOrderUpdates").val("Activate realtime order updates");
+        }
     }
 
     /**
@@ -1329,8 +1354,8 @@ $(function () {
             $("#idBtnFind").on("click", displayInstrumentSearchResults);
             $("input[type=radio][name=instrumentSearchType]").on("change", displayInstrumentSearchResults);
             $("input[type=radio][name=orderType]").on("change", displayInstrumentSearchResults);
-            $("#idBtnOrdersFeed").on("click", displayOrdersFeed);
-            $("#idBtnNewsFeed").on("click", displayNewsFeed);
+            $("#idBtnActivateRealtimeOrderUpdates").on("click", activateRealtimeOrderUpdates);
+            $("#idBtnActivateRealtimeNews").on("click", activateRealtimeNews);
             $("#idTransactionsFilter a[href]").on("click", function (e) {
                 e.preventDefault();
                 displayTransactions($(this).data("code").toString());

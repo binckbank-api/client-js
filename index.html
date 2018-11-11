@@ -44,14 +44,14 @@
     </select>
     <label for="idEdtCulture">Culture: </label>
     <select id="idEdtCulture">
-        <option value="fr" selected>fr</option>
+        <option value="fr">fr</option>
         <option value="frBE">fr-BE</option>
         <option value="it">it</option>
-        <option value="nl">nl</option>
+        <option value="nl" selected>nl</option>
         <option value="nlBE">nl-BE</option>
     </select>
     <label for="idEdtRealm">Realm: </label><input type="text" id="idEdtRealm" value=""/>
-    <label for="idEdtScope">Scope: </label><input type="text" id="idEdtScope" value="read write"/>
+    <label for="idEdtScope">Scope: </label><input type="text" id="idEdtScope" value="read write news quotes"/>
     <input type="button" id="idBtnLoginOrLogout" value="Sign in"/> Bearer token: <span id="idBearerToken">-</span>
     <div id="idUnauthenticatedPart">
         <h2>This is a demo application. Sign in to use the API. You will be redirected to the login dialog.</h2>
@@ -123,7 +123,7 @@
         </p>
         <p>
             News:
-            <input type="button" id="idBtnNewsFeed" value="Activate streaming news"/>
+            <input type="button" id="idBtnActivateRealtimeNews" value="Activate realtime news"/>
             <div id="idNews"></div>
         </p>
         <p>
@@ -149,7 +149,7 @@
         </p>
         <p>
             <input type="button" id="idBtnOrders" value="Get pending orders"/>
-            <input type="button" id="idBtnOrdersFeed" value="Activate streaming order updates"/>
+            <input type="button" id="idBtnActivateRealtimeOrderUpdates" value="Activate realtime order updates"/>
             <div id="idOrders"></div>
         </p>
         <p>

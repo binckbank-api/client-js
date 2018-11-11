@@ -7,7 +7,7 @@
 
 // Set your return content type
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: http://localhost');
+header('Access-Control-Allow-Origin: https://your.host.here');
 
 $clientId = 'enter_client_id';
 $clientSecret = 'p@ssw0rd';

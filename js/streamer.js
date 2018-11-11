@@ -39,9 +39,9 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback
     /** @type {boolean} */
     this.isConnected = false;
     /** @type {boolean} */
-    var isNewsActivated = false;
+    this.isNewsActivated = false;
     /** @type {boolean} */
-    var isOrdersActivated = false;
+    this.isOrdersActivated = false;
     var subscriptionsForQuotes = new SubscriptionsForQuotes();
 
     /**
@@ -66,6 +66,12 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback
         connection.on("Quote", quoteCallback);
         // Do something with incoming news:
         connection.on("News", newsCallback);
+        // Do something with incoming order executions:
+        connection.on("OrderExecution", ordersCallback);
+        // Do something with incoming order modifications:
+        connection.on("OrderModified", ordersCallback);
+        // Do something with incoming order status changes:
+        connection.on("OrderStatus", ordersCallback);
         // More in the future, like "order" and "transaction"
         connection.onclose(function () {
             console.log("The connection has been closed.");
@@ -93,10 +99,10 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback
                 if (subscriptionsForQuotes.hasSubscriptionsToBeActivated()) {
                     streamerObject.activateSubscriptions();
                 }
-                if (isNewsActivated) {
+                if (streamerObject.isNewsActivated) {
                     streamerObject.activateNews();
                 }
-                if (isOrdersActivated) {
+                if (streamerObject.isOrdersActivated) {
                     streamerObject.activateOrders();
                 }
                 startedCallback();
@@ -149,8 +155,8 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback
             connection.stop()
             .then(function () {
                 console.log("Streamer stopped.");
-                isNewsActivated = false;
-                isOrdersActivated = false;
+                streamerObject.isNewsActivated = false;
+                streamerObject.isOrdersActivated = false;
                 streamerObject.isConnected = false;
             })
             .catch(function (error) {
@@ -216,13 +222,34 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback
         }
         console.log("Subscribe to news feed with account " + accountNumber);
         connection.invoke("SubscribeNews", accountNumber)
-        .then(function () {
-            isNewsActivated = true;
-            console.log("Subscribe to the news feed succeeded.");
+        .then(function (subscriptionResponse) {
+            if (subscriptionResponse.isSucceeded) {
+                streamerObject.isNewsActivated = true;
+                console.log("Subscribe to the news feed succeeded.");
+            } else {
+                console.log("Something went wrong with the subscription. Probably the accoumntNumber is not valid.");
+            }
         })
         .catch(function (error) {
             console.error(error);
             errorCallback("500", "Something went wrong subscribing to the news feed.");
+        });
+    };
+
+    /**
+     * Deactivates the news feed
+     * @return {void}
+     */
+    this.deActivateNews = function () {
+        console.log("De-activating realtime news");
+        connection.invoke("UnSubscribeNews")
+        .then(function () {
+            streamerObject.isNewsActivated = false;
+            console.log("Unsubscribe to the news feed succeeded.");
+        })
+        .catch(function (error) {
+            console.error(error);
+            errorCallback("500", "Something went wrong unsubscribing the news feed.");
         });
     };
 
@@ -238,9 +265,13 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback
         }
         console.log("Subscribe to order updates feed with account " + accountNumber);
         connection.invoke("SubscribeOrders", accountNumber)
-        .then(function () {
-            isOrdersActivated = true;
-            console.log("Subscribe to the order updates feed succeeded.");
+        .then(function (subscriptionResponse) {
+            if (subscriptionResponse.isSucceeded) {
+                streamerObject.isOrdersActivated = true;
+                console.log("Subscribe to the order updates feed succeeded.");
+            } else {
+                console.log("Something went wrong with the subscription. Probably the accoumntNumber is not valid.");
+            }
         })
         .catch(function (error) {
             console.error(error);
@@ -248,4 +279,20 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback
         });
     };
 
+    /**
+     * Deactivates the order updates feed
+     * @return {void}
+     */
+    this.deActivateOrders = function () {
+        console.log("De-activating the realtime order updates");
+        connection.invoke("UnSubscribeOrders")
+        .then(function () {
+            streamerObject.isOrdersActivated = false;
+            console.log("Unsubscribe to the order updates feed succeeded.");
+        })
+        .catch(function (error) {
+            console.error(error);
+            errorCallback("500", "Something went wrong unsubscribing the order updates feed.");
+        });
+    };
 }
