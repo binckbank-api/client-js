@@ -40,23 +40,35 @@ $(function () {
         // scope can be "read write" (mutation rights) and "read" (readonly)
         // scope is depending on Application rights, password or just what is desired.
 
-        // Sandbox
-        var selectedAuthenticationProviderUrl = "https://login.sandbox.binck.com/am/oauth2/";  // This is the URL of the authentication provider to be used.
-        var selectedApiUrl = "https://api.sandbox.binck.com/api/v1/"; // This is the URL to the API of Binck sandbox.
-        var selectedClientId = "enter_client_id";
-        var selectedRedirectUrl = "https://your.host.here/";
-        var selectedAppServerUrl = "https://your.host.here/server/sandbox/";
-        var selectedStreamerUrl = "https://realtime.sandbox.binck.com/stream/v1";
+        var environment = "Sandbox";  // Active environment. Can be Sandbox, or Production.
 
-        /*
-        // Production
-        var selectedAuthenticationProviderUrl = "https://login.binck.com/am/oauth2/";  // This is the URL of the authentication provider to be used.
-        var selectedApiUrl = "https://api.binck.com/api/v1/"; // This is the URL to the API of Binck production.
-        var selectedClientId = "enter_client_id";
-        var selectedRedirectUrl = "https://your.host.here/";
-        var selectedAppServerUrl = "https://your.host.here/server/prod/";
-        var selectedStreamerUrl = "https://realtime.binck.com/stream/v1";
-        */
+        var selectedAuthenticationProviderUrl;  // This is the URL of the authentication provider to be used.
+        var selectedApiUrl;  // This is the URL to the API of Binck of the local process.
+        var selectedStreamerUrl;  // This is the URL to the streamer, providing real time prices, order updates, portfolio updates and news.
+        var selectedClientId;  // This is the identifier of your application.
+        var selectedRedirectUrl;  // This is the landing URL of your application, after logging in. HTTPS is required for production use.
+        var selectedAppServerUrl;  // This is the server of your application, used to request and refresh the token. HTTPS is required for production use.
+
+        switch (environment.toLowerCase()) {
+        case "sandbox":
+            // Sandbox (PS)
+            selectedAuthenticationProviderUrl = "https://login.sandbox.binck.com/am/oauth2/";
+            selectedApiUrl = "https://api.sandbox.binck.com/api/v1/";
+            selectedStreamerUrl = "https://realtime.sandbox.binck.com/stream/v1";
+            selectedClientId = "enter_client_id";
+            selectedRedirectUrl = "https://your.host.here/";
+            selectedAppServerUrl = "https://your.host.here/server/sandbox/";
+            break;
+        case "production":
+            // Production (P)
+            selectedAuthenticationProviderUrl = "https://login.binck.com/am/oauth2/";
+            selectedApiUrl = "https://api.binck.com/api/v1/";
+            selectedStreamerUrl = "https://realtime.binck.com/stream/v1";
+            selectedClientId = "enter_client_id";
+            selectedRedirectUrl = "https://your.host.here/";
+            selectedAppServerUrl = "https://your.host.here/server/sandbox/";
+            break;
+        }
 
         var configurationObject = {
             "clientId": selectedClientId,
@@ -896,13 +908,36 @@ $(function () {
     }
 
     /**
-     * Showcase of the streaming order updates API.
+     * Showcase of the streaming order updates API: Change in positions.
      * @param {Object} orderObject The object received by the streamer
      * @return {void}
      */
-    function ordersCallback(orderObject) {
+    function orderExecutionsCallback(orderObject) {
+        console.log("Order has (partially) been executed.");
+        console.log(orderObject);
+        window.alert("You just received an order execution for account " + orderObject.accountNumber);
+    }
+
+    /**
+     * Showcase of the streaming order updates API: Change in pending order.
+     * @param {Object} orderObject The object received by the streamer
+     * @return {void}
+     */
+    function orderModificationsCallback(orderObject) {
+        console.log("Order has been modified.");
+        console.log(orderObject);
+        window.alert("You just received an order modification for account " + orderObject.accountNumber);
+    }
+
+    /**
+     * Showcase of the streaming order updates API: Change in order status.
+     * @param {Object} orderObject The object received by the streamer
+     * @return {void}
+     */
+    function orderEventsCallback(orderObject) {
         var currentOrdersHtml;
         var orderHtml;
+        console.log("Order status has been changed.");
         console.log(orderObject);
         if (orderObject.accountNumber === activeAccountNumber) {
             // Add the incoming order to the list
@@ -979,13 +1014,13 @@ $(function () {
 
     /**
      * Create an order object, from the textarea input.
-     * @return {Object}
+     * @return {Object} The newOrderObject
      */
     function createNewOrderObject() {
         var inputText = $("#idEdtOrderModel").val().toString();
         /** @type {Object} */
         var newOrderObject = JSON.parse(inputText);
-        if (newOrderObject !== null && typeof newOrderObject === 'object') {
+        if (newOrderObject !== null && typeof newOrderObject === "object") {
             return newOrderObject;
         }
         throw "Invalid input: " + inputText;
@@ -997,15 +1032,20 @@ $(function () {
      */
     function placeOrder() {
 
-        function internalPlaceOrder(newOrderObject) {
+        /**
+         * Place the order after the validation.
+         * @param {Object} internalNewOrderObject The order model.
+         * @return {void}
+         */
+        function internalPlaceOrder(internalNewOrderObject) {
             api.orders.placeOrder(
                 activeAccountNumber,
-                newOrderObject,
+                internalNewOrderObject,
                 function (dataFromPlaceOrder) {
                     console.log("Placed order with number: " + dataFromPlaceOrder.ordersCollection.orders[0].number);
-                    delete newOrderObject.validationCode;
+                    delete internalNewOrderObject.validationCode;
                     // Replace the object with one without the validationCode
-                    $("#idEdtOrderModel").val(JSON.stringify(newOrderObject));
+                    $("#idEdtOrderModel").val(JSON.stringify(internalNewOrderObject));
                     displayOrders();
                 },
                 function (error) {
@@ -1055,8 +1095,18 @@ $(function () {
      */
     function displayOrderCosts() {
 
-        function internalDisplayOrderCosts(newOrderObject) {
+        /**
+         * Display the price breakdown after the validation.
+         * @param {Object} internalNewOrderObject The order model.
+         * @return {void}
+         */
+        function internalDisplayOrderCosts(internalNewOrderObject) {
 
+            /**
+             * Callback to display the price breakdown.
+             * @param {Object} dataFromOrderCosts The response.
+             * @return {string} Text containing the description of the costs
+             */
             function convertCostsToText(dataFromOrderCosts) {
                 var result = "";
                 var legCounter;  // Normally 1, 2 of option combination.
@@ -1084,10 +1134,10 @@ $(function () {
                 return result;
             }
 
-            delete newOrderObject.validationCode;
+            delete internalNewOrderObject.validationCode;
             api.orders.getCosts(
                 activeAccountNumber,
-                newOrderObject,
+                internalNewOrderObject,
                 function (dataFromOrderCosts) {
                     window.alert(convertCostsToText(dataFromOrderCosts));
                 },
@@ -1302,7 +1352,16 @@ $(function () {
     }
 
     api = new Api(getConfiguration, newTokenCallback);
-    streamer = new Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback, ordersCallback, apiStreamerErrorCallback);
+    streamer = new Streamer(
+        getConfiguration,
+        getSubscription,
+        quoteCallback,
+        newsCallback,
+        orderExecutionsCallback,
+        orderModificationsCallback,
+        orderEventsCallback,
+        apiStreamerErrorCallback
+    );
     // Not authenticated yet. Hide login stuff.
     $("#idAuthenticatedPart").hide();
     // Show QR Code, for demo purposes

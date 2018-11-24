@@ -26,10 +26,12 @@ var QuoteSubscriptionLevel = {
  * @param {function()} getSubscription Subscription, with account and access token
  * @param {function(Object)} quoteCallback Callback to be called when a quote is received
  * @param {function(Object)} newsCallback Callback to be called when news is received
- * @param {function(Object)} ordersCallback Callback to be called when an order update is received
+ * @param {function(Object)} orderExecutionsCallback Callback to be called when an order execution is received
+ * @param {function(Object)} orderModificationsCallback Callback to be called when an order modification is received
+ * @param {function(Object)} orderEventsCallback Callback to be called when an order update is received
  * @param {function(string, string)} errorCallback Callback that will be called on an error situation
  */
-function Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback, ordersCallback, errorCallback) {
+function Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback, orderExecutionsCallback, orderModificationsCallback, orderEventsCallback, errorCallback) {
     "use strict";
 
     /** @type {Object} */
@@ -67,11 +69,11 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback
         // Do something with incoming news:
         connection.on("News", newsCallback);
         // Do something with incoming order executions:
-        connection.on("OrderExecution", ordersCallback);
+        connection.on("OrderExecution", orderExecutionsCallback);
         // Do something with incoming order modifications:
-        connection.on("OrderModified", ordersCallback);
+        connection.on("OrderModified", orderModificationsCallback);
         // Do something with incoming order status changes:
-        connection.on("OrderStatus", ordersCallback);
+        connection.on("OrderStatus", orderEventsCallback);
         // More in the future, like "order" and "transaction"
         connection.onclose(function () {
             console.log("The connection has been closed.");

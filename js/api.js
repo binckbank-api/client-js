@@ -81,9 +81,15 @@ function Api(getConfiguration, newTokenCallback) {
 
         return $.ajax({
             "dataType": "json",
-            "type": method,
+            // We are sending JSON if using POST or PATCH. API is not accepting www-form-urlencoded.
+            "contentType": "application/json; charset=utf-8",
+            "type": method.toUpperCase(),
             "url": getConfiguration().apiUrl + urlParams,
-            "data": data,
+            "data": (
+                method.toUpperCase() === "GET"
+                ? data
+                : JSON.stringify(data)
+            ),
             "headers": getAccessHeader(),
             "success": successCallback,
             "error": function (jqXhr) {
