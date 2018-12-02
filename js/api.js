@@ -85,11 +85,11 @@ function Api(getConfiguration, newTokenCallback) {
             "contentType": "application/json; charset=utf-8",
             "type": method.toUpperCase(),
             "url": getConfiguration().apiUrl + urlParams,
-            "data": (
+            "data":
                 method.toUpperCase() === "GET"
                 ? data
                 : JSON.stringify(data)
-            ),
+            ,
             "headers": getAccessHeader(),
             "success": successCallback,
             "error": function (jqXhr) {
@@ -173,7 +173,7 @@ function Api(getConfiguration, newTokenCallback) {
     function setCookie(key, value) {
         var expires = new Date();
         // Cookie is valid for 360 days.
-        expires.setTime(expires.getTime() + (360 * 24 * 60 * 60 * 1000));
+        expires.setTime(expires.getTime() + 360 * 24 * 60 * 60 * 1000);
         document.cookie = key + "=" + value + ";expires=" + expires.toUTCString();
     }
 
@@ -282,12 +282,11 @@ function Api(getConfiguration, newTokenCallback) {
 
     /**
      * If authentication was successful, the token can be requested using the code supplied by the authentication provider.
-     * @param {Object} data The token object returned
-     * @param {function(Object)} successCallback Callback function when successful
+     * @param {Object} tokenObject The token object returned
      * @param {function(string)} errorCallback Callback function to invoke in case of an error
      * @return {void}
      */
-    function tokenReceivedCallback(data, successCallback, errorCallback) {
+    function tokenReceivedCallback(tokenObject, errorCallback) {
         /* {
             access_token: "7819a965-6858-4db9-8583-864d66d80911",
             refresh_token: "4a4b125f-e5a2-439d-abac-3e85ef40cc37",
@@ -295,91 +294,82 @@ function Api(getConfiguration, newTokenCallback) {
             token_type: "Bearer",
             expires_in: 3599
         } */
-        var nextSessionRefresh = data.expires_in - 60;  // Refresh one minute before expiration
+        var nextSessionRefresh = tokenObject.expires_in - 60;  // Refresh one minute before expiration
         var nextSessionRefreshTime = new Date();
         nextSessionRefreshTime.setSeconds(nextSessionRefreshTime.getSeconds() + nextSessionRefresh);
-        console.log(data);
-        accessToken = data.access_token;
-        refreshToken = data.refresh_token;
-        updateTokenExpirationTime(data.expires_in);
+        accessToken = tokenObject.access_token;
+        refreshToken = tokenObject.refresh_token;
+        console.log("New token received: " + accessToken);
+        updateTokenExpirationTime(tokenObject.expires_in);
         // Start a timer, to refresh the token before it expires.
         console.log("Session will be refreshed at " + nextSessionRefreshTime.toLocaleString());
         accessTokenRefreshTimer = window.setTimeout(
             function () {
-                apiObject.getRefreshToken(
-                    function () {
-                        console.log("Session has been extended with " + data.expires_in / 60 + " minutes");
-                    },
-                    errorCallback
-                );
+                apiObject.getRefreshToken(errorCallback);
             },
             nextSessionRefresh * 1000  // Do the refresh just before the token will expire
         );
-        successCallback(data);
-        newTokenCallback(data);
+        newTokenCallback(tokenObject);
+    }
+
+    /**
+     * Retrieve an access token from the server.
+     * @param {Object} data Data to be send as query string
+     * @param {function(string)} errorCallback Callback function to invoke in case of an error
+     * @return {void}
+     */
+    function getToken(data, errorCallback) {
+        var configurationObject = getConfiguration();
+        data.realm = apiObject.getState().realm;
+        data.redirect_uri = configurationObject.redirectUrl;
+        $.ajax({
+            "dataType": "json",
+            "type": "GET",
+            "url": configurationObject.appServerUrl + "token.php",
+            "data": data,
+            "cache": false,
+            "success": function (tokenObject) {
+                tokenReceivedCallback(tokenObject, errorCallback);
+            },
+            "error": function (jqXhr) {
+                if (jqXhr.hasOwnProperty("responseJSON") && jqXhr.responseJSON.hasOwnProperty("error") && jqXhr.responseJSON.hasOwnProperty("error_description")) {
+                    if (jqXhr.responseJSON.error === "invalid_grant") {
+                        apiObject.navigateToLoginPage(apiObject.getState().realm);
+                    } else {
+                        errorCallback(jqXhr.responseJSON.error_description);
+                    }
+                } else {
+                    errorCallback("Communication error in getToken: " + jqXhr.status);
+                }
+            }
+        });
     }
 
     /**
      * If authentication was successful, the token can be requested using the code supplied by the authentication provider.
      * @param {string} code The code from the URL
-     * @param {function(Object)} successCallback Callback function when successful
      * @param {function(string)} errorCallback Callback function to invoke in case of an error
      * @return {void}
      */
-    function getAccessToken(code, successCallback, errorCallback) {
-        var configurationObject = getConfiguration();
+    function getAccessToken(code, errorCallback) {
+        var data = {
+            "code": code
+        };
         console.log("Requesting token..");
-        $.ajax({
-            "dataType": "json",
-            "type": "GET",
-            "url": configurationObject.appServerUrl + "token.php?realm=" + encodeURIComponent(apiObject.getState().realm) + "&code=" + encodeURIComponent(code) + "&redirect_uri=" + encodeURIComponent(configurationObject.redirectUrl),
-            "cache": false,
-            "success": function (data) {
-                tokenReceivedCallback(data, successCallback, errorCallback);
-            },
-            "error": function (jqXhr) {
-                if (jqXhr.hasOwnProperty("responseJSON") && jqXhr.responseJSON.hasOwnProperty("error") && jqXhr.responseJSON.hasOwnProperty("error_description")) {
-                    if (jqXhr.responseJSON.error === "invalid_grant") {
-                        apiObject.navigateToLoginPage(apiObject.getState().realm);
-                    } else {
-                        errorCallback(jqXhr.responseJSON.error_description);
-                    }
-                } else {
-                    errorCallback("Communication error in getAccessToken: " + jqXhr.status);
-                }
-            }
-        });
+        getToken(data, errorCallback);
     }
 
     /**
      * Retrieve a new accessToken, if the current one is almost expired.
-     * @param {function(Object)} successCallback Callback function when successful
      * @param {function(string)} errorCallback Callback function to invoke in case of an error
      * @return {void}
      */
-    this.getRefreshToken = function (successCallback, errorCallback) {
-        var configurationObject = getConfiguration();
+    this.getRefreshToken = function (errorCallback) {
+        var data = {
+            "refresh_token": refreshToken
+        };
         console.log("Requesting token refresh..");
-        $.ajax({
-            "dataType": "json",
-            "type": "GET",
-            "url": configurationObject.appServerUrl + "token.php?realm=" + encodeURIComponent(apiObject.getState().realm) + "&refresh_token=" + encodeURIComponent(refreshToken) + "&redirect_uri=" + encodeURIComponent(configurationObject.redirectUrl),
-            "cache": false,
-            "success": function (data) {
-                tokenReceivedCallback(data, successCallback, errorCallback);
-            },
-            "error": function (jqXhr) {
-                if (jqXhr.hasOwnProperty("responseJSON") && jqXhr.responseJSON.hasOwnProperty("error") && jqXhr.responseJSON.hasOwnProperty("error_description")) {
-                    if (jqXhr.responseJSON.error === "invalid_grant") {
-                        apiObject.navigateToLoginPage(apiObject.getState().realm);
-                    } else {
-                        errorCallback(jqXhr.responseJSON.error_description);
-                    }
-                } else {
-                    errorCallback("Communication error in getAccessToken: " + jqXhr.status);
-                }
-            }
-        });
+        getToken(data, errorCallback);
     };
 
     /**
@@ -387,11 +377,10 @@ function Api(getConfiguration, newTokenCallback) {
      * The URL is checked. If it contains a code, the token is requested and the user is authenticated.
      * If there is no code yet, the login page will be shown.
      * @param {function()} notAuthenticatedCallback If not authenticated, this callback will be invoked, along with the login page
-     * @param {function(Object)} authenticatedCallback If the user is authenticated, this function is invoked
      * @param {function(string)} errorCallback Callback function to invoke in case of an error
      * @return {void}
      */
-    this.checkState = function (notAuthenticatedCallback, authenticatedCallback, errorCallback) {
+    this.checkState = function (notAuthenticatedCallback, errorCallback) {
         var code = getUrlParameterByName("code");
         if (code === "") {
             notAuthenticatedCallback();
@@ -402,7 +391,7 @@ function Api(getConfiguration, newTokenCallback) {
         } else {
             console.log("Received scope: " + getUrlParameterByName("scope"));
             verifyCsrfToken(errorCallback);
-            getAccessToken(code, authenticatedCallback, errorCallback);
+            getAccessToken(code, errorCallback);
         }
     };
 

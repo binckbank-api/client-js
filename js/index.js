@@ -10,12 +10,14 @@ $(function () {
     var isActiveAccountReadonly = true;
     /** @type {Object} */
     var api;
+    /** @type {Object} */
+    var streamer;
     /** @type {Date} */
     var nextDelayLogTime = new Date();  // Log the delay on the connection every minute
     /** @type {Array<Object>} */
     var instrumentList;
-    /** @type {Object} */
-    var streamer;
+    /** @type {boolean} */
+    var isFirstToken = true;
 
     /**
      * Get the selected realm.
@@ -96,6 +98,32 @@ $(function () {
     }
 
     /**
+     * Set the correct caption to the streaming news button.
+     * @param {boolean} isOn Indication if streaming news is enabled or disabled.
+     * @return {void}
+     */
+    function toggleNewsButtonText(isOn) {
+        $("#idBtnActivateRealtimeNews").val(
+            isOn
+            ? "Turn off news"
+            : "Activate realtime news"
+        );
+    }
+
+    /**
+     * Set the correct caption to the streaming order events button.
+     * @param {boolean} isOn Indication if streaming orders is enabled or disabled.
+     * @return {void}
+     */
+    function toggleOrderEventsButtonText(isOn) {
+        $("#idBtnActivateRealtimeOrderUpdates").val(
+            isOn
+            ? "Turn off order updates"
+            : "Activate realtime order updates"
+        );
+    }
+
+    /**
      * This is the callback when communication errors appear in the streamer.
      * @param {string} errorCode The error to be shown.
      * @param {string} description The error to be shown.
@@ -107,6 +135,10 @@ $(function () {
             streamer.start(function () {
                 console.log("Reconnected to the streamer.");
             });
+        } else {
+            // Turn off news and streaming orders
+            toggleNewsButtonText(false);
+            toggleOrderEventsButtonText(false);
         }
     }
 
@@ -1266,7 +1298,7 @@ $(function () {
     function activateRealtimeNews() {
         if (!streamer.isNewsActivated) {
             // Activate the realtime news feed
-            $("#idBtnActivateRealtimeNews").val("Turn off news");
+            toggleNewsButtonText(true);
             streamer.start(
                 function () {
                     streamer.activateNews();
@@ -1274,7 +1306,7 @@ $(function () {
             );
         } else {
             streamer.deActivateNews();
-            $("#idBtnActivateRealtimeNews").val("Activate realtime news");
+            toggleNewsButtonText(false);
         }
     }
 
@@ -1285,7 +1317,7 @@ $(function () {
     function activateRealtimeOrderUpdates() {
         if (!streamer.isOrdersActivated) {
             // Activate the realtime order update feed
-            $("#idBtnActivateRealtimeOrderUpdates").val("Turn off order updates");
+            toggleOrderEventsButtonText(true);
             streamer.start(
                 function () {
                     streamer.activateOrders();
@@ -1293,7 +1325,7 @@ $(function () {
             );
         } else {
             streamer.deActivateOrders();
-            $("#idBtnActivateRealtimeOrderUpdates").val("Activate realtime order updates");
+            toggleOrderEventsButtonText(false);
         }
     }
 
@@ -1346,9 +1378,52 @@ $(function () {
      * @return {void}
      */
     function newTokenCallback(tokenObject) {
-        console.log("New token received: " + tokenObject.access_token);
         $("#idBearerToken").text(tokenObject.access_token);
-        streamer.extendSubscriptions();
+        if (isFirstToken === true) {
+            // User is authenticated
+            isFirstToken = false;
+            $("#idUnauthenticatedPart").hide();
+            $("#idAuthenticatedPart").show();
+            $("#idBtnLoginOrLogout").on("click", function (evt) {
+                evt.preventDefault();
+                streamer.stop();
+                api.sessions.abortSession(
+                    function (dataFromAbortSession) {
+                        window.alert(dataFromAbortSession.message);
+                    },
+                    apiErrorCallback
+                );
+            }).val("Sign out");
+            $("#idEdtScope").val(tokenObject.scope);
+            $("#idEdtRealm").val(api.getState().realm);
+            $("#idRefreshToken").on("click", function () {
+                api.getRefreshToken(function (dataFromRefreshToken) {
+                    console.log("Token refresh completed: " + dataFromRefreshToken.access_token);
+                }, apiErrorCallback);
+            });
+            $("#idEdtAccountType").val(api.getState().account);
+            $("#idBtnOrders").on("click", displayOrders);
+            $("#idBtnOrder").on("click", placeOrder);
+            $("#idBtnOrderCosts").on("click", displayOrderCosts);
+            $("#idBtnOrderKID").on("click", displayOrderKid);
+            $("#idBtnUpdatePositions").on("click", displayPositions);
+            $("#idBtnFind").on("click", displayInstrumentSearchResults);
+            $("input[type=radio][name=instrumentSearchType]").on("change", displayInstrumentSearchResults);
+            $("input[type=radio][name=orderType]").on("change", displayInstrumentSearchResults);
+            $("#idBtnActivateRealtimeOrderUpdates").on("click", activateRealtimeOrderUpdates);
+            $("#idBtnActivateRealtimeNews").on("click", activateRealtimeNews);
+            $("#idTransactionsFilter a[href]").on("click", function (e) {
+                e.preventDefault();
+                displayTransactions($(this).data("code").toString());
+            });
+            $("#idInstrumentsLists a[href]").on("click", function (e) {
+                e.preventDefault();
+                displayInstrumentList($(this).data("code").toString());
+            });
+            displayAccounts();
+        } else {
+            streamer.extendSubscriptions();
+        }
     }
 
     api = new Api(getConfiguration, newTokenCallback);
@@ -1381,49 +1456,6 @@ $(function () {
             // Display the version of the API every 15 seconds, so we can wait for an update
             window.setInterval(displayVersion, 15 * 1000);
             displayVersion();
-        },
-        function (data) {
-            // User is authenticated
-            $("#idUnauthenticatedPart").hide();
-            $("#idAuthenticatedPart").show();
-            $("#idBtnLoginOrLogout").on("click", function (evt) {
-                evt.preventDefault();
-                streamer.stop();
-                api.sessions.abortSession(
-                    function (dataFromAbortSession) {
-                        window.alert(dataFromAbortSession.message);
-                    },
-                    apiErrorCallback
-                );
-            }).val("Sign out");
-            $("#idBearerToken").text(data.access_token);
-            $("#idEdtScope").val(data.scope);
-            $("#idEdtRealm").val(api.getState().realm);
-            $("#idRefreshToken").on("click", function () {
-                api.getRefreshToken(function (dataFromRefreshToken) {
-                    console.log("Token refresh completed: " + dataFromRefreshToken.access_token);
-                }, apiErrorCallback);
-            });
-            $("#idEdtAccountType").val(api.getState().account);
-            $("#idBtnOrders").on("click", displayOrders);
-            $("#idBtnOrder").on("click", placeOrder);
-            $("#idBtnOrderCosts").on("click", displayOrderCosts);
-            $("#idBtnOrderKID").on("click", displayOrderKid);
-            $("#idBtnUpdatePositions").on("click", displayPositions);
-            $("#idBtnFind").on("click", displayInstrumentSearchResults);
-            $("input[type=radio][name=instrumentSearchType]").on("change", displayInstrumentSearchResults);
-            $("input[type=radio][name=orderType]").on("change", displayInstrumentSearchResults);
-            $("#idBtnActivateRealtimeOrderUpdates").on("click", activateRealtimeOrderUpdates);
-            $("#idBtnActivateRealtimeNews").on("click", activateRealtimeNews);
-            $("#idTransactionsFilter a[href]").on("click", function (e) {
-                e.preventDefault();
-                displayTransactions($(this).data("code").toString());
-            });
-            $("#idInstrumentsLists a[href]").on("click", function (e) {
-                e.preventDefault();
-                displayInstrumentList($(this).data("code").toString());
-            });
-            displayAccounts();
         },
         apiErrorCallback
     );
