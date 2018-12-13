@@ -58,7 +58,8 @@
         Login URL:<div id="idLoginUrl"></div><br />
         API URL:<div id="idEnvironment"></div><br />
         Documentation URL:<div><a href="https://developers.binck.com" target="_blank">https://developers.binck.com</a></div><br />
-        <span id="idTestConnectionFromClient"></span><br />
+        <span id="idTestApiConnection"></span><br />
+        <span id="idTestStreamerConnection"></span><br />
     </div>
     <div id="idAuthenticatedPart">
         <h2>We are in! API can now be used to get accounts and positions for the customer. If write scope has been granted, ordering is enabled.</h2>
@@ -155,15 +156,15 @@
         <p>
             Find an instrument: <input type="text" id="idEdtInstrumentName" value="Binck" />
             <input type="button" id="idBtnFind" value="Find" /><br />
-            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeAll" value="all" /><label for="idInstrumentSearchTypeAll">All</label>
-            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeBonds" value="bond" checked /><label for="idInstrumentSearchTypeBonds">Bonds</label>
-            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeEquities" value="equity" checked /><label for="idInstrumentSearchTypeEquities">Equities</label>
-            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeFutures" value="future" /><label for="idInstrumentSearchTypeFutures">Futures</label>
-            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeOptions" value="option" /><label for="idInstrumentSearchTypeOptions">Options</label>
-            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeSRDs" value="srd" /><label for="idInstrumentSearchTypeSRDs">SRDs</label>
-            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeTrackers" value="tracker" /><label for="idInstrumentSearchTypeTrackerss">Trackers</label>
-            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeTurbos" value="turbo" /><label for="idInstrumentSearchTypeTurbos">Turbos</label>
-            <input type="radio" name="instrumentSearchType" id="idInstrumentSearchTypeWarrants" value="warrant" /><label for="idInstrumentSearchTypeWarrants">Warrants</label>
+            <label><input type="radio" name="instrumentSearchType" value="all" />All</label>
+            <label><input type="radio" name="instrumentSearchType" value="bond" />Bonds</label>
+            <label><input type="radio" name="instrumentSearchType" value="equity" checked />Equities</label>
+            <label><input type="radio" name="instrumentSearchType" value="future" />Futures</label>
+            <label><input type="radio" name="instrumentSearchType" value="option" />Options</label>
+            <label><input type="radio" name="instrumentSearchType" value="srdClass" />SRDs</label>
+            <label><input type="radio" name="instrumentSearchType" value="tracker" />Trackers</label>
+            <label><input type="radio" name="instrumentSearchType" value="turbo" />Turbos</label>
+            <label><input type="radio" name="instrumentSearchType" value="warrant" />Warrants</label>
             <br />
             <div id="idSearchResults"></div><br />
             <input type="radio" name="orderType" id="idOrderTypeMarket" value="market" checked /><label for="idOrderTypeMarket">Market</label>

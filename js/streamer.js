@@ -47,6 +47,31 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback
     var subscriptionsForQuotes = new SubscriptionsForQuotes();
 
     /**
+     * Get the version of the API. Since this function works without token, this might be the first call to test development.
+     * @param {function(Object)} successCallback When successful, this function is called.
+     * @param {function(string)} errorCallback The function to be called in case of a failed request.
+     * @return {void}
+     */
+    this.getVersion = function (successCallback, errorCallback) {
+        console.log("Requesting version of streamer..");
+        var parser = document.createElement('a');
+        parser.href = getConfiguration().streamerUrl;
+
+        // The version endpoint requires parameters nor token. Only GET.
+        $.ajax({
+            "dataType": "json",
+            "type": "GET",
+            "url": parser.protocol + "//" + parser.host + "/version",
+            //"url": getConfiguration().streamerUrl + "/version",
+            "success": successCallback,
+            "error": function (jqXhr) {
+                console.log("Version: " + JSON.stringify(jqXhr));
+                errorCallback("Error in version: " + jqXhr.status + " (" + jqXhr.statusText + ")");
+            }
+        });
+    };
+
+    /**
      * Creates the connection
      * @return {void}
      */

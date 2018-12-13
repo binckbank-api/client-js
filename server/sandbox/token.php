@@ -15,6 +15,9 @@ $clientSecret = 'p@ssw0rd';
 // Sandbox:
 $authenticationProviderUrl = 'https://login.sandbox.binck.com/am/oauth2/';
 
+/**
+ * @param string $message The message to return in the JSON response.
+ */
 function handleError($message) {
     http_response_code(500);
     die(
@@ -29,6 +32,12 @@ function handleError($message) {
     );
 }
 
+/**
+ * @param boolean $isRefresh Initial retrieval, or refresh?
+ * @param string $realm The realm used for the session.
+ * @param string $code If it is an initial request, this argument must contain the code, otherwise this is the refresh token.
+ * @param string $redirect_uri The redirection URL, for validation purposes.
+ */
 function doAuthenticationResponse($isRefresh, $realm, $code, $redirect_uri) {
     global $authenticationProviderUrl;
     global $clientId;
@@ -92,5 +101,5 @@ if (isset($_GET['realm']) && isset($_GET['code']) && isset($_GET['redirect_uri']
         filter_input(INPUT_GET, 'redirect_uri', FILTER_SANITIZE_STRING)
     );
 } else {
-    handleError('Parameters are missing. Required are "realm", "redirect_uri" and "code" or "refresh_token".');
+    handleError('Parameters are missing. Required are "realm", "redirect_uri" and "code", or "refresh_token".');
 }

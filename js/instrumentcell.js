@@ -214,6 +214,15 @@ function InstrumentCell(containerElm, cellType, infoToShow, priceDecimals, hasHi
      * @return {void}
      */
     this.update = function (quoteMessage) {
+
+        function truncate(number) {
+            return (
+                number > 0
+                ? Math.floor(number)
+                : Math.ceil(number)
+            );
+        }
+
         var price;
         var priceAsNumber;
         var currentUpdateDateTime = new Date(quoteMessage.dt);
@@ -238,16 +247,24 @@ function InstrumentCell(containerElm, cellType, infoToShow, priceDecimals, hasHi
             return;
         }
         if (infoToShow === "volume") {
-            price = quoteMessage.vol;
             priceAsNumber = quoteMessage.vol;
+            if (priceAsNumber > 1800000) {
+                price = truncate(quoteMessage.vol / 1000000) + " M";
+            } else if (priceAsNumber > 2000) {
+                price = truncate(quoteMessage.vol / 1000) + " K";
+            } else {
+                price = quoteMessage.vol;
+            }
         } else if (infoToShow === "time") {
             price = getTimeString(currentUpdateDateTime);
             priceAsNumber = currentUpdateDateTime.getTime();
         } else if (infoToShow === "orders") {
             // Some instruments don't have the order count enabled
-            price = quoteMessage.ord !== 0
-            ? quoteMessage.ord
-            : "";
+            price = (
+                quoteMessage.ord !== 0
+                ? quoteMessage.ord
+                : ""
+            );
             priceAsNumber = quoteMessage.ord;
         } else {
             price = quoteMessage.prc.toFixed(priceDecimals);

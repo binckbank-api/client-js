@@ -68,7 +68,7 @@ $(function () {
             selectedStreamerUrl = "https://realtime.binck.com/stream/v1";
             selectedClientId = "enter_client_id";
             selectedRedirectUrl = "https://your.host.here/";
-            selectedAppServerUrl = "https://your.host.here/server/sandbox/";
+            selectedAppServerUrl = "https://your.host.here/server/prod/";
             break;
         }
 
@@ -649,7 +649,7 @@ $(function () {
                     "instrumentId": instrument.id
                 };
                 break;
-            case "srd":
+            case "srdClass":
                 newOrderObject.srd = {
                     "side": "buy",
                     "instrumentId": instrument.id
@@ -1330,23 +1330,41 @@ $(function () {
     }
 
     /**
-     * Show the version in the title.
+     * Test the connection and if any, show the version of API in the title.
      * @return {void}
      */
-    function displayVersion() {
-        api.version.getVersion(
-            function (data) {
-                var newTitle = "API " + data.currentVersion + " (" + new Date(data.buildDate).toLocaleString() + ")";
-                console.log("Received version " + data.currentVersion + " reply @ " + new Date(data.metadata.timestamp).toLocaleString());
-                if (document.title !== newTitle) {
-                    document.title = newTitle;
+    function displayVersions() {
+
+        function displayApiVersion() {
+            api.version.getVersion(
+                function (data) {
+                    var newTitle = "API " + data.currentVersion + " (" + new Date(data.buildDate).toLocaleString() + ")";
+                    console.log("Received api version " + data.currentVersion + " reply @ " + new Date(data.metadata.timestamp).toLocaleString());
+                    if (document.title !== newTitle) {
+                        document.title = newTitle;
+                    }
+                    $("#idTestApiConnection").text("Test api connection: OK");
+                },
+                function (error) {
+                    $("#idTestApiConnection").text("Test api connection: " + error);
                 }
-                $("#idTestConnectionFromClient").text("Test connection from client: OK");
-            },
-            function (error) {
-                $("#idTestConnectionFromClient").text("Test connection from client: " + error);
-            }
-        );
+            );
+        }
+
+        function displayStreamerVersion() {
+            streamer.getVersion(
+                function (data) {
+                    console.log("Received streamer version " + data.currentVersion + " build @ " + new Date(data.buildDate).toLocaleString());
+                    $("#idTestStreamerConnection").text("Test streamer connection: OK");
+                },
+                function (error) {
+                    $("#idTestStreamerConnection").text("Test streamer connection: " + error);
+                }
+            );
+        }
+
+        displayApiVersion();
+        displayStreamerVersion();
     }
 
     /**
@@ -1454,8 +1472,8 @@ $(function () {
                 api.navigateToLoginPage(getRealm());
             }).val("Sign in");
             // Display the version of the API every 15 seconds, so we can wait for an update
-            window.setInterval(displayVersion, 15 * 1000);
-            displayVersion();
+            window.setInterval(displayVersions, 15 * 1000);
+            displayVersions();
         },
         apiErrorCallback
     );
