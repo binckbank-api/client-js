@@ -2,12 +2,30 @@
 /*global window $ alert console QuoteSubscriptionLevel */
 
 /**
- * The subscriptions per instrument. This administration is important in case of a reconnect.
+ * Subscription level enum
+ * @readonly
+ * @enum {string}
+ */
+
+var QuoteSubscriptionLevel = {
+    TRADES: "Trades",  // Retrieve only the last, high, low, cumulative volume and open prices.
+    TOPOFBOOK: "TopOfBook",  // In addition to trades, retrieve the bid1 and ask1 of the book.
+    BOOK: "Book" // In addition to trades, retrieve the full book, if available.
+};
+
+/**
+ * The quote subscriptions per instrument. This administration is important in case of a reconnect.
  *
  * @constructor
+ * @param {function()} getConnection Retrieve the hub connection object
+ * @param {function()} getSubscription Subscription, with account and access token
+ * @param {function(string, string)} errorCallback Callback that will be called on an error situation
  */
-function SubscriptionsForQuotes() {
+function SubscriptionsForQuotes(getConnection, getSubscription, errorCallback) {
     "use strict";
+
+    /** @type {Object} */
+    var streamerQuotesObject = this;
 
     /**
      * An array of instruments with subscriptionLevel and number of appearances
@@ -85,17 +103,17 @@ function SubscriptionsForQuotes() {
     /**
      * Add an instrument to the list of subscriptions.
      * @param {string} instrumentId The instrument to add
-     * @param {QuoteSubscriptionLevel} subscriptionLevel Subscribe only to trades, top of book, or to full book
+     * @param {QuoteSubscriptionLevel} quoteSubscriptionLevel Subscribe only to trades, top of book, or to full book
      * @return {void}
      */
-    this.push = function (instrumentId, subscriptionLevel) {
+    this.push = function (instrumentId, quoteSubscriptionLevel) {
         var pos = findPosition(instrumentId);
         var subscription;
         var isNewSubscriptionRequestRequired = false;
         if (pos === -1) {
             // Add the object to the array
             console.log("Add instrument to subscriptions");
-            subscriptions[subscriptions.length] = createSubscription(instrumentId, subscriptionLevel);
+            subscriptions[subscriptions.length] = createSubscription(instrumentId, quoteSubscriptionLevel);
             // Check if this instrument is queued for deletion. If so, remove it from that list:
             pos = $.inArray(instrumentId, instrumentsToUnsubscribe);
             if (pos !== -1) {
@@ -107,13 +125,13 @@ function SubscriptionsForQuotes() {
             // Increment subscription count for instrument
             console.log("Increment subscription count for instrument");
             subscription = subscriptions[pos];
-            isNewSubscriptionRequestRequired = changeSubscriptionCount(subscription, subscriptionLevel, 1) === 1;
+            isNewSubscriptionRequestRequired = changeSubscriptionCount(subscription, quoteSubscriptionLevel, 1) === 1;
         }
         if (isNewSubscriptionRequestRequired) {
             // There is no subscription yet, for this level
             instrumentsToSubscribe[instrumentsToSubscribe.length] = {
                 "instrumentId": instrumentId,
-                "subscriptionLevel": subscriptionLevel
+                "subscriptionLevel": quoteSubscriptionLevel
             };
         }
     };
@@ -121,10 +139,10 @@ function SubscriptionsForQuotes() {
     /**
      * Remove an instrument from the list of subscriptions.
      * @param {string} instrumentId The instrument to remove
-     * @param {QuoteSubscriptionLevel} subscriptionLevel The level for which the instrument must be unsubscribed
+     * @param {QuoteSubscriptionLevel} quoteSubscriptionLevel The level for which the instrument must be unsubscribed
      * @return {void}
      */
-    this.pop = function (instrumentId, subscriptionLevel) {
+    this.pop = function (instrumentId, quoteSubscriptionLevel) {
         var pos = findPosition(instrumentId);
         var subscription = subscriptions[pos];
         if (subscription.countLevelTrades + subscription.countLevelTopOfBook + subscription.countLevelBook === 1) {
@@ -133,61 +151,55 @@ function SubscriptionsForQuotes() {
             instrumentsToUnsubscribe[instrumentsToUnsubscribe.length] = instrumentId;
         } else {
             // Decrease only the subscription count
-            changeSubscriptionCount(subscription, subscriptionLevel, -1);
+            changeSubscriptionCount(subscription, quoteSubscriptionLevel, -1);
         }
     };
 
+    function processError(error) {
+        console.error(error);
+        errorCallback("500", "Something went wrong with the connection to the quotes feed.");
+    }
+
     /**
      * Activate the delayed subscriptions.
-     * @param {Object} connection The connection with the server
-     * @param {string} accountNumber Account number for which the subscription is activated
-     * @param {function(string, string)} errorCallback Callback that will be called on an error situation
      * @return {void}
      */
-    this.processQueue = function (connection, accountNumber, errorCallback) {
+    this.activateSubscriptions = function () {
+        var accountNumber = getSubscription().activeAccountNumber;
 
-        function processSubscribeForLevel(subscriptionLevel) {
+        function activateQuotes(subscriptionResponse) {
+            if (subscriptionResponse.isSucceeded) {
+                console.log("Quote subscribe succeeded, number of subscribed instruments is now: " + subscriptionResponse.subcount);
+            } else {
+                console.log("Something went wrong. Is the accountNumber valid?");
+            }
+        }
+
+        function processSubscribeForLevel(quoteSubscriptionLevel) {
             var instrumentIds = [];
             var i;
             for (i = 0; i < instrumentsToSubscribe.length; i += 1) {
-                if (instrumentsToSubscribe[i].subscriptionLevel === subscriptionLevel) {
+                if (instrumentsToSubscribe[i].subscriptionLevel === quoteSubscriptionLevel) {
                     instrumentIds[instrumentIds.length] = instrumentsToSubscribe[i].instrumentId;
                 }
             }
             if (instrumentIds.length > 0) {
-                connection.invoke("SubscribeQuotes", accountNumber, instrumentIds, subscriptionLevel)
-                .then(function (subscriptionResponse) {
-                    if (subscriptionResponse.isSucceeded) {
-                        console.log("Quote subscribe succeeded, number of subscribed instruments is now: " + subscriptionResponse.subcount);
-                    } else {
-                        console.log("Something went wrong with the subscription. Probably the accoumntNumber is not valid.");
-                    }
-                })
-                .catch(function (error) {
-                    console.error(error);
-                    errorCallback("500", "Something went wrong subscribing to instrument(s): " + instrumentIds.join(", ") + ".");
-                });
-                console.log("Instrument(s) " + instrumentIds.join(", ") + " subscribed.");
+                getConnection().invoke("SubscribeQuotes", accountNumber, instrumentIds, quoteSubscriptionLevel).then(activateQuotes).catch(processError);
+            }
+        }
+
+        function deActivateQuotes(subscriptionResponse) {
+            if (subscriptionResponse.isSucceeded) {
+                console.log("Quote unsubscribe succeeded, number of subscribed instruments is now: " + subscriptionResponse.subcount);
+            } else {
+                // Internal issue - should never occur
+                console.log("Quote unsubscribe failed");
             }
         }
 
         function processUnsubscribe() {
             if (instrumentsToUnsubscribe.length > 0) {
-                connection.invoke("UnSubscribeQuotes", instrumentsToUnsubscribe)
-                .then(function (subscriptionResponse) {
-                    if (subscriptionResponse.success) {
-                        // todo: must change to isActivated
-                        console.log("Quote unsubscribe succeeded, number of subscribed instruments is now: " + subscriptionResponse.subcount);
-                    } else {
-                        // Internal issue - should never occur
-                        console.log("Quote unsubscribe failed");
-                    }
-                })
-                .catch(function (error) {
-                    console.error(error);
-                    errorCallback("500", "Something went wrong when deleting the subscription to instrument(s): " + instrumentsToUnsubscribe.join(", ") + ".");
-                });
-                console.log("Instrument(s) " + instrumentsToUnsubscribe.join(", ") + " deleted.");
+                getConnection().invoke("UnSubscribeQuotes", instrumentsToUnsubscribe).then(deActivateQuotes).catch(processError);
             }
         }
 
@@ -224,5 +236,33 @@ function SubscriptionsForQuotes() {
             }
         }
         return instrumentsToSubscribe.length > 0;
+    };
+
+    /**
+     * Add a list of instruments to the feed.
+     * @param {Array<string>} instrumentIds The instruments for subscription
+     * @param {QuoteSubscriptionLevel} quoteSubscriptionLevel Max level of quotes to receive back
+     * @return {void}
+     */
+    this.addInstruments = function (instrumentIds, quoteSubscriptionLevel) {
+        var i;
+        for (i = 0; i < instrumentIds.length; i += 1) {
+            streamerQuotesObject.push(instrumentIds[i], quoteSubscriptionLevel);
+        }
+        console.log("Instrument(s) queued for subscription: " + instrumentIds.join(", ") + " (level " + quoteSubscriptionLevel + ").");
+    };
+
+    /**
+     * Remove a list of instruments from the feed.
+     * @param {Array<string>} instrumentIds The instruments for subscription
+     * @param {QuoteSubscriptionLevel} quoteSubscriptionLevel Max level of quotes to receive back
+     * @return {void}
+     */
+    this.deleteInstruments = function (instrumentIds, quoteSubscriptionLevel) {
+        var i;
+        for (i = 0; i < instrumentIds.length; i += 1) {
+            streamerQuotesObject.pop(instrumentIds[i], quoteSubscriptionLevel);
+        }
+        console.log("Instrument(s) queued for deletion: " + instrumentIds.join(", ") + " (level " + quoteSubscriptionLevel + ").");
     };
 }

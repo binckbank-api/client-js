@@ -260,7 +260,7 @@ $(function () {
             instrumentIds[instrumentIds.length] = instrument.id;
             instrumentList[instrumentList.length] = new InstrumentRow(streamer, $("#idInstrumentsList"), instrument.id, instrument.name + " (" + currencyCodeToSymbol(instrument.currency) + ")", instrument.priceDecimals);
         }
-        streamer.activateSubscriptions();
+        streamer.quotes.activateSubscriptions();
         api.quotes.getQuotes(activeAccountNumber, instrumentIds, "none", function (data) {
             displayQuoteSubscriptions(instrumentIds, data.quotesCollection.quotes);
         }, apiErrorCallback);
@@ -574,7 +574,7 @@ $(function () {
         for (i = 1; i <= 5; i += 1) {
             new OrderBookRow(streamer, $("#idOrderBook"), instrumentId, i, priceDecimals);
         }
-        streamer.activateSubscriptions();
+        streamer.quotes.activateSubscriptions();
     }
 
     /**
@@ -1296,16 +1296,16 @@ $(function () {
      * @return {void}
      */
     function activateRealtimeNews() {
-        if (!streamer.isNewsActivated) {
+        if (!streamer.news.isActive) {
             // Activate the realtime news feed
             toggleNewsButtonText(true);
             streamer.start(
                 function () {
-                    streamer.activateNews();
+                    streamer.news.activate();
                 }
             );
         } else {
-            streamer.deActivateNews();
+            streamer.news.deActivate();
             toggleNewsButtonText(false);
         }
     }
@@ -1315,16 +1315,16 @@ $(function () {
      * @return {void}
      */
     function activateRealtimeOrderUpdates() {
-        if (!streamer.isOrdersActivated) {
+        if (!streamer.orders.isActive) {
             // Activate the realtime order update feed
             toggleOrderEventsButtonText(true);
             streamer.start(
                 function () {
-                    streamer.activateOrders();
+                    streamer.orders.activate();
                 }
             );
         } else {
-            streamer.deActivateOrders();
+            streamer.orders.deActivate();
             toggleOrderEventsButtonText(false);
         }
     }

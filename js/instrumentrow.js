@@ -59,7 +59,7 @@ function InstrumentRow(streamer, containerElm, id, name, priceDecimals) {
         lastTimeCell = new InstrumentCell(elmMain, "lst", "time", 0, true);
         containerElm.append(elmMain);
         // Requested level is "Trades + bid1 + ask1"
-        streamer.addInstruments([id], QuoteSubscriptionLevel.TOPOFBOOK);
+        streamer.quotes.addInstruments([id], QuoteSubscriptionLevel.TOPOFBOOK);
     }
 
     /**
@@ -113,7 +113,7 @@ function InstrumentRow(streamer, containerElm, id, name, priceDecimals) {
     function removeRow(idToRemove) {
         if (idToRemove === undefined || idToRemove.toString() === id.toString()) {
             // It's me!
-            streamer.deleteInstruments([id], QuoteSubscriptionLevel.TOPOFBOOK);
+            streamer.quotes.deleteInstruments([id], QuoteSubscriptionLevel.TOPOFBOOK);
             lastCell.stop();
             bidCell.stop();
             askCell.stop();

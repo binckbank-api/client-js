@@ -327,7 +327,6 @@ function Api(getConfiguration, newTokenCallback) {
             "type": "GET",
             "url": configurationObject.appServerUrl + "token.php",
             "data": data,
-            "cache": false,
             "success": function (tokenObject) {
                 tokenReceivedCallback(tokenObject, errorCallback);
             },

@@ -7,7 +7,6 @@
 
 // Set your return content type
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: https://your.host.here');
 
 $clientId = 'enter_client_id';
 $clientSecret = 'p@ssw0rd';
@@ -68,8 +67,8 @@ function doAuthenticationResponse($isRefresh, $realm, $code, $redirect_uri) {
         'ssl' => array(
             // This Mozilla CA certificate store is downloaded from:
             // https://curl.haxx.se/docs/caextract.html
-            // This bundle was generated at Wed Jun 20 03:12:06 2018 GMT.
-            'cafile' => 'cacert.pem',
+            // This bundle was generated at Wed Oct 17 03:12:10 2018 GMT.
+            'cafile' => 'cacert-2018-10-17.pem',
             'verify_peer' => true,
             'verify_peer_name' => true
         )
@@ -101,5 +100,5 @@ if (isset($_GET['realm']) && isset($_GET['code']) && isset($_GET['redirect_uri']
         filter_input(INPUT_GET, 'redirect_uri', FILTER_SANITIZE_STRING)
     );
 } else {
-    handleError('Parameters are missing. Required are "realm", "redirect_uri" and "code", or "refresh_token".');
+    handleError('Parameters are missing. Required are "realm", "redirect_uri" and "code" or "refresh_token".');
 }
