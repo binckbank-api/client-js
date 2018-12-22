@@ -88,8 +88,8 @@ function Api(getConfiguration, newTokenCallback) {
             "url": getConfiguration().apiUrl + urlParams,
             "data": (
                 method.toUpperCase() === "GET"
-                ? data
-                : JSON.stringify(data)
+                    ? data
+                    : JSON.stringify(data)
             ),
             "headers": getAccessHeader(),
             "success": successCallback,
@@ -137,8 +137,8 @@ function Api(getConfiguration, newTokenCallback) {
         var results = regex.exec(window.location.href);
         return (
             results === null
-            ? ""
-            : decodeURIComponent(results[1].replace(/\+/g, " "))
+                ? ""
+                : decodeURIComponent(results[1].replace(/\+/g, " "))
         );
     }
 
@@ -328,6 +328,7 @@ function Api(getConfiguration, newTokenCallback) {
             "type": "GET",
             "url": configurationObject.appServerUrl + "token.php",
             "data": data,
+            "cache": false,  // No caching. Multiple tokens can be retrieved with same code when page is refreshed.
             "success": function (tokenObject) {
                 tokenReceivedCallback(tokenObject, errorCallback);
             },

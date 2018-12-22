@@ -5,11 +5,11 @@
  * The orders subscriptions.
  *
  * @constructor
- * @param {Object} connection The connection with the server
+ * @param {function()} getConnection Retrieve the hub connection object
  * @param {function()} getSubscription Subscription, with account and access token
  * @param {function(string, string)} errorCallback Callback that will be called on an error situation
  */
-function SubscriptionsForOrders(connection, getSubscription, errorCallback) {
+function SubscriptionsForOrders(getConnection, getSubscription, errorCallback) {
     "use strict";
 
     /** @type {boolean} */
@@ -39,7 +39,7 @@ function SubscriptionsForOrders(connection, getSubscription, errorCallback) {
 
         var accountNumber = getSubscription().activeAccountNumber;
         console.log("Subscribe to order updates feed with account " + accountNumber);
-        connection.invoke("SubscribeOrders", accountNumber).then(activateOrders).catch(processError);
+        getConnection().invoke("SubscribeOrders", accountNumber).then(activateOrders).catch(processError);
     };
 
     /**
@@ -54,7 +54,7 @@ function SubscriptionsForOrders(connection, getSubscription, errorCallback) {
         }
 
         console.log("De-activating the realtime order updates");
-        connection.invoke("UnSubscribeOrders").then(deActivateOrders).catch(processError);
+        getConnection().invoke("UnSubscribeOrders").then(deActivateOrders).catch(processError);
     };
 
 }

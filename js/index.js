@@ -36,6 +36,10 @@ $(function () {
         return $("#idEdtCulture").val().toString();
     }
 
+    /**
+     * Get the configuration for the API, like environment and client.
+     * @return {Object} Object with the configuration
+     */
     function getConfiguration() {
         // clientId is the "Consumer key"
         // clientSecret is the "Consumer secret" and cannot be in frontend app
@@ -53,16 +57,9 @@ $(function () {
         var selectedAppServerUrl;  // This is the server of your application, used to request and refresh the token. HTTPS is required for production use.
 
         switch (environment.toLowerCase()) {
-        case "sandbox":
-            // Sandbox (PS)
-            selectedAuthenticationProviderUrl = "https://login.sandbox.binck.com/am/oauth2/";
-            selectedApiUrl = "https://api.sandbox.binck.com/api/v1/";
-            selectedStreamerUrl = "https://realtime.sandbox.binck.com/stream/v1";
-            selectedClientId = "enter_client_id";
-            selectedRedirectUrl = "https://your.host.here/";
-            selectedAppServerUrl = "https://your.host.here/server/sandbox/";
-            break;
         case "production":
+        case "prod":
+        case "p":
             // Production (P)
             selectedAuthenticationProviderUrl = "https://login.binck.com/am/oauth2/";
             selectedApiUrl = "https://api.binck.com/api/v1/";
@@ -70,6 +67,15 @@ $(function () {
             selectedClientId = "enter_client_id";
             selectedRedirectUrl = "https://your.host.here/";
             selectedAppServerUrl = "https://your.host.here/server/prod/";
+            break;
+        default:
+            // Sandbox (PS)
+            selectedAuthenticationProviderUrl = "https://login.sandbox.binck.com/am/oauth2/";
+            selectedApiUrl = "https://api.sandbox.binck.com/api/v1/";
+            selectedStreamerUrl = "https://realtime.sandbox.binck.com/stream/v1";
+            selectedClientId = "enter_client_id";
+            selectedRedirectUrl = "https://your.host.here/";
+            selectedAppServerUrl = "https://your.host.here/server/sandbox/";
             break;
         }
 
@@ -159,7 +165,7 @@ $(function () {
      * @param {Object} quoteMessagesObject The object received by the streamer
      * @return {void}
      */
-    function quoteCallback(quoteMessagesObject) {
+    function quotesCallback(quoteMessagesObject) {
         var now = new Date();
         // This is the function receiving the quotes
         // Internally, the received data is published to the instrument rows:
@@ -1449,7 +1455,7 @@ $(function () {
     streamer = new Streamer(
         getConfiguration,
         getSubscription,
-        quoteCallback,
+        quotesCallback,
         newsCallback,
         orderExecutionsCallback,
         orderModificationsCallback,

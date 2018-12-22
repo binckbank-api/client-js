@@ -13,14 +13,14 @@
  * @constructor
  * @param {function()} getConfiguration Connection configuration
  * @param {function()} getSubscription Subscription, with account and access token
- * @param {function(Object)} quoteCallback Callback to be called when a quote is received
+ * @param {function(Object)} quotesCallback Callback to be called when a quote is received
  * @param {function(Object)} newsCallback Callback to be called when news is received
  * @param {function(Object)} orderExecutionsCallback Callback to be called when an order execution is received
  * @param {function(Object)} orderModificationsCallback Callback to be called when an order modification is received
  * @param {function(Object)} orderEventsCallback Callback to be called when an order update is received
  * @param {function(string, string)} errorCallback Callback that will be called on an error situation
  */
-function Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback, orderExecutionsCallback, orderModificationsCallback, orderEventsCallback, errorCallback) {
+function Streamer(getConfiguration, getSubscription, quotesCallback, newsCallback, orderExecutionsCallback, orderModificationsCallback, orderEventsCallback, errorCallback) {
     "use strict";
 
     /** @type {Object} */
@@ -78,7 +78,7 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback
         console.log("Setup streamer connection");
         connection = new signalR.HubConnectionBuilder().withUrl(getConfiguration().streamerUrl, options).configureLogging(signalR.LogLevel.Information).build();
         // Configure the callback for quote events:
-        connection.on("Quote", quoteCallback);
+        connection.on("Quote", quotesCallback);
         // Configure the callback for news events:
         connection.on("News", newsCallback);
         // Configure the callback for order execution events:
