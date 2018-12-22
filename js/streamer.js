@@ -30,11 +30,11 @@ function Streamer(getConfiguration, getSubscription, quoteCallback, newsCallback
     /** @type {boolean} */
     this.isConnected = false;
     /** @type {Object} */
-    this.news;
+    this.news = null;
     /** @type {Object} */
-    this.orders;
+    this.orders = null;
     /** @type {Object} */
-    this.quotes;
+    this.quotes = null;
 
     /**
      * Get the version of the API. Since this function works without token, this might be the first call to test development.

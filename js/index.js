@@ -1,4 +1,5 @@
 /*jslint this: true, browser: true, for: true, single: true, long: true */
+/*jshint laxbreak: true */
 /*global window $ console Api Streamer InstrumentRow OrderBookRow QuoteSubscriptionLevel */
 
 $(function () {
@@ -7,7 +8,7 @@ $(function () {
     /** @type {string} */
     var activeAccountNumber;
     /** @type {boolean} */
-    var isActiveAccountReadonly = true;
+    var isActiveAccountReadOnly = true;
     /** @type {Object} */
     var api;
     /** @type {Object} */
@@ -715,7 +716,7 @@ $(function () {
             function (data) {
                 var account = data.accountsCollection.accounts[0];
                 document.title = account.iban;
-                isActiveAccountReadonly = account.isReadOnly;
+                isActiveAccountReadOnly = account.isReadOnly;
                 // This call requires an account type:
                 displaySettings();
                 displayPositions();
@@ -749,16 +750,16 @@ $(function () {
                 } else {
                     for (i = 0; i < data.accountsCollection.accounts.length; i += 1) {
                         account = data.accountsCollection.accounts[i];
-                        if (account.isReadonly) {
-                            rights = "readonly";
-                        } else {
-                            rights = "mutation";
-                        }
+                        rights = (
+                            account.isReadOnly
+                            ? "read"
+                            : "write"
+                        );
                         if (!isDefaultAccountTypeFound && account.type === defaultAccountTypeToFind) {
                             isDefaultAccountTypeFound = true;
                             defaultAccount = i;
                         }
-                        accountsHtml += '<a href="#" data-code="' + account.number + '">' + account.iban + " " + account.name + "</a> (" + rights + ")<br />";
+                        accountsHtml += '<a href="#" data-code="' + account.number + '">' + account.iban + " " + account.name + "</a> (" + account.type + ": " + rights + ")<br />";
                     }
                     account = data.accountsCollection.accounts[defaultAccount];
                     activeAccountNumber = account.number;
@@ -796,8 +797,8 @@ $(function () {
      * If the write scope is not available, some endpoints are not available. Display a warning if this is the case.
      * @return {void}
      */
-    function alertIfActiveAccountIsReadonly() {
-        if (isActiveAccountReadonly) {
+    function alertIfActiveAccountIsReadOnly() {
+        if (isActiveAccountReadOnly) {
             window.alert("You are not authorized to access this endpoint with the granted scope.");
         }
     }
@@ -809,7 +810,7 @@ $(function () {
      * @return {void}
      */
     function modifyOrder(modifyOrderModel, successCallback) {
-        alertIfActiveAccountIsReadonly();
+        alertIfActiveAccountIsReadOnly();
         api.orders.validateModifyOrder(
             activeAccountNumber,
             modifyOrderModel,
@@ -1090,7 +1091,7 @@ $(function () {
         }
 
         var newOrderObject = createNewOrderObject();
-        alertIfActiveAccountIsReadonly();
+        alertIfActiveAccountIsReadOnly();
         if (newOrderObject.hasOwnProperty("validationCode")) {
             internalPlaceOrder(newOrderObject);
         } else {
@@ -1178,7 +1179,7 @@ $(function () {
         }
 
         var newOrderObject = createNewOrderObject();
-        alertIfActiveAccountIsReadonly();
+        alertIfActiveAccountIsReadOnly();
         if (newOrderObject.hasOwnProperty("validationCode")) {
             internalDisplayOrderCosts(newOrderObject);
         } else {
@@ -1246,7 +1247,7 @@ $(function () {
 
         var newOrderObject = createNewOrderObject();
         var instrumentIds = getInstrumentsFromOrderObject(newOrderObject);
-        alertIfActiveAccountIsReadonly();
+        alertIfActiveAccountIsReadOnly();
         // First, we need to know if the KID regime applies for one or more instruments
         api.instruments.getInstrument(
             instrumentIds,

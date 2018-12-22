@@ -1,4 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
+/*jshint laxbreak: true */
 /*global window $ console Sessions Version Settings Instruments Quotes News Accounts Balances Performances Positions Orders Transactions */
 
 /**
@@ -85,11 +86,11 @@ function Api(getConfiguration, newTokenCallback) {
             "contentType": "application/json; charset=utf-8",
             "type": method.toUpperCase(),
             "url": getConfiguration().apiUrl + urlParams,
-            "data":
+            "data": (
                 method.toUpperCase() === "GET"
                 ? data
                 : JSON.stringify(data)
-            ,
+            ),
             "headers": getAccessHeader(),
             "success": successCallback,
             "error": function (jqXhr) {
