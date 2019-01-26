@@ -8,7 +8,7 @@
 // Set your return content type
 header('Content-Type: application/json; charset=utf-8');
 
-$clientId = 'enter_client_id';
+$clientId = 'enter_sandbox_client_id';
 $clientSecret = 'p@ssw0rd';
 
 // Sandbox:
@@ -67,14 +67,14 @@ function doAuthenticationResponse($isRefresh, $realm, $code, $redirect_uri) {
         'ssl' => array(
             // This Mozilla CA certificate store is downloaded from:
             // https://curl.haxx.se/docs/caextract.html
-            // This bundle was generated at Wed Oct 17 03:12:10 2018 GMT.
-            'cafile' => 'cacert-2018-10-17.pem',
+            // This bundle was generated at Wed Jan 23 04:12:09 2019 GMT.
+            'cafile' => 'cacert-2019-01-23.pem',
             'verify_peer' => true,
             'verify_peer_name' => true
         )
     );
     $context  = stream_context_create($options);
-    $url = $authenticationProviderUrl.'access_token?realm='.urlencode($realm);
+    $url = $authenticationProviderUrl.'realms/'.urlencode($realm).'/access_token';
     $result = @file_get_contents($url, false, $context);
     if (!$result) {
         handleError(error_get_last()['message']);

@@ -1,5 +1,4 @@
 /*jslint this: true, browser: true, for: true, long: true, single: true */
-/*jshint laxbreak: true */
 /*global window $ alert console QuoteSubscriptionLevel InstrumentCell */
 
 /**

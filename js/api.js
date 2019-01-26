@@ -1,5 +1,4 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*jshint laxbreak: true */
 /*global window $ console Sessions Version Settings Instruments Quotes News Accounts Balances Performances Positions Orders Transactions */
 
 /**
@@ -88,8 +87,8 @@ function Api(getConfiguration, newTokenCallback) {
             "url": getConfiguration().apiUrl + urlParams,
             "data": (
                 method.toUpperCase() === "GET"
-                    ? data
-                    : JSON.stringify(data)
+                ? data
+                : JSON.stringify(data)
             ),
             "headers": getAccessHeader(),
             "success": successCallback,
@@ -137,8 +136,8 @@ function Api(getConfiguration, newTokenCallback) {
         var results = regex.exec(window.location.href);
         return (
             results === null
-                ? ""
-                : decodeURIComponent(results[1].replace(/\+/g, " "))
+            ? ""
+            : decodeURIComponent(results[1].replace(/\+/g, " "))
         );
     }
 
@@ -220,8 +219,8 @@ function Api(getConfiguration, newTokenCallback) {
         var configurationObject = getConfiguration();
         var responseType = "code";
         return configurationObject.authenticationProviderUrl +
-                "authorize?realm=" + encodeURIComponent(realm) +
-                "&ui_locales=" + encodeURIComponent(configurationObject.language) +
+                "realms/" + encodeURIComponent(realm) + "/authorize" +
+                "?ui_locales=" + encodeURIComponent(configurationObject.language) +
                 "&client_id=" + encodeURIComponent(configurationObject.clientId) +
                 "&scope=" + encodeURIComponent(configurationObject.scope) +
                 "&state=" + encodeURIComponent(createState(configurationObject.accountType, realm)) +
@@ -333,6 +332,7 @@ function Api(getConfiguration, newTokenCallback) {
                 tokenReceivedCallback(tokenObject, errorCallback);
             },
             "error": function (jqXhr) {
+                console.error("Error retrieving token.");
                 if (jqXhr.hasOwnProperty("responseJSON") && jqXhr.responseJSON.hasOwnProperty("error") && jqXhr.responseJSON.hasOwnProperty("error_description")) {
                     if (jqXhr.responseJSON.error === "invalid_grant") {
                         apiObject.navigateToLoginPage(apiObject.getState().realm);

@@ -1,5 +1,4 @@
 /*jslint this: true, browser: true, for: true, single: true, long: true */
-/*jshint laxbreak: true */
 /*global window $ console Api Streamer InstrumentRow OrderBookRow QuoteSubscriptionLevel */
 
 $(function () {
@@ -64,7 +63,7 @@ $(function () {
             selectedAuthenticationProviderUrl = "https://login.binck.com/am/oauth2/";
             selectedApiUrl = "https://api.binck.com/api/v1/";
             selectedStreamerUrl = "https://realtime.binck.com/stream/v1";
-            selectedClientId = "enter_client_id";
+            selectedClientId = "enter_production_client_id";
             selectedRedirectUrl = "https://your.host.here/";
             selectedAppServerUrl = "https://your.host.here/server/prod/";
             break;
@@ -73,10 +72,9 @@ $(function () {
             selectedAuthenticationProviderUrl = "https://login.sandbox.binck.com/am/oauth2/";
             selectedApiUrl = "https://api.sandbox.binck.com/api/v1/";
             selectedStreamerUrl = "https://realtime.sandbox.binck.com/stream/v1";
-            selectedClientId = "enter_client_id";
+            selectedClientId = "enter_sandbox_client_id";
             selectedRedirectUrl = "https://your.host.here/";
             selectedAppServerUrl = "https://your.host.here/server/sandbox/";
-            break;
         }
 
         var configurationObject = {
@@ -259,6 +257,10 @@ $(function () {
         var i;
         var instrument;
         var instrumentIds = [];
+        if (instruments.length === 0) {
+            window.alert("No instruments available to request quotes for.\n\nAre these instruments applicable for this account type?");
+            return;
+        }
         // Delete all active subscriptions
         $.topic("RemoveInstrumentList").publish();
         instrumentList = [];
@@ -668,6 +670,7 @@ $(function () {
                     "instrumentId": instrument.id
                 };
             }
+            newOrderObject.referenceId = "my correlation id";  // Better to make it unique..
             $("#idEdtOrderModel").val(JSON.stringify(newOrderObject));
             // Get recent news updates about this instrument
             displayNews(instrument.id);
@@ -985,12 +988,15 @@ $(function () {
                 orderObject.hasOwnProperty("side")
                 ? orderObject.side + " "
                 : ""
-            ) + orderObject.quantity + " x " + orderObject.instrument.id + " /refresh to get full name/ (expires " + new Date(orderObject.expirationDate).toLocaleDateString() + ") state: " + orderObject.status;
+            ) + " instrumentId " + orderObject.instrument.id + " /refresh to get full name/ (expires " + new Date(orderObject.expirationDate).toLocaleDateString() + ") state: " + orderObject.status;
             if (orderObject.status === "placed") {
                 orderHtml += ' <a href="#cancel" data-code="' + orderObject.number + '">cancel</a>';
             } else if (orderObject.status === "placementConfirmed" || orderObject.status === "modified") {
                 orderHtml += ' <a href="#modify" data-code="' + orderObject.number + '">modify</a>';
                 orderHtml += ' <a href="#cancel" data-code="' + orderObject.number + '">cancel</a>';
+            }
+            if (orderObject.hasOwnProperty("referenceId")) {
+                orderHtml += " /order has reference '" + orderObject.referenceId + "'/";
             }
             currentOrdersHtml = orderHtml + "<br />" + currentOrdersHtml;
             populateOrdersList(currentOrdersHtml, displayOrders);
@@ -1085,7 +1091,9 @@ $(function () {
                     delete internalNewOrderObject.validationCode;
                     // Replace the object with one without the validationCode
                     $("#idEdtOrderModel").val(JSON.stringify(internalNewOrderObject));
-                    displayOrders();
+                    if (!streamer.orders.isActive) {
+                        displayOrders();
+                    }
                 },
                 function (error) {
                     // Something went wrong, for example, there is no money to buy something.
@@ -1142,13 +1150,25 @@ $(function () {
         function internalDisplayOrderCosts(internalNewOrderObject) {
 
             /**
+             * Translate the object to a line.
+             * @param {Object} category The (sub)category.
+             * @return {string} Text containing the description of the costs detail
+             */
+            function addCostsLine(category) {
+                if (category.hasOwnProperty("valueInEuro")) {
+                    return category.name + " (" + currencyCodeToSymbol("EUR") + " " + category.valueInEuro.toFixed(2) + " - " + category.percentage + "%" + ")\n";
+                }
+                return category.name + " (" + category.extraInfo + ")";
+            }
+
+            /**
              * Callback to display the price breakdown.
              * @param {Object} dataFromOrderCosts The response.
              * @return {string} Text containing the description of the costs
              */
             function convertCostsToText(dataFromOrderCosts) {
                 var result = "";
-                var legCounter;  // Normally 1, 2 of option combination.
+                var legCounter;  // Normally 1 leg, 2 in case of an option strategy.
                 var leg;
                 var categoryCounter;
                 var category;
@@ -1159,14 +1179,10 @@ $(function () {
                     result += "Leg " + (legCounter + 1) + ":\n";
                     for (categoryCounter = 0; categoryCounter < leg.categories.length; categoryCounter += 1) {
                         category = leg.categories[categoryCounter];
-                        result += category.type + " (" + category.valueInEuro.toFixed(2) + "):\n";
+                        result += addCostsLine(category);
                         for (subCategoryCounter = 0; subCategoryCounter < category.subCategories.length; subCategoryCounter += 1) {
                             subCategory = category.subCategories[subCategoryCounter];
-                            result += "- " + (
-                                subCategory.type === "other"
-                                ? subCategory.costCategory
-                                : subCategory.type
-                            ) + " (" + subCategory.valueInEuro.toFixed(2) + ")\n";
+                            result += "- " + addCostsLine(subCategory);
                         }
                     }
                 }
@@ -1379,6 +1395,14 @@ $(function () {
      * @return {void}
      */
     function populateLoginUrl() {
+        $("#idLoginUrl").text(api.getLogonUrl(getRealm()));
+    }
+
+    /**
+     * Display, for demo purposes, the URL used to request the login page - add realm text.
+     * @return {void}
+     */
+    function populateLoginUrlFromCulture() {
         switch (getCultureForLogin()) {
         case "fr":
             $("#idEdtRealm").val("binckfrapi");
@@ -1394,7 +1418,7 @@ $(function () {
             $("#idEdtRealm").val("bincknlapi");
             break;
         }
-        $("#idLoginUrl").text(api.getLogonUrl(getRealm()));
+        populateLoginUrl();
     }
 
     /**
@@ -1473,6 +1497,7 @@ $(function () {
             $("#idEdtRealm").val(getConfiguration().realm);
             $("#idEnvironment").text(getConfiguration().apiUrl);
             populateLoginUrl();
+            $("#idEdtCulture").on("change input", populateLoginUrlFromCulture);
             $("#idEdtAccountType, #idEdtCulture, #idEdtRealm, #idEdtScope").on("change input", populateLoginUrl);
             $("#idBtnLoginOrLogout").on("click", function (evt) {
                 evt.preventDefault();
