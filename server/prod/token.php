@@ -9,7 +9,7 @@
 header('Content-Type: application/json; charset=utf-8');
 
 $clientId = 'enter_production_client_id';
-$clientSecret = 'p@ssw0rd';
+$clientSecret = 'enter_production_secret';
 
 // Production:
 $authenticationProviderUrl = 'https://login.binck.com/am/oauth2/';
@@ -17,7 +17,7 @@ $authenticationProviderUrl = 'https://login.binck.com/am/oauth2/';
 /**
  * @param string $message The message to return in the JSON response.
  */
-function handleError($message) {
+function handleErrorAndDie($message) {
     http_response_code(500);
     die(
         json_encode(
@@ -77,10 +77,12 @@ function doAuthenticationResponse($isRefresh, $realm, $code, $redirect_uri) {
     $url = $authenticationProviderUrl.'realms/'.urlencode($realm).'/access_token';
     $result = @file_get_contents($url, false, $context);
     if (!$result) {
-        handleError(error_get_last()['message']);
+        handleErrorAndDie(error_get_last()['message']);
     }
     if (property_exists(json_decode($result), 'error')) {
         http_response_code(500);
+    } else if (property_exists(json_decode($result), 'code')) {
+        http_response_code(json_decode($result)->code);
     }
     echo $result;
 }
@@ -100,5 +102,5 @@ if (isset($_GET['realm']) && isset($_GET['code']) && isset($_GET['redirect_uri']
         filter_input(INPUT_GET, 'redirect_uri', FILTER_SANITIZE_STRING)
     );
 } else {
-    handleError('Parameters are missing. Required are "realm", "redirect_uri" and "code" or "refresh_token".');
+    handleErrorAndDie('Parameters are missing. Required are "realm", "redirect_uri" and "code" or "refresh_token".');
 }
