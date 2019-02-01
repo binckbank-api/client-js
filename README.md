@@ -2,7 +2,7 @@ Binck OpenApi documentation
 ===========
 This document describes how an application can get access to customers data, send orders to the market and retrieve streaming quotes, order events and news.
 
-## Logon to Binck API using OAuth2
+## <a name="logon"></a>Logon to Binck API using OAuth2
 
 The Binck API is accesible with a rest API protected with OAuth2.
 > “The authorization code grant is used when an application exchanges an authorization code for an access token. After the user returns to the application via the redirect URL, the application will get the authorization code from the URL and use it to request an access token. This request will be made to the token endpoint.”
@@ -202,5 +202,329 @@ The description of the available endpoints is located here: https://developers.b
 8.  When the systems of Binck are down, the error message is stating this. Sign in page shows a maintenance page.
 9.  When requesting the login page, supply the locale of the customer. If not, the fallback might not be the desired language of the country.
 10.  Instrument ids might change overnight. When caching, keep this in mind.
+
+
+
+## Get realtime data using the Binck API
+This document describes the realtime feed available for customers.
+
+The library used to push data is SignalR:
+> ASP.NET Core SignalR is an open-source library that simplifies adding real-time web functionality to apps. Real-time web functionality enables server-side code to push content to clients instantly.
+
+Communication is done using WebSockets, Server-Sent Events, or Long Polling. SignalR automatically chooses the best transport method that is within the capabilities of the server and client.
+
+More info: https://docs.microsoft.com/en-us/aspnet/core/signalr
+
+For SignalR are client libraries available in Java, Javascript and .NET. In this example Javascript is used, with the NPM package here: https://www.npmjs.com/package/@aspnet/signalr
+
+Prerequisites:
+- A token retrieved using the OAuth2 Authentication flow, as described in the chapter [Logon to Binck API using Oauth2](#logon).
+
+Scopes:
+- quotes (for instrument prices)
+- news (for news)
+- read and/or write (for order updates)
+
+Binck has a test environment (sandbox) and a production environment. Both have the realtime feed.
+
+For this example we use the sandbox environment, with predefined test users and passwords.
+
+### Step 1: Connect to the feed
+
+The instruction for creating the client can be found here: https://docs.microsoft.com/en-us/aspnet/core/signalr/javascript-client
+
+The following code creates and starts a connection:
+
+```javascript
+var options = {
+    accessTokenFactory: function () {
+        var accessToken = "{TOKEN_RETRIEVED_FROM_LOGIN.BINCK.COM}";
+        console.log("AccessToken used in streamer request: " + accessToken);
+        return accessToken;
+    }
+};
+connection = new signalR.HubConnectionBuilder()
+.withUrl("https://realtime.sandbox.binck.com/stream/v1", options)
+.configureLogging(signalR.LogLevel.Information) // Might be 'Trace' for testing
+.build();
+```
+
+**accessToken** – The Bearer token\
+**url** - The URL of the realtime channel
+
+### Step 2: Handle connection changes
+
+The user might stop the connection. Or something can go wrong with the server. Then the application might do a reconnect, or just show this to the user.
+
+The following code configures the event:
+```javascript
+connection.onclose(function () {
+    console.log("The connection has been closed.");
+    alert("disconnected");
+});
+```
+### Step 3: Start the connection
+The following code starts the connection:
+
+```javascript
+connection.start()
+.then(function () {
+    console.log("The streamer has been started.");
+})
+.catch(function (error) {
+    console.error(error);
+});
+```
+That’s it. The application is now ready to subscribe to messages.
+
+### Step 4: Subscribe to data
+#### News
+News can differ per account. For example, asset management accounts see different messages than trading accounts.
+
+In general, news is English, or in the locale of the customer.
+
+Required scope: “news”.
+
+Configure the callback using this code:
+```javascript
+connection.on("News", function (data) {
+    console.log(data);
+});
+```
+Create the subscription for the account using this code:
+```javascript
+connection.invoke("SubscribeNews", accountNumber)
+.then(function (subscriptionResponse) {
+    if (subscriptionResponse.isSucceeded) {
+        console.log("Subscribed to news.");
+    } else {
+        console.log("Error. Is accountNumber valid for this session?");
+    }
+})
+.catch(function (error) {
+    console.error(error);
+});
+```
+Stop listening to the news broadcast can be achieved by invoking UnSubscribeNews (no account number).
+
+#### Quotes
+Quotes are not always realtime. This differs based on the subscription of the customer for realtime feeds on certain markets. If there is no realtime subscription, quotes are delayed, but still streaming.
+
+Required scope: “quotes”.
+
+Configure the callback using this code:
+```javascript
+connection.on("Quote", function (data) {
+    console.log(data);
+});
+```
+Create the subscription for the account using this code:
+```javascript
+connection.invoke(
+    "SubscribeQuotes",
+    accountNumber,
+    instrumentIds,  // Array of instrumentsIds
+    quoteSubscriptionLevel
+)
+.then(function (subscriptionResponse) {
+    if (subscriptionResponse.isSucceeded) {
+        console.log("Succeeded, instrument #: " + subscriptionResponse.subcount);
+    } else {
+        console.log("Error. Is accountNumber valid for this session?");
+    }
+})
+.catch(function (error) {
+    console.error(error);
+});
+```
+The instrumentIds must be an array of instrumentIds.
+
+SubscriptionLevel is one of these values:
+```javascript
+var QuoteSubscriptionLevel = {
+    // Retrieve only the last, high, low, cumulative volume and open prices.
+    TRADES: "Trades",
+    // In addition to trades, retrieve the bid1 and ask1 of the book.
+    TOPOFBOOK: "TopOfBook",
+    // In addition to trades, retrieve the full book, if available.
+    BOOK: "Book"
+};
+```
+In the response the number of subscriptions is returned. Use this to validate if there are not to many instruments in the subscription. This might make the connection slow.
+
+#### Order executions
+The order execution events are published when there is a change in portfolio positions.
+
+Required scope: “read” or “write”.
+
+Configure the callback using this code:
+```javascript
+connection.on("OrderExecution", function (data) {
+    console.log(data);
+});
+```
+Subscribing to order events, modifications and executions is combined, using this code:
+```javascript
+connection.invoke("SubscribeOrders", accountNumber)
+.then(function (subscriptionResponse) {
+    if (subscriptionResponse.isSucceeded) {
+        console.log("Subscribed to order events.");
+    } else {
+        console.log("Error. Is accountNumber valid for this session?");
+    }
+})
+.catch(function (error) {
+    console.error(error);
+});
+```
+Stop listening to the order broadcast can be achieved by invoking UnSubscribeOrders (no account number).
+
+#### Order modifications
+The order modification events are send when the pending order is modified by the customer.
+
+Required scope: “read” or “write”.
+
+Configure the callback using this code:
+```javascript
+connection.on("OrderStatus", function (data) {
+    console.log(data);
+});
+```
+
+#### Order changes
+The order change events are send when the order is placed, (partially) executed, or cancelled, etc.
+
+Required scope: “read” or “write”.
+
+Configure the callback using this code:
+```javascript
+connection.on("OrderModified", function (data) {
+    console.log(data);
+});
+```
+
+### Step 5: Extend the subscription before the token expires
+The realtime feed will stop after the token has been expired. When the application has refreshed the token, there is a need to extend the subscription.
+
+See the documentation of the OAuth2 flow on how to handle a token refresh.
+
+Extend the subscription using this code:
+```javascript
+connection.invoke("ExtendSubscriptions", "{NEW_TOKEN_RETRIEVED_FROM_LOGIN.BINCK.COM}")
+.then(function () {
+    console.log("Session extended.");
+})
+.catch(function (error) {
+    console.error(error);
+});
+```
+
+### Step 6: Description of the data
+#### News-object
+A news object is structured as following:
+```javascript
+{
+    "cul": "nl-BE", // Culture of the news message
+    "dt": "2019-04-23T18:25:43.511Z", // Publishing datetime
+    "head": "Title", // Subject, unformatted
+    "body": "Body", // News body (optional)
+    "fmt": "html", // Format of the body
+    "iids": ["instrumentId"] // Array of instrument ids
+}
+```
+**cul (culture)** The messages can be in different cultures, depending on the news subscription of the customer.\
+**dt** The datetime the message was published, in UTC format.\
+**head** The subject of the message. If prefixed with an *, probably it is only a header. This is the journalist working on a news message, sending the headlines in front.
+The * is just a standard. If the message is only a headline, there is no body property.\
+**body** Optional news message. Can come in HTML format or plain text, depending on the news supplier.\
+**fmt (format)** Format of the body. Can be ‘html’ or ‘plain’.\
+**iids (instrument ids)** If the message is applicable for one or more tradable instruments, this array contains the instrument ids.
+
+#### Order-object
+An order object is structured as following:
+```javascript
+{
+    "accountNumber": "accountNumber",  // Account
+    "number": orderNumber,  // Together with account, this identifies the order
+    "instrument": {
+        "id": "instrumentId"  // Instrument id
+    },
+    "status": "placed",  // New order status, like “placed”, or “canceled”
+    "limitPrice": 5,  // New limit price, if applicable
+    "type": "orderType",  // Order type, like “limit”
+    "expirationDate": "2019-01-16T00:00:00Z",  // Date when order expires
+    "dt": "2019-01-16T10:21:28Z"  // Date when order was placed
+}
+```
+The status can be one of the following:
+
+- placed: It is a new order
+- canceled: Order has been canceled
+- expired: Order is expired
+- completelyExecuted: Order is completely executed
+- partiallyExecuted: Applicable when order is executed in multiple parts
+- remainderExecuted: Applicable when order is executed in multiple parts
+
+#### Quote-object
+A quote object is structured with an array of quote objects, as following:
+```javascript
+{
+    "id": "instrumentId", // Instrument id
+    "lvl": 0, // Subscription level of customer
+    "sdt": "2019-04-23T18:25:43.511Z", // Time of sending packet
+    "qt": [{
+        "msg": "qu", // Quote Init, or Quote Update
+        "typ": "lst", // Last, High, Low, Close, Open, etc.
+        "prc": 7.78, // New price
+        "vol": 100, // Volume
+        "dt": "2019-04-23T18:25:43.511Z", // Generation datetime
+        "tags": "C"  // Optional flag for (C)ancel, or (M)arket
+    }]
+}
+```
+
+**msg (message)** This property is used to differentiate between object formats.
+- qi: An initial quote, used to populate the page. By populating from SDI, a possible gap in the quotes is prevented. Highlighting is not needed.
+- qu: A quote update. Highlighting can be done.
+
+The initial quote is send to prevent empty quotes and possible gaps. But, an update might arrive before the initial quote. If this is the case, ignore the initial quote.
+
+**typ (type)** The type of quote, where to differentiate the following types:
+- lst: Last price
+- vol: Cumulative volume of the day
+- cls: Close price
+- opn: Opening price
+- hgh: Highest price of the day
+- low: Lowest price of the day
+- bid: The bid price
+- ask: Ask price
+- thp: Theoretical price
+- ivl: Implied volatility
+- idv: Implied div
+- iir: Implied IR
+
+**id (identification)** The hashed instrument id.
+
+**prc (price)** This property has the price of the instrument. Zero for cumulative volumes.
+
+**vol (volume)** This property contains the amount of traded instruments. Zero for non-tradeable instruments like indices, and zero for close, open, high and low prices.
+
+**dt (datetime)** This property contains the date and time of the price, in local time of the market.
+
+**tags** A quote might be taged with one of the following tags:
+- C (cancel): A new cycle will start. The quotes for the instrument must be removed.
+- M (market): Show the maket indicator in the bid and ask cells.
+- O (open): Show an open indicator.
+- E (exclude): Exclude this quote from intraday charts, but show in overview lists.
+
+### Step 7: Production
+The production environment is the same as sandbox, only with real customers and live data.
+
+Use this URL: https://realtime.binck.com/stream/v1/
+
+Example code (in JavaScript) can be found on GitHub: https://github.com/binckbank-api/showcase-js
+
+### Things to keep in mind developing the API
+1.  Testing the connection can be done using the version endpoint: https://realtime.sandbox.binck.com/version.
 
 
