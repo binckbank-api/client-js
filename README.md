@@ -2,9 +2,28 @@ Binck OpenApi documentation
 ===========
 This document describes how an application can get access to customers data, send orders to the market and retrieve streaming quotes, order events and news.
 
-## <a name="logon"></a>Logon to Binck API using OAuth2
+## Table of contents
+[Sign in to Binck API using Oauth2](#logon)\
+[Step 1: Sign in](#logon1)\
+[Step 2: Retrieve authorization code](#logon2)\
+[Step 3: Retrieve token](#logon3)\
+[Step 4: First API request](#logon4)\
+[Step 5: Refresh token](#logon5)\
+[Step 6: Production](#logon6)\
+[Things to keep in mind](#logonSuggestions)
 
-The Binck API is accesible with a rest API protected with OAuth2.
+[Get realtime data using the Binck API](#realtime)\
+[Step 1: Connect to the feed](#realtime1)\
+[Step 2: Handle connection changes](#realtime2)\
+[Step 3: Start the connection](#realtime3)\
+[Step 4: Subscribe to data](#realtime4)\
+[Step 5: Extend the subscription before the token expires](#realtime5)\
+[Step 6: Description of the data](#realtime6)\
+[Step 7: Production](#realtime7)\
+[Things to keep in mind](#realtimeSuggestions)
+
+## <a name="logon"></a>Sign in to Binck API using OAuth2
+The Binck API is accessible with a rest API protected with OAuth2.
 > “The authorization code grant is used when an application exchanges an authorization code for an access token. After the user returns to the application via the redirect URL, the application will get the authorization code from the URL and use it to request an access token. This request will be made to the token endpoint.”
 
 More info: https://www.oauth.com/oauth2-servers/access-tokens/authorization-code-request/
@@ -16,7 +35,7 @@ Binck has a test environment, called sandbox, and a production environment. Both
 The authentication provider uses the OAuth2 "authorization code" flow.\
 For this example we use the sandbox environment, with predefined test users and passwords.
 
-### Step 1: Login
+### <a name="logon1"></a>Step 1: Sign in
 Create a 'Log in' link sending the user to:
 
 https://login.sandbox.binck.com/am/oauth2/realms/{realm}/authorize?ui_locales={it}&client_id={CLIENT_ID}&scope={read}&state={1234zyx}&response_type={code}&redirect_uri={REDIRECT_URI}
@@ -34,7 +53,7 @@ TODO Add login dialog screenshot
 
 Skipping entering the validation code (SMS challenge) results in a readonly session. Placing orders won’t be allowed, even if the application requested 'write' scope.
 
-### Step 2: Retrieve authorization code
+### <a name="logon2"></a>Step 2: Retrieve authorization code
 After logging in, the user sees a dialog to give access to the thirdparty, if access is not already granted. In order to authorize, the user must login with the validation code (2FA).
 
 TODO Add consent page screenshot
@@ -55,7 +74,7 @@ If the login failed, the error is returned in the query string.
 
 This is an example of the error when the user denied access for your application.
 
-### Step 3: Retrieve token
+### <a name="logon3"></a>Step 3: Retrieve token
 With the code the application can request the token.
 
 `POST` https://login.sandbox.binck.com/am/oauth2/realms/{realm}/access_token \
@@ -103,7 +122,7 @@ If there is a problem receiving the code, an error will be returned. If there is
     "error": "invalid_client"
 }
 ```
-### Step 4: First API request
+### <a name="logon4"></a>Step 4: First API request
 The token grants access to the API. For example, to get the accounts of the user.
 
 Before proceeding, the API connection can be tested without token, by using the version endpoint.
@@ -147,7 +166,7 @@ The errors are returned in a uniform layout.
 **errorCode** – A code, which can be used for development\
 **errorId** – If applicable, an error id to report back to Binck, for trouble shooting
 
-### Step 5: Refresh token
+### <a name="logon5"></a>Step 5: Refresh token
 The token request contains an expiration time. After this time, the token is no longer valid.
 So, before the token expires, a new token must be requested. For this, we have a refresh token.
 
@@ -167,7 +186,7 @@ As with the initial token retrieval, this request is not allowed from any client
 
 The response is the same as the initial token request. See step 3.
 
-### Step 6: Production
+### <a name="logon6"></a>Step 6: Production
 The production environment is the same as sandbox, but, with real customers and live data.
 
 Use these URL’s:
@@ -191,7 +210,7 @@ Your application must be able to handle this error message.
 #### Documentation
 The description of the available endpoints is located here: https://developers.binck.com, and an example of a client written in javascript can be found here: https://github.com/binckbank-api/showcase-js/
 
-### Things to keep in mind developing the API
+### <a name="logonSuggestions"></a>Things to keep in mind developing the API
 1.  Never ever leak the secret. Don’t put in in frontend code.
 2.  The secret will change periodically, keep it in a controlled environment.
 3.  The customer login is on person level. This means if a customer has more than one account, the customer might need to select the account to use for the application. There are multiple account types, not all account types have trading options (example is the savings account).
@@ -205,7 +224,7 @@ The description of the available endpoints is located here: https://developers.b
 
 
 
-## Get realtime data using the Binck API
+## <a name="realtime"></a>Get realtime data using the Binck API
 This document describes the realtime feed available for customers.
 
 The library used to push data is SignalR:
@@ -229,7 +248,7 @@ Binck has a test environment (sandbox) and a production environment. Both have t
 
 For this example we use the sandbox environment, with predefined test users and passwords.
 
-### Step 1: Connect to the feed
+### <a name="realtime1"></a>Step 1: Connect to the feed
 
 The instruction for creating the client can be found here: https://docs.microsoft.com/en-us/aspnet/core/signalr/javascript-client
 
@@ -252,7 +271,7 @@ connection = new signalR.HubConnectionBuilder()
 **accessToken** – The Bearer token\
 **url** - The URL of the realtime channel
 
-### Step 2: Handle connection changes
+### <a name="realtime2"></a>Step 2: Handle connection changes
 
 The user might stop the connection. Or something can go wrong with the server. Then the application might do a reconnect, or just show this to the user.
 
@@ -263,7 +282,7 @@ connection.onclose(function () {
     alert("disconnected");
 });
 ```
-### Step 3: Start the connection
+### <a name="realtime3"></a>Step 3: Start the connection
 The following code starts the connection:
 
 ```javascript
@@ -277,7 +296,7 @@ connection.start()
 ```
 That’s it. The application is now ready to subscribe to messages.
 
-### Step 4: Subscribe to data
+### <a name="realtime4"></a>Step 4: Subscribe to data
 #### News
 News can differ per account. For example, asset management accounts see different messages than trading accounts.
 
@@ -393,6 +412,7 @@ connection.on("OrderStatus", function (data) {
 
 #### Order changes
 The order change events are send when the order is placed, (partially) executed, or cancelled, etc.
+These updates are not as detailed as in the orders endpoint, so requesting the order data from the API might be necessary.
 
 Required scope: “read” or “write”.
 
@@ -403,7 +423,7 @@ connection.on("OrderModified", function (data) {
 });
 ```
 
-### Step 5: Extend the subscription before the token expires
+### <a name="realtime5"></a>Step 5: Extend the subscription before the token expires
 The realtime feed will stop after the token has been expired. When the application has refreshed the token, there is a need to extend the subscription.
 
 See the documentation of the OAuth2 flow on how to handle a token refresh.
@@ -419,7 +439,7 @@ connection.invoke("ExtendSubscriptions", "{NEW_TOKEN_RETRIEVED_FROM_LOGIN.BINCK.
 });
 ```
 
-### Step 6: Description of the data
+### <a name="realtime6"></a>Step 6: Description of the data
 #### News-object
 A news object is structured as following:
 ```javascript
@@ -517,14 +537,14 @@ The initial quote is send to prevent empty quotes and possible gaps. But, an upd
 - O (open): Show an open indicator.
 - E (exclude): Exclude this quote from intraday charts, but show in overview lists.
 
-### Step 7: Production
+### <a name="realtime7"></a>Step 7: Production
 The production environment is the same as sandbox, only with real customers and live data.
 
 Use this URL: https://realtime.binck.com/stream/v1/
 
 Example code (in JavaScript) can be found on GitHub: https://github.com/binckbank-api/showcase-js
 
-### Things to keep in mind developing the API
+### <a name="realtimeSuggestions"></a>Things to keep in mind developing the API
 1.  Testing the connection can be done using the version endpoint: https://realtime.sandbox.binck.com/version.
 
 
