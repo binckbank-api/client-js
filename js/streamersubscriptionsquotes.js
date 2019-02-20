@@ -109,7 +109,7 @@ function SubscriptionsForQuotes(getConnection, getSubscription, errorCallback) {
     this.push = function (instrumentId, quoteSubscriptionLevel) {
         var pos = findPosition(instrumentId);
         var subscription;
-        var isNewSubscriptionRequestRequired = false;
+        var isNewSubscriptionRequestRequired;
         if (pos === -1) {
             // Add the object to the array
             console.log("Add instrument to subscriptions");

@@ -94,8 +94,13 @@ function Streamer(getConfiguration, getSubscription, quotesCallback, newsCallbac
         });
     }
 
+    /**
+     * Handle an error.
+     * @param {Object} error Error object.
+     * @return {void}
+     */
     function processError(error) {
-        if (error !== undefined) {
+        if (error !== undefined && error !== null) {
             console.error(error);
             if ($.trim(error.message) !== "") {
                 errorCallback("404", error.message);

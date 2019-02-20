@@ -188,6 +188,7 @@ function Api(getConfiguration, newTokenCallback) {
             return JSON.parse(stateStringDecoded);
         } catch (ignore) {
             console.error("State returned in the URL parameter is invalid.");
+            return null;
         }
     };
 

@@ -1,9 +1,23 @@
 /*jslint this: true, browser: true, for: true, single: true, long: true */
 /*global window $ console Api Streamer InstrumentRow OrderBookRow QuoteSubscriptionLevel */
 
+/*
+ *
+ * Edit your configuration vars in this file.
+ * selectedRedirectUrl: The URI of your application
+ * selectedAppServerUrl: The backend of your application
+ *
+ * ClientId resides in the file server.php.
+ *
+ * Change environment to production, after testing on sandbox.
+ *
+ */
+
 $(function () {
     "use strict";
 
+    /** @type {string} */
+    var environment = "Sandbox";  // Active environment. Can be Sandbox, or Production.
     /** @type {string} */
     var activeAccountNumber;
     /** @type {boolean} */
@@ -18,6 +32,10 @@ $(function () {
     var instrumentList;
     /** @type {boolean} */
     var isFirstToken = true;
+    /** @type {string} */
+    var clientId = "";  // This is the identifier of your application. Both clientId and secret are available server side.
+    /** @type {string} */
+    var authenticationProviderUrl = "";  // This is the URL of the authentication provider to be used.
 
     /**
      * Get the selected realm.
@@ -40,18 +58,11 @@ $(function () {
      * @return {Object} Object with the configuration
      */
     function getConfiguration() {
-        // clientId is the "Consumer key"
-        // clientSecret is the "Consumer secret" and cannot be in frontend app
         // realm for Italian customers is binckitapi
         // scope can be "read write" (mutation rights) and "read" (readonly)
         // scope is depending on Application rights, password or just what is desired.
-
-        var environment = "Sandbox";  // Active environment. Can be Sandbox, or Production.
-
-        var selectedAuthenticationProviderUrl;  // This is the URL of the authentication provider to be used.
         var selectedApiUrl;  // This is the URL to the API of Binck of the local process.
         var selectedStreamerUrl;  // This is the URL to the streamer, providing real time prices, order updates, portfolio updates and news.
-        var selectedClientId;  // This is the identifier of your application.
         var selectedRedirectUrl;  // This is the landing URL of your application, after logging in. HTTPS is required for production use.
         var selectedAppServerUrl;  // This is the server of your application, used to request and refresh the token. HTTPS is required for production use.
 
@@ -60,36 +71,31 @@ $(function () {
         case "prod":
         case "p":
             // Production (P)
-            selectedAuthenticationProviderUrl = "https://login.binck.com/am/oauth2/";
             selectedApiUrl = "https://api.binck.com/api/v1/";
             selectedStreamerUrl = "https://realtime.binck.com/stream/v1";
-            selectedClientId = "enter_production_client_id";
             selectedRedirectUrl = "https://your.host.here/";
             selectedAppServerUrl = "https://your.host.here/server/prod/";
             break;
         default:
             // Sandbox (PS)
-            selectedAuthenticationProviderUrl = "https://login.sandbox.binck.com/am/oauth2/";
             selectedApiUrl = "https://api.sandbox.binck.com/api/v1/";
             selectedStreamerUrl = "https://realtime.sandbox.binck.com/stream/v1";
-            selectedClientId = "enter_sandbox_client_id";
             selectedRedirectUrl = "https://your.host.here/";
             selectedAppServerUrl = "https://your.host.here/server/sandbox/";
         }
 
         var configurationObject = {
-            "clientId": selectedClientId,
+            "clientId": clientId,
             "accountType": $("#idEdtAccountType").val(),
             "redirectUrl": selectedRedirectUrl,
             "realm": "bincknlapi",
-            "authenticationProviderUrl": selectedAuthenticationProviderUrl,
+            "authenticationProviderUrl": authenticationProviderUrl,
             "apiUrl": selectedApiUrl,
             "appServerUrl": selectedAppServerUrl,
             "streamerUrl": selectedStreamerUrl,
             "language": getCultureForLogin(),
             "scope": $("#idEdtScope").val()
         };
-
         return configurationObject;
     }
 
@@ -220,6 +226,11 @@ $(function () {
         );
     }
 
+    /**
+     * Convert the currency code to a symbol (USD to $).
+     * @param {string} currencyCode Currency code, coming from the API.
+     * @return {string} Currency symbol.
+     */
     function currencyCodeToSymbol(currencyCode) {
         switch (currencyCode) {
         case "EUR":
@@ -270,7 +281,7 @@ $(function () {
             instrumentList[instrumentList.length] = new InstrumentRow(streamer, $("#idInstrumentsList"), instrument.id, instrument.name + " (" + currencyCodeToSymbol(instrument.currency) + ")", instrument.priceDecimals);
         }
         streamer.quotes.activateSubscriptions();
-        api.quotes.getQuotes(activeAccountNumber, instrumentIds, "none", function (data) {
+        api.quotes.getLatestQuotes(activeAccountNumber, instrumentIds, "none", function (data) {
             displayQuoteSubscriptions(instrumentIds, data.quotesCollection.quotes);
         }, apiErrorCallback);
     }
@@ -733,7 +744,7 @@ $(function () {
                 displayPerformances();
                 displayInstrumentSearchResults();
                 displayDerivativeSeriesBySymbol("BCK", 0);
-                $("#idSelectedAccount").text(account.iban);
+                $("#idSelectedAccount").text(account.iban + " " + account.name + " (" + account.type + ")");
                 displayBalance();
             },
             apiErrorCallback
@@ -748,12 +759,19 @@ $(function () {
         api.accounts.getAccounts(
             function (data) {
                 var account;
-                var defaultAccountTypeToFind = api.getState().account;
+                var state = api.getState();
+                var defaultAccountTypeToFind = "";
                 var isDefaultAccountTypeFound = false;
                 var defaultAccount = 0;
                 var accountsHtml = "";
                 var rights;
                 var i;
+                // Check if the state returned as query parameter in the redirect_url is valid.
+                if (state === null) {
+                    window.alert("The state returned in the URL is invalid. Something went wrong while logging in.");
+                } else {
+                    defaultAccountTypeToFind = state.account;
+                }
                 if (data.accountsCollection.accounts.length === 0) {
                     accountsHtml = "No accounts found.";
                 } else {
@@ -911,7 +929,35 @@ $(function () {
     }
 
     /**
-     * Display orders. Highlight the new order.
+     * Display quotes from the last 6 months.
+     * @return {void}
+     */
+    function displayHistoricalQuotes() {
+        var instrumentId = $("#idSearchResults a[href]").data("code").toString();
+        var sixMonthsBack = new Date();
+        sixMonthsBack.setMonth(sixMonthsBack.getMonth() - 6);
+        api.quotes.getHistoricalQuotes(
+            activeAccountNumber,
+            instrumentId,
+            sixMonthsBack,
+            null,
+            "OneWeek",  // Group by 1 week
+            function (data) {
+                var historicalQuotesHtml = "";
+                var i;
+                var historicalQuote;
+                for (i = 0; i < data.historicalQuotesCollection.historicalQuotes.length; i += 1) {
+                    historicalQuote = data.historicalQuotesCollection.historicalQuotes[i];
+                    historicalQuotesHtml += historicalQuote.last + " (" + historicalQuote.cumVol + ") @ " + new Date(historicalQuote.dateTime).toLocaleString() + "<br />";
+                }
+                $("#idHistoricalQuotesForInstrument").html(historicalQuotesHtml);
+            },
+            apiErrorCallback
+        );
+    }
+
+    /**
+     * Display orders.
      * @return {void}
      */
     function displayOrders() {
@@ -1230,7 +1276,11 @@ $(function () {
                     var i;
                     for (i = 0; i < data.kidCollection.kids.length; i += 1) {
                         kid = data.kidCollection.kids[i];
-                        resultsArray[resultsArray.length] = {name: kid.name + ".pdf", id: kid.kidId, instrumentId: instrumentId};
+                        resultsArray[resultsArray.length] = {
+                            "name": kid.name + ".pdf",
+                            "id": kid.kidId,
+                            "instrumentId": instrumentId
+                        };
                     }
                 },
                 apiErrorCallback
@@ -1423,7 +1473,7 @@ $(function () {
 
     /**
      * This callback is triggered when a new token is available.
-     * @param {Object} tokenObject If the user is authenticated, this function is invoked
+     * @param {Object} tokenObject Fresh token
      * @return {void}
      */
     function newTokenCallback(tokenObject) {
@@ -1453,6 +1503,7 @@ $(function () {
             $("#idEdtAccountType").val(api.getState().account);
             $("#idBtnOrders").on("click", displayOrders);
             $("#idBtnOrder").on("click", placeOrder);
+            $("#idBtnQuotesHist").on("click", displayHistoricalQuotes);
             $("#idBtnOrderCosts").on("click", displayOrderCosts);
             $("#idBtnOrderKID").on("click", displayOrderKid);
             $("#idBtnUpdatePositions").on("click", displayPositions);
@@ -1475,38 +1526,50 @@ $(function () {
         }
     }
 
-    api = new Api(getConfiguration, newTokenCallback);
-    streamer = new Streamer(
-        getConfiguration,
-        getSubscription,
-        quotesCallback,
-        newsCallback,
-        orderExecutionsCallback,
-        orderModificationsCallback,
-        orderEventsCallback,
-        apiStreamerErrorCallback
-    );
-    // Not authenticated yet. Hide login stuff.
-    $("#idAuthenticatedPart").hide();
-    // Show QR Code, for demo purposes
-    document.getElementById("idQrCode").src = "https://chart.googleapis.com/chart?cht=qr&chs=500x500&chl=" + encodeURIComponent(window.location.href);
-    // Authorize.
-    api.checkState(
-        function () {
-            // Not authenticated
-            $("#idEdtRealm").val(getConfiguration().realm);
-            $("#idEnvironment").text(getConfiguration().apiUrl);
-            populateLoginUrl();
-            $("#idEdtCulture").on("change input", populateLoginUrlFromCulture);
-            $("#idEdtAccountType, #idEdtCulture, #idEdtRealm, #idEdtScope").on("change input", populateLoginUrl);
-            $("#idBtnLoginOrLogout").on("click", function (evt) {
-                evt.preventDefault();
-                api.navigateToLoginPage(getRealm());
-            }).val("Sign in");
-            // Display the version of the API every 15 seconds, so we can wait for an update
-            window.setInterval(displayVersions, 15 * 1000);
-            displayVersions();
-        },
-        apiErrorCallback
-    );
+    /**
+     * This callback is triggered the configuration is retrieved from the server.
+     * @param {Object} configData Contains clientId and authentication URI
+     * @return {void}
+     */
+    function initPage(configData) {
+        clientId = configData.clientId;
+        authenticationProviderUrl = configData.authenticationProviderUrl;
+        api = new Api(getConfiguration, newTokenCallback);
+        streamer = new Streamer(
+            getConfiguration,
+            getSubscription,
+            quotesCallback,
+            newsCallback,
+            orderExecutionsCallback,
+            orderModificationsCallback,
+            orderEventsCallback,
+            apiStreamerErrorCallback
+        );
+        // Not authenticated yet. Hide login stuff.
+        $("#idAuthenticatedPart").hide();
+        // Show QR Code, for demo purposes
+        document.getElementById("idQrCode").src = "https://chart.googleapis.com/chart?cht=qr&chs=500x500&chl=" + encodeURIComponent(window.location.href);
+        // Authorize.
+        api.checkState(
+            function () {
+                // Not authenticated
+                $("#idEdtRealm").val(getConfiguration().realm);
+                $("#idEnvironment").text(getConfiguration().apiUrl);
+                populateLoginUrl();
+                $("#idEdtCulture").on("change input", populateLoginUrlFromCulture);
+                $("#idEdtAccountType, #idEdtCulture, #idEdtRealm, #idEdtScope").on("change input", populateLoginUrl);
+                $("#idBtnLoginOrLogout").on("click", function (evt) {
+                    evt.preventDefault();
+                    api.navigateToLoginPage(getRealm());
+                }).val("Sign in");
+                // Display the version of the API every 15 seconds, so we can wait for an update
+                window.setInterval(displayVersions, 15 * 1000);
+                displayVersions();
+            },
+            apiErrorCallback
+        );
+    }
+
+    // Retrieve a clientId from the server
+    $.getJSON(getConfiguration().appServerUrl + "token.php", {"config": "y"}, initPage);
 });

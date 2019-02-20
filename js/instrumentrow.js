@@ -111,7 +111,7 @@ function InstrumentRow(streamer, containerElm, id, name, priceDecimals) {
      * @return {void}
      */
     function removeRow(idToRemove) {
-        if (idToRemove === undefined || idToRemove.toString() === id.toString()) {
+        if (idToRemove === undefined || idToRemove === null || idToRemove.toString() === id.toString()) {
             // It's me!
             streamer.quotes.deleteInstruments([id], QuoteSubscriptionLevel.TOPOFBOOK);
             lastCell.stop();

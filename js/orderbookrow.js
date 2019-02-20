@@ -41,7 +41,7 @@ function OrderBookRow(streamer, containerElm, id, depth, priceDecimals) {
         askOrdersCell = new InstrumentCell(elmMain, "ask" + cellTypePostfix, "orders", 0, false);
         containerElm.append(elmMain);
         // Requested level is "book"
-        streamer.addInstruments([id], QuoteSubscriptionLevel.BOOK);
+        streamer.quotes.addInstruments([id], QuoteSubscriptionLevel.BOOK);
     }
 
     /**
@@ -70,9 +70,9 @@ function OrderBookRow(streamer, containerElm, id, depth, priceDecimals) {
      * @return {void}
      */
     function removeRow(idToRemove) {
-        if (idToRemove === undefined || idToRemove.toString() === id.toString()) {
+        if (idToRemove === undefined || idToRemove === null || idToRemove.toString() === id.toString()) {
             // It's me!
-            streamer.deleteInstruments([id], QuoteSubscriptionLevel.BOOK);
+            streamer.quotes.deleteInstruments([id], QuoteSubscriptionLevel.BOOK);
             askCell.stop();
             askVolumeCell.stop();
             askOrdersCell.stop();
