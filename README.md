@@ -220,8 +220,8 @@ The description of the available endpoints is located here: https://developers.b
 7.  End user messages must be shown, they are in the locale language of the customer.
 8.  When the systems of Binck are down, the error message is stating this. Sign in page shows a maintenance page.
 9.  When requesting the login page, supply the locale of the customer. If not, the fallback might not be the desired language of the country.
-10.  Instrument ids might change overnight. When caching, keep this in mind.
-
+10. Instrument ids might change overnight. When caching, keep this in mind.
+11. The API has a limit of 50 requests per minute. If exceeded, the customer might be logged out, resulting in an UnAuthorized response.
 
 
 ## <a name="realtime"></a>Get realtime data using the Binck API
@@ -328,6 +328,7 @@ Stop listening to the news broadcast can be achieved by invoking UnSubscribeNews
 
 #### Quotes
 Quotes are not always realtime. This differs based on the subscription of the customer for realtime feeds on certain markets. If there is no realtime subscription, quotes are delayed, but still streaming.
+There is a limit on the number of quotes to subscribe, of 3.000. And to the number of instruments to be added to the subscription. Blocks per subscription update must be at most 100.
 
 Required scope: “quotes”.
 
