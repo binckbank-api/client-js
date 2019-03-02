@@ -467,6 +467,7 @@ An order object is structured as following:
 {
     "accountNumber": "accountNumber",  // Account
     "number": orderNumber,  // Together with account, this identifies the order
+    "referenceId": "external reference"  // This can be your reference, provided with an order
     "instrument": {
         "id": "instrumentId"  // Instrument id
     },
