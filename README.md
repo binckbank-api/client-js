@@ -499,8 +499,9 @@ A quote object is structured with an array of quote objects, as following:
         "typ": "lst", // Last, High, Low, Close, Open, etc.
         "prc": 7.78, // New price
         "vol": 100, // Volume
+        "ord": 3, // Order size (book)
         "dt": "2019-04-23T18:25:43.511Z", // Generation datetime
-        "tags": "C"  // Optional flag for (C)ancel, or (M)arket
+        "tags": "C"  // Optional flag for (C)ancel, (M)arket, etc.
     }]
 }
 ```
