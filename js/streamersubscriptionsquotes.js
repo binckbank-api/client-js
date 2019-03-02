@@ -112,7 +112,6 @@ function SubscriptionsForQuotes(getConnection, getSubscription, errorCallback) {
         var isNewSubscriptionRequestRequired;
         if (pos === -1) {
             // Add the object to the array
-            console.log("Add instrument to subscriptions");
             subscriptions[subscriptions.length] = createSubscription(instrumentId, quoteSubscriptionLevel);
             // Check if this instrument is queued for deletion. If so, remove it from that list:
             pos = $.inArray(instrumentId, instrumentsToUnsubscribe);

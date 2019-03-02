@@ -70,14 +70,14 @@ $(function () {
         case "production":
         case "prod":
         case "p":
-            // Production (P)
+            // Production
             selectedApiUrl = "https://api.binck.com/api/v1/";
             selectedStreamerUrl = "https://realtime.binck.com/stream/v1";
             selectedRedirectUrl = "https://your.host.here/";
             selectedAppServerUrl = "https://your.host.here/server/prod/";
             break;
         default:
-            // Sandbox (PS)
+            // Sandbox
             selectedApiUrl = "https://api.sandbox.binck.com/api/v1/";
             selectedStreamerUrl = "https://realtime.sandbox.binck.com/stream/v1";
             selectedRedirectUrl = "https://your.host.here/";
@@ -244,18 +244,15 @@ $(function () {
 
     /**
      * Get the quote subscription level per instrument.
-     * @param {Array<number>} instrumentIds instruments in order of rows.
      * @param {Object} subscriptions Quote collection, limited to subscriptions.
      * @return {void}
      */
-    function displayQuoteSubscriptions(instrumentIds, subscriptions) {
+    function displayQuoteSubscriptions(subscriptions) {
         var i;
-        var position;
         var subscription;
         for (i = 0; i < subscriptions.length; i += 1) {
             subscription = subscriptions[i];
-            position = $.inArray(subscription.instrumentId, instrumentIds);
-            instrumentList[position].setTitle(instrumentList[position].getTitle() + " [" + subscription.subscriptionLevel + "]");
+            $.topic("AddSubscriptionLevel").publish(subscription);
         }
     }
 
@@ -265,6 +262,16 @@ $(function () {
      * @return {void}
      */
     function displayQuotesFeed(instruments) {
+
+        function internalDisplayQuotesFeed(instrumentIdsToUpdate) {
+            // Display if instrument has realtime or delayed quotes
+            api.quotes.getLatestQuotes(activeAccountNumber, instrumentIdsToUpdate, "none", function (data) {
+                displayQuoteSubscriptions(data.quotesCollection.quotes);
+            }, apiErrorCallback);
+            // Start streamer for the queued instruments
+            streamer.quotes.activateSubscriptions();
+        }
+
         var i;
         var instrument;
         var instrumentIds = [];
@@ -279,11 +286,16 @@ $(function () {
             instrument = instruments[i];
             instrumentIds[instrumentIds.length] = instrument.id;
             instrumentList[instrumentList.length] = new InstrumentRow(streamer, $("#idInstrumentsList"), instrument.id, instrument.name + " (" + currencyCodeToSymbol(instrument.currency) + ")", instrument.priceDecimals);
+            if (instrumentIds.length > 99) {
+                // Update the list in blocks. Otherwise the headers might be too long.
+                internalDisplayQuotesFeed(instrumentIds);
+                instrumentIds = [];
+            }
         }
-        streamer.quotes.activateSubscriptions();
-        api.quotes.getLatestQuotes(activeAccountNumber, instrumentIds, "none", function (data) {
-            displayQuoteSubscriptions(instrumentIds, data.quotesCollection.quotes);
-        }, apiErrorCallback);
+        // And process the rest
+        if (instrumentIds.length > 0) {
+            internalDisplayQuotesFeed(instrumentIds);
+        }
     }
 
     /**
@@ -1096,7 +1108,7 @@ $(function () {
                         successCallback(newOrderObject);
                     }
                 } else {
-                    window.alert("Order cannot be placed!");
+                    window.alert("Order cannot be placed! See warnings below for the reason.");
                 }
             },
             apiErrorCallback
@@ -1110,11 +1122,17 @@ $(function () {
     function createNewOrderObject() {
         var inputText = $("#idEdtOrderModel").val().toString();
         /** @type {Object} */
-        var newOrderObject = JSON.parse(inputText);
+        var newOrderObject = null;
+        try {
+            newOrderObject = JSON.parse(inputText);
+        } catch (e) {
+            console.error(e);
+        }
         if (newOrderObject !== null && typeof newOrderObject === "object") {
             return newOrderObject;
         }
-        throw "Invalid input: " + inputText;
+        apiErrorCallback("The order model is not a valid JSON object. Missing a quote? Comma instead of dot?");
+        throw "Invalid JSON input: " + inputText;
     }
 
     /**
@@ -1562,8 +1580,8 @@ $(function () {
                     evt.preventDefault();
                     api.navigateToLoginPage(getRealm());
                 }).val("Sign in");
-                // Display the version of the API every 15 seconds, so we can wait for an update
-                window.setInterval(displayVersions, 15 * 1000);
+                // Display the version of the API every 45 seconds, so we can wait for an update
+                window.setInterval(displayVersions, 45 * 1000);
                 displayVersions();
             },
             apiErrorCallback

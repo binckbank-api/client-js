@@ -85,6 +85,7 @@ function Api(getConfiguration, newTokenCallback) {
             "contentType": "application/json; charset=utf-8",
             "type": method.toUpperCase(),
             "url": getConfiguration().apiUrl + urlParams,
+            "timeout": 30 * 1000,  // Timeout after 30 seconds.
             "data": (
                 method.toUpperCase() === "GET"
                 ? data
@@ -219,14 +220,14 @@ function Api(getConfiguration, newTokenCallback) {
     this.getLogonUrl = function (realm) {
         var configurationObject = getConfiguration();
         var responseType = "code";
-        return configurationObject.authenticationProviderUrl +
-                "realms/" + encodeURIComponent(realm) + "/authorize" +
-                "?ui_locales=" + encodeURIComponent(configurationObject.language) +
-                "&client_id=" + encodeURIComponent(configurationObject.clientId) +
-                "&scope=" + encodeURIComponent(configurationObject.scope) +
-                "&state=" + encodeURIComponent(createState(configurationObject.accountType, realm)) +
-                "&response_type=" + encodeURIComponent(responseType) +
-                "&redirect_uri=" + encodeURIComponent(configurationObject.redirectUrl);
+        return configurationObject.authenticationProviderUrl + "realms/" + encodeURIComponent(realm) + "/authorize?" + $.param({
+            "ui_locales": configurationObject.language,
+            "client_id": configurationObject.clientId,
+            "scope": configurationObject.scope,
+            "state": createState(configurationObject.accountType, realm),
+            "response_type": responseType,
+            "redirect_uri": configurationObject.redirectUrl
+        });
     };
 
     /**

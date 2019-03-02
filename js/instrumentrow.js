@@ -129,11 +129,19 @@ function InstrumentRow(streamer, containerElm, id, name, priceDecimals) {
 
     $.topic("NewQuote").subscribe(function (quoteMessagesObject) {
         var i;
-        if (quoteMessagesObject.id.toString() === id.toString()) {
+        if (quoteMessagesObject.id.toString() === id) {
             // It's me!
             for (i = 0; i < quoteMessagesObject.qt.length; i += 1) {
                 processQuoteMessage(quoteMessagesObject.qt[i]);
             }
+        }
+    });
+
+    $.topic("AddSubscriptionLevel").subscribe(function (subscriptionObject) {
+        var elm;
+        if (subscriptionObject.instrumentId.toString() === id) {
+            elm = elmMain.find("span.instrumentName");
+            elm.text(elm.text().toString() + " [" + subscriptionObject.subscriptionLevel + "]");
         }
     });
 
