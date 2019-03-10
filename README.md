@@ -429,7 +429,7 @@ connection.on("OrderModified", function (data) {
 ### <a name="realtime5"></a>Step 5: Extend the subscription before the token expires
 The realtime feed will stop after the token has been expired. When the application has refreshed the token, there is a need to extend the subscription.
 
-See the documentation of the [OAuth2 flow](#logon3) on how to handle a token refresh.
+See the documentation of the [OAuth2 flow](#logon5) on how to handle a token refresh.
 
 Extend the subscription using this code:
 ```javascript
