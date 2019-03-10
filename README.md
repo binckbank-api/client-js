@@ -167,7 +167,7 @@ The errors are returned in a uniform layout.
 **errorId** – If applicable, an error id to report back to Binck, for trouble shooting
 
 ### <a name="logon5"></a>Step 5: Refresh token
-The token request contains an expiration time. After this time, the token is no longer valid.
+The token request contains an expiration time. After this time, the token is no longer valid.\
 So, before the token expires, a new token must be requested. For this, we have a refresh token.
 
 `POST` https://login.sandbox.binck.com/am/oauth2/realms/{realm}/access_token \
@@ -184,7 +184,9 @@ So, before the token expires, a new token must be requested. For this, we have a
 
 As with the initial token retrieval, this request is not allowed from any client application hosted on the customers machine.
 
-The response is the same as the initial token request. See step 3.
+The response is the same as the initial token request. See [step 3](#logon3).
+
+For realtime streams, see [documentation on realtime refresh](#realtime5) on how to inject the new token to that connection.
 
 ### <a name="logon6"></a>Step 6: Production
 The production environment is the same as sandbox, but, with real customers and live data.
@@ -427,7 +429,7 @@ connection.on("OrderModified", function (data) {
 ### <a name="realtime5"></a>Step 5: Extend the subscription before the token expires
 The realtime feed will stop after the token has been expired. When the application has refreshed the token, there is a need to extend the subscription.
 
-See the documentation of the OAuth2 flow on how to handle a token refresh.
+See the documentation of the [OAuth2 flow](#logon3) on how to handle a token refresh.
 
 Extend the subscription using this code:
 ```javascript
