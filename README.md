@@ -10,7 +10,8 @@ This document describes how an application can get access to customers data, sen
 [Step 3: Retrieve token](#logon3)\
 [Step 4: First API request](#logon4)\
 [Step 5: Refresh token](#logon5)\
-[Step 6: Production](#logon6)\
+[Step 7: Testing](#logon6)\
+[Step 6: Production](#logon7)\
 [Things to keep in mind](#logonSuggestions)
 
 [Get realtime data using the Binck API](#realtime)\
@@ -208,7 +209,16 @@ The response is the same as the initial token request. See [step 3](#logon3).
 
 For realtime streams, see [documentation on realtime refresh](#realtime5) on how to inject the new token to that connection.
 
-### <a name="logon6"></a>Step 6: Production
+### <a name="logon6"></a>Step 6: Testing
+
+The sandbox functionality can be compared with the website. The website with the same data as sandbox can be accessed using these URLs:
+
+- Binck BE: <https://web.sandbox.binck.be/logon/>
+- Binck FR: <https://web.sandbox.binck.fr/logon/>
+- Binck IT: <https://web.sandbox.binck.it/logon/>
+- Binck NL: <https://web.sandbox.binck.nl/logon/>
+
+### <a name="logon7"></a>Step 7: Production
 
 The production environment is the same as sandbox, but, with real customers and live data.
 
