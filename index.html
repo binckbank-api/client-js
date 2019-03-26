@@ -35,8 +35,7 @@
     <title>Binckbank Connect</title>
 </head>
 <body>
-    <label for="idEdtAccountType">Account: </label>
-    <select id="idEdtAccountType">
+    <label>Account: <select id="idEdtAccountType">
         <option value="globalAssetManagement">Asset Management</option>
         <option value="binckComplete" selected>Binck Complete (self investing)</option>
         <option value="fundCoach">Fund Coach</option>
@@ -44,17 +43,16 @@
         <option value="planEpargneActionPme">PEA-PME</option>
         <option value="savings">Savings</option>
         <option value="savingsBroker">Savings Broker</option>
-    </select>
-    <label for="idEdtCulture">Culture: </label>
-    <select id="idEdtCulture">
+    </select></label>
+    <label>Culture: <select id="idEdtCulture">
         <option value="fr">fr</option>
         <option value="frBE">fr-BE</option>
         <option value="it">it</option>
         <option value="nl" selected>nl</option>
         <option value="nlBE">nl-BE</option>
-    </select>
-    <label for="idEdtRealm">Realm: </label><input type="text" id="idEdtRealm" value=""/>
-    <label for="idEdtScope">Scope: </label><input type="text" id="idEdtScope" value="read write news quotes"/>
+    </select></label>
+    <label>Realm: <input type="text" id="idEdtRealm" value=""/></label>
+    <label>Scope: <input type="text" id="idEdtScope" value="read write news quotes"/></label>
     <input type="button" id="idBtnLoginOrLogout" value="Sign in"/> Bearer <span id="idBearerToken">-</span>
     <div id="idUnauthenticatedPart">
         <h2>This is a demo application. Sign in to use the API. You will be redirected to the login dialog.</h2>
@@ -116,6 +114,9 @@
                 <a href="#torontoVentureIndex" data-code="torontoVentureIndex">Venture (Toronto)</a> -
                 <a href="#viennaATX20Index" data-code="viennaATX20Index">ATX20</a> -
                 <a href="#zurichSMIIndex" data-code="zurichSMIIndex">SMI</a> -
+                <a href="#popularItalyFutures" data-code="popularItalyFutures">PopularFutures (Italy)</a> -
+                <a href="#popularFranceFutures" data-code="popularItalyFutures">PopularFutures (France)</a> -
+                <a href="#popularNetherlandsFutures" data-code="popularNetherlandsFutures">PopularFutures (Netherlands)</a> -
                 <a href="#proRealTimeUniverse" data-code="proRealTimeUniverse">PRT</a>
             </div>
         </p>
@@ -170,10 +171,11 @@
             <label><input type="radio" name="instrumentSearchType" value="warrant" />Warrants</label>
             <br />
             <div id="idSearchResults"></div><br />
-            <input type="radio" name="orderType" id="idOrderTypeMarket" value="market" checked /><label for="idOrderTypeMarket">Market</label>
-            <input type="radio" name="orderType" id="idOrderTypeLimit" value="limit" /><label for="idOrderTypeLimit">Limit</label>
-            <input type="radio" name="orderType" id="idOrderTypeStop" value="stop" /><label for="idOrderTypeStop">Stop</label>
-            <input type="radio" name="orderType" id="idOrderTypeStopLimit" value="stopLimit" /><label for="idOrderTypeStopLimit">Stop limit</label>
+            <label>Tick size(s): <select id="idEdtTickSizes"></select></label>
+            <label><input type="radio" name="orderType" id="idOrderTypeMarket" value="market" checked />Market</label>
+            <label><input type="radio" name="orderType" id="idOrderTypeLimit" value="limit" />Limit</label>
+            <label><input type="radio" name="orderType" id="idOrderTypeStop" value="stop" />Stop</label>
+            <label><input type="radio" name="orderType" id="idOrderTypeStopLimit" value="stopLimit" />Stop limit</label>
             <div>
                 <textarea id="idEdtOrderModel" rows="15" cols="150"></textarea><br />
                 <input type="button" id="idBtnOrderCosts" value="Order costs"/>
@@ -189,7 +191,8 @@
                 <div><span class="price">Orders</span><span class="price">Volume</span><span class="price">Bid</span><span class="price">Ask</span><span class="price">Volume</span><span class="price">Orders</span></div>
             </div>
             <br />
-            <div id="idHistoricalQuotesForInstrument"></div>
+            <div id="idHistoricalQuotesForInstrumentWeek"></div><br />
+            <div id="idHistoricalQuotesForInstrumentQuarter"></div>
             <div id="idNewsForInstrument"></div>
         </p>
     </div>

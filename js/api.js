@@ -7,8 +7,9 @@
  * @constructor
  * @param {function()} getConfiguration The function used to retrieve the configuration object
  * @param {function(Object)} newTokenCallback When a token has been acquired, this function is called
+ * @param {function(number)} expirationCounterCallback Counter function returning minutes until expiration of the token (for demo purposes)
  */
-function Api(getConfiguration, newTokenCallback) {
+function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
     "use strict";
 
     /** @type {Object} */
@@ -22,27 +23,27 @@ function Api(getConfiguration, newTokenCallback) {
     /** @type {number} */
     var accessTokenExpirationTimer;  // Show the time left the token is active, for debug purposes.
     /** @type {number} */
-    var accessTokenRefreshTimer;  // Request a new token just before the token expires
-    // CSRF-token is optional but highly recommended. You should store the value of this (CSRF) token in the user’s session to be validated when they return.
+    var accessTokenRefreshTimer;  // Request a new token just before the token expires.
+    // CSRF-token is optional but highly recommended. You should store the value of this (CSRF) token in the users session to be validated when they return.
     // This should be a random unique per session token and put on the session/cookie/localStorage.
     /** @type {number} */
     var csrfToken = Math.random();
 
     /**
      * This function is used to do the calls.
-     * @param {string} method The HTTP method, for example 'POST'
-     * @param {string} urlParams Specify the endpoint, like 'version'
-     * @param {Object} data Data to submit
+     * @param {string} method The HTTP method, for example 'POST'.
+     * @param {string} urlParams Specify the endpoint, like 'version'.
+     * @param {Object} data Data to submit.
      * @param {function(Object)} successCallback When successful, this function is called.
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
-     * @return {Object} Returns the ajax request, for optional triggering
+     * @return {Object} Returns the ajax request, for optional triggering.
      */
     function requestCallback(method, urlParams, data, successCallback, errorCallback) {
 
         /**
          * Return the authorization header with the Bearer token.
          * If the token is expired, the login page will be shown instead.
-         * @return {Object} The constructed header, to be sent with a request
+         * @return {Object} The constructed header, to be sent with a request.
          */
         function getAccessHeader() {
             if (accessToken === "" && urlParams !== "version") {
@@ -101,9 +102,9 @@ function Api(getConfiguration, newTokenCallback) {
 
     /**
      * This function is used to start a download.
-     * @param {string} method The HTTP method, for example 'POST'
-     * @param {string} urlParams Specify the endpoint, like 'version'
-     * @param {Object} data Data to submit
+     * @param {string} method The HTTP method, for example 'POST'.
+     * @param {string} urlParams Specify the endpoint, like 'version'.
+     * @param {Object} data Data to submit.
      * @param {function((Object|null|string))} successCallback When successful, this function is called.
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
      * @return {void}
@@ -126,9 +127,9 @@ function Api(getConfiguration, newTokenCallback) {
     }
 
     /**
-     * Get argument from the URL
-     * @param {string} name Name of query parameter
-     * @return {string} Value
+     * Get argument from the URL.
+     * @param {string} name Name of query parameter.
+     * @return {string} Value.
      */
     function getUrlParameterByName(name) {
         // Get an argument of the URL like www.test.org/?arg=value
@@ -144,10 +145,10 @@ function Api(getConfiguration, newTokenCallback) {
 
     /**
      * Read a cookie.
-     * @param {string} key Name of the cookie
-     * @return {string} Value
+     * @param {string} key Name of the cookie.
+     * @return {string} Value.
      */
-    function getCookie(key) {
+    this.getCookie = function (key) {
         var name = key + "=";
         var decodedCookie = decodeURIComponent(document.cookie);
         var cookieArray = decodedCookie.split(";");
@@ -163,24 +164,24 @@ function Api(getConfiguration, newTokenCallback) {
             }
         }
         return "";
-    }
+    };
 
     /**
      * Insert a cookie. In order to delete it, make value empty.
-     * @param {string} key Name of the cookie
-     * @param {string} value Value to store
+     * @param {string} key Name of the cookie.
+     * @param {string} value Value to store.
      * @return {void}
      */
-    function setCookie(key, value) {
+    this.setCookie = function (key, value) {
         var expires = new Date();
         // Cookie is valid for 360 days.
         expires.setTime(expires.getTime() + 360 * 24 * 60 * 60 * 1000);
         document.cookie = key + "=" + value + ";expires=" + expires.toUTCString();
-    }
+    };
 
     /**
      * Get the state from the redirect URL.
-     * @return {*} The object saved in the state parameter
+     * @return {*} The object saved in the state parameter.
      */
     this.getState = function () {
         var stateString = getUrlParameterByName("state");
@@ -195,9 +196,9 @@ function Api(getConfiguration, newTokenCallback) {
 
     /**
      * The state is used to validate the response and to add the desired opening account, if multiple accounts are available and if this account type is one of them.
-     * @param {string} accountType The requested account type to show
-     * @param {string} realm The realm to use
-     * @return {string} The encoded state object, including the CSRF token
+     * @param {string} accountType The requested account type to show.
+     * @param {string} realm The realm to use.
+     * @return {string} The encoded state object, including the CSRF token.
      */
     function createState(accountType, realm) {
         var stateObject = {
@@ -214,8 +215,8 @@ function Api(getConfiguration, newTokenCallback) {
 
     /**
      * Construct the URL to navigate to the login dialog.
-     * @param {string} realm Realm used by the client
-     * @return {string} URL to redirect to
+     * @param {string} realm Realm used by the client.
+     * @return {string} URL to redirect to.
      */
     this.getLogonUrl = function (realm) {
         var configurationObject = getConfiguration();
@@ -233,20 +234,20 @@ function Api(getConfiguration, newTokenCallback) {
     /**
      * This function loads the page where the user enters the credentials and agreed to the consent.
      * When authorized, the browser will navigate to the given redirect URL (which must be registered as "Callback URL" in WSO2).
-     * @param {string} realm Identification for the type of login
+     * @param {string} realm Identification for the type of login.
      * @return {void}
      */
     this.navigateToLoginPage = function (realm) {
         // The login page needs to be a redirect, using GET to supply landing page and client id.
         // Save the state, to compare after the login.
-        setCookie("csrfToken", csrfToken.toString());
+        apiObject.setCookie("csrfToken", csrfToken.toString());
         console.log("Loading login or consent page..");
-        window.location = this.getLogonUrl(realm);
+        window.location = apiObject.getLogonUrl(realm);
     };
 
     /**
      * This function calculates the time until which the token is valid.
-     * @param {number} expiresInSeconds Seconds until expiration
+     * @param {number} expiresInSeconds Seconds until expiration.
      * @return {void}
      */
     function updateTokenExpirationTime(expiresInSeconds) {
@@ -257,8 +258,9 @@ function Api(getConfiguration, newTokenCallback) {
         accessTokenExpirationTimer = window.setInterval(
             function () {
                 var difference = accessTokenExpirationTime - new Date();
+                var minutesTillExpiration = Math.round(difference / 1000 / 60);
                 if (difference > 0) {
-                    console.log("Token expires in " + Math.floor(difference / 1000 / 60) + " minutes.");
+                    expirationCounterCallback(minutesTillExpiration);
                 } else {
                     console.log("Token expired.");
                     window.clearInterval(accessTokenExpirationTimer);
@@ -270,11 +272,11 @@ function Api(getConfiguration, newTokenCallback) {
 
     /**
      * If authentication was successful, we validate the response by comparing states. Ideally the state is stored in a cookie or localStorage.
-     * @param {function(string)} errorCallback Callback function to invoke in case of an error
+     * @param {function(string)} errorCallback Callback function to invoke in case of an error.
      * @return {void}
      */
     function verifyCsrfToken(errorCallback) {
-        var csrfTokenBefore = parseFloat(getCookie("csrfToken"));
+        var csrfTokenBefore = parseFloat(apiObject.getCookie("csrfToken"));
         var csrfTokenAfter = apiObject.getState().csrfToken;
         console.log("Comparing stored CSRF code " + csrfTokenBefore + " with retrieved code " + csrfTokenAfter + "..");
         if (csrfTokenAfter !== csrfTokenBefore) {
@@ -284,8 +286,8 @@ function Api(getConfiguration, newTokenCallback) {
 
     /**
      * If authentication was successful, the token can be requested using the code supplied by the authentication provider.
-     * @param {Object} tokenObject The token object returned
-     * @param {function(string)} errorCallback Callback function to invoke in case of an error
+     * @param {Object} tokenObject The token object returned.
+     * @param {function(string)} errorCallback Callback function to invoke in case of an error.
      * @return {void}
      */
     function tokenReceivedCallback(tokenObject, errorCallback) {
@@ -316,8 +318,8 @@ function Api(getConfiguration, newTokenCallback) {
 
     /**
      * Retrieve an access token from the server.
-     * @param {Object} data Data to be send as query string
-     * @param {function(string)} errorCallback Callback function to invoke in case of an error
+     * @param {Object} data Data to be send as query string.
+     * @param {function(string)} errorCallback Callback function to invoke in case of an error.
      * @return {void}
      */
     function getToken(data, errorCallback) {
@@ -350,8 +352,8 @@ function Api(getConfiguration, newTokenCallback) {
 
     /**
      * If authentication was successful, the token can be requested using the code supplied by the authentication provider.
-     * @param {string} code The code from the URL
-     * @param {function(string)} errorCallback Callback function to invoke in case of an error
+     * @param {string} code The code from the URL.
+     * @param {function(string)} errorCallback Callback function to invoke in case of an error.
      * @return {void}
      */
     function getAccessToken(code, errorCallback) {
@@ -364,7 +366,7 @@ function Api(getConfiguration, newTokenCallback) {
 
     /**
      * Retrieve a new accessToken, if the current one is almost expired.
-     * @param {function(string)} errorCallback Callback function to invoke in case of an error
+     * @param {function(string)} errorCallback Callback function to invoke in case of an error.
      * @return {void}
      */
     this.getRefreshToken = function (errorCallback) {
@@ -379,8 +381,8 @@ function Api(getConfiguration, newTokenCallback) {
      * This is the function to use for a single page application.
      * The URL is checked. If it contains a code, the token is requested and the user is authenticated.
      * If there is no code yet, the login page will be shown.
-     * @param {function()} notAuthenticatedCallback If not authenticated, this callback will be invoked, along with the login page
-     * @param {function(string)} errorCallback Callback function to invoke in case of an error
+     * @param {function()} notAuthenticatedCallback If not authenticated, this callback will be invoked, along with the login page.
+     * @param {function(string)} errorCallback Callback function to invoke in case of an error.
      * @return {void}
      */
     this.checkState = function (notAuthenticatedCallback, errorCallback) {
@@ -398,16 +400,16 @@ function Api(getConfiguration, newTokenCallback) {
         }
     };
 
-    this.accounts = new Accounts(requestCallback);
-    this.settings = new Settings(requestCallback);
-    this.balances = new Balances(requestCallback);
-    this.instruments = new Instruments(requestCallback, requestCallbackDownload);
-    this.quotes = new Quotes(requestCallback);
-    this.news = new News(requestCallback);
-    this.orders = new Orders(requestCallback);
-    this.performances = new Performances(requestCallback);
-    this.positions = new Positions(requestCallback);
-    this.sessions = new Sessions(requestCallback);
-    this.transactions = new Transactions(requestCallback);
-    this.version = new Version(requestCallback);
+    apiObject.accounts = new Accounts(requestCallback);
+    apiObject.settings = new Settings(requestCallback);
+    apiObject.balances = new Balances(requestCallback);
+    apiObject.instruments = new Instruments(requestCallback, requestCallbackDownload);
+    apiObject.quotes = new Quotes(requestCallback);
+    apiObject.news = new News(requestCallback);
+    apiObject.orders = new Orders(requestCallback);
+    apiObject.performances = new Performances(requestCallback);
+    apiObject.positions = new Positions(requestCallback);
+    apiObject.sessions = new Sessions(requestCallback);
+    apiObject.transactions = new Transactions(requestCallback);
+    apiObject.version = new Version(requestCallback);
 }

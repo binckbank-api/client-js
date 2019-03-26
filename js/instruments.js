@@ -37,14 +37,16 @@ function Instruments(requestCallback, requestCallbackDownload) {
      * @param {null|string} instrumentType The type of instrument (eg. equity, option, tracker, or index).
      * @param {number} count The maximum number of instruments in the response.
      * @param {string} accountNumber The account number.
+     * @param {boolean} includeTickSizeTable Add tickSize table to the response, to lookup the minimum price movement for order limits.
      * @param {function(Object)} successCallback When successful, this function is called.
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
      * @return {void}
      */
-    this.findByName = function (q, instrumentType, count, accountNumber, successCallback, errorCallback) {
+    this.findByName = function (q, instrumentType, count, accountNumber, includeTickSizeTable, successCallback, errorCallback) {
         var data = {
             "searchText": q,
             "accountNumber": accountNumber,
+            "includeTickSizes": includeTickSizeTable,
             "range": "0-" + (count - 1)
         };
         console.log("Searching " + count + " result for instrument '" + q + "' with account number " + accountNumber + "..");

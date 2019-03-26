@@ -27,7 +27,7 @@ $(function () {
     /** @type {Object} */
     var streamer;
     /** @type {Date} */
-    var nextDelayLogTime = new Date();  // Log the delay on the connection every minute
+    var nextDelayLogTime = new Date();  // Log the delay on the connection every minute.
     /** @type {Array<Object>} */
     var instrumentList;
     /** @type {boolean} */
@@ -39,15 +39,15 @@ $(function () {
 
     /**
      * Get the selected realm.
-     * @return {string} Realm selected when login page was loaded
+     * @return {string} Realm selected when login page was loaded.
      */
     function getRealm() {
         return $("#idEdtRealm").val().toString();
     }
 
     /**
-     * Get the language for the login dialog and exception if login is not successful
-     * @return {string} Culture code selected when login page was loaded
+     * Get the language for the login dialog and exception if login is not successful.
+     * @return {string} Culture code selected when login page was loaded.
      */
     function getCultureForLogin() {
         return $("#idEdtCulture").val().toString();
@@ -55,7 +55,7 @@ $(function () {
 
     /**
      * Get the configuration for the API, like environment and client.
-     * @return {Object} Object with the configuration
+     * @return {Object} Object with the configuration.
      */
     function getConfiguration() {
         // realm for Italian customers is binckitapi
@@ -155,7 +155,7 @@ $(function () {
 
     /**
      * The streamer needs the account and token, to validate the subscription.
-     * @return {Object} Json object with account and token
+     * @return {Object} Json object with account and token.
      */
     function getSubscription() {
         return {
@@ -165,8 +165,8 @@ $(function () {
     }
 
     /**
-     * Publish the received quote object
-     * @param {Object} quoteMessagesObject The object received by the streamer
+     * Publish the received quote object.
+     * @param {Object} quoteMessagesObject The object received by the streamer.
      * @return {void}
      */
     function quotesCallback(quoteMessagesObject) {
@@ -185,7 +185,7 @@ $(function () {
 
     /**
      * Showcase of the streaming news API.
-     * @param {Object} newsObject The object received by the streamer
+     * @param {Object} newsObject The object received by the streamer.
      * @return {void}
      */
     function newsCallback(newsObject) {
@@ -284,7 +284,10 @@ $(function () {
         instrumentList = [];
         for (i = 0; i < instruments.length; i += 1) {
             instrument = instruments[i];
-            instrumentIds[instrumentIds.length] = instrument.id;
+            if (instrument.type !== "futureClass" && instrument.type !== "optionClass") {
+                // Classes don't have quotes, so leave them out of the request.
+                instrumentIds[instrumentIds.length] = instrument.id;
+            }
             instrumentList[instrumentList.length] = new InstrumentRow(streamer, $("#idInstrumentsList"), instrument.id, instrument.name + " (" + currencyCodeToSymbol(instrument.currency) + ")", instrument.priceDecimals);
             if (instrumentIds.length > 99) {
                 // Update the list in blocks. Otherwise the headers might be too long.
@@ -635,6 +638,23 @@ $(function () {
     }
 
     /**
+     * Populate the tickSizes.
+     * @param {Object} data The tickSize steps array from the instruments endpoint.
+     * @return {void}
+     */
+    function displayTickSizeTable(data) {
+        var tickSizeStep;
+        var i;
+        // Clear tick sizes
+        $("#idEdtTickSizes").children().remove();
+        // Populate tick size list
+        for (i = 0; i < data.tickSizes.length; i += 1) {
+            tickSizeStep = data.tickSizes[i];
+            $("#idEdtTickSizes").append('<option value="' + tickSizeStep.from + '">From ' + tickSizeStep.from + ": " + tickSizeStep.size + "</option>");
+        }
+    }
+
+    /**
      * Populate the order object with the found instrument from the search response.
      * @param {Object} instrumentsData The response of the instruments endpoint.
      * @return {void}
@@ -665,6 +685,7 @@ $(function () {
             }
             // We found one result
             instrument = instrumentsData.instrumentsCollection.instruments[0];
+            displayTickSizeTable(instrument.tickSizeCollection);
             // Populate the newOrderObject
             switch (instrument.type) {
             case "option":
@@ -733,6 +754,7 @@ $(function () {
             instrumentType,
             1,
             activeAccountNumber,
+            true,  // includeTickSizes
             prepareOrder,
             apiErrorCallback
         );
@@ -945,8 +967,21 @@ $(function () {
      * @return {void}
      */
     function displayHistoricalQuotes() {
+
+        function internalDisplayHistoricalQuotes(data, targetElm) {
+            var historicalQuotesHtml = "";
+            var i;
+            var historicalQuote;
+            for (i = 0; i < data.historicalQuotesCollection.historicalQuotes.length; i += 1) {
+                historicalQuote = data.historicalQuotesCollection.historicalQuotes[i];
+                historicalQuotesHtml += historicalQuote.last + " (" + historicalQuote.cumVol + ") @ " + new Date(historicalQuote.dateTime).toLocaleString() + "<br />";
+            }
+            targetElm.html(historicalQuotesHtml);
+        }
+
         var instrumentId = $("#idSearchResults a[href]").data("code").toString();
         var sixMonthsBack = new Date();
+        var twoDaysBack = new Date();
         sixMonthsBack.setMonth(sixMonthsBack.getMonth() - 6);
         api.quotes.getHistoricalQuotes(
             activeAccountNumber,
@@ -955,14 +990,19 @@ $(function () {
             null,
             "OneWeek",  // Group by 1 week
             function (data) {
-                var historicalQuotesHtml = "";
-                var i;
-                var historicalQuote;
-                for (i = 0; i < data.historicalQuotesCollection.historicalQuotes.length; i += 1) {
-                    historicalQuote = data.historicalQuotesCollection.historicalQuotes[i];
-                    historicalQuotesHtml += historicalQuote.last + " (" + historicalQuote.cumVol + ") @ " + new Date(historicalQuote.dateTime).toLocaleString() + "<br />";
-                }
-                $("#idHistoricalQuotesForInstrument").html(historicalQuotesHtml);
+                internalDisplayHistoricalQuotes(data, $("#idHistoricalQuotesForInstrumentWeek"));
+            },
+            apiErrorCallback
+        );
+        twoDaysBack.setDate(twoDaysBack.getDate() - 2);
+        api.quotes.getHistoricalQuotes(
+            activeAccountNumber,
+            instrumentId,
+            twoDaysBack,
+            null,
+            "fifteenMinutes",  // Group by 15 minutes
+            function (data) {
+                internalDisplayHistoricalQuotes(data, $("#idHistoricalQuotesForInstrumentQuarter"));
             },
             apiErrorCallback
         );
@@ -992,6 +1032,9 @@ $(function () {
                             ? order.side + " "
                             : ""
                         ) + order.quantity + " x " + order.instrument.name + " (expires " + new Date(order.expirationDate).toLocaleDateString() + ") state: " + order.lastStatus;
+                        if (order.hasOwnProperty("referenceId")) {
+                            orderHtml += " /order has reference '" + order.referenceId + "'/";
+                        }
                         if (order.lastStatus === "placed") {
                             orderHtml += ' <a href="#cancel" data-code="' + order.number + '">cancel</a>';
                         } else if (order.lastStatus === "placementConfirmed" || order.lastStatus === "modified") {
@@ -1009,7 +1052,7 @@ $(function () {
 
     /**
      * Showcase of the streaming order updates API: Change in positions.
-     * @param {Object} orderObject The object received by the streamer
+     * @param {Object} orderObject The object received by the streamer.
      * @return {void}
      */
     function orderExecutionsCallback(orderObject) {
@@ -1020,7 +1063,7 @@ $(function () {
 
     /**
      * Showcase of the streaming order updates API: Change in pending order.
-     * @param {Object} orderObject The object received by the streamer
+     * @param {Object} orderObject The object received by the streamer.
      * @return {void}
      */
     function orderModificationsCallback(orderObject) {
@@ -1031,7 +1074,7 @@ $(function () {
 
     /**
      * Showcase of the streaming order updates API: Change in order status.
-     * @param {Object} orderObject The object received by the streamer
+     * @param {Object} orderObject The object received by the streamer.
      * @return {void}
      */
     function orderEventsCallback(orderObject) {
@@ -1117,7 +1160,7 @@ $(function () {
 
     /**
      * Create an order object, from the textarea input.
-     * @return {Object} The newOrderObject
+     * @return {Object} The newOrderObject.
      */
     function createNewOrderObject() {
         var inputText = $("#idEdtOrderModel").val().toString();
@@ -1216,7 +1259,7 @@ $(function () {
             /**
              * Translate the object to a line.
              * @param {Object} category The (sub)category.
-             * @return {string} Text containing the description of the costs detail
+             * @return {string} Text containing the description of the costs detail.
              */
             function addCostsLine(category) {
                 if (category.hasOwnProperty("valueInEuro")) {
@@ -1228,7 +1271,7 @@ $(function () {
             /**
              * Callback to display the price breakdown.
              * @param {Object} dataFromOrderCosts The response.
-             * @return {string} Text containing the description of the costs
+             * @return {string} Text containing the description of the costs.
              */
             function convertCostsToText(dataFromOrderCosts) {
                 var result = "";
@@ -1283,7 +1326,7 @@ $(function () {
          * Although KID is applicable, we are not sure if there is actually a document is the correct language. Search for it.
          * @param {string} instrumentId The instrumentId where to find documents for.
          * @param {Array<Object>} resultsArray The list of documents which can be downloaded.
-         * @return {Object} The ajax request
+         * @return {Object} The ajax request.
          */
         function getKidDocumentLink(instrumentId, resultsArray) {
             return api.instruments.getKidDocumentLink(
@@ -1491,7 +1534,7 @@ $(function () {
 
     /**
      * This callback is triggered when a new token is available.
-     * @param {Object} tokenObject Fresh token
+     * @param {Object} tokenObject Fresh token.
      * @return {void}
      */
     function newTokenCallback(tokenObject) {
@@ -1545,14 +1588,23 @@ $(function () {
     }
 
     /**
+     * This callback is triggered periodically, to publish the minutes until token refresh. Only for demo purposes.
+     * @param {number} minutesTillExpiration Minutes left until expiration.
+     * @return {void}
+     */
+    function expirationCounterCallback(minutesTillExpiration) {
+        console.log("Token expires in " + minutesTillExpiration + " minutes.");
+    }
+
+    /**
      * This callback is triggered the configuration is retrieved from the server.
-     * @param {Object} configData Contains clientId and authentication URI
+     * @param {Object} configData Contains clientId and authentication URI.
      * @return {void}
      */
     function initPage(configData) {
         clientId = configData.clientId;
         authenticationProviderUrl = configData.authenticationProviderUrl;
-        api = new Api(getConfiguration, newTokenCallback);
+        api = new Api(getConfiguration, newTokenCallback, expirationCounterCallback);
         streamer = new Streamer(
             getConfiguration,
             getSubscription,
