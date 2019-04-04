@@ -1,0 +1,201 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="DESCRIPTION" content="Binckbank API" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="FORMAT-DETECTION" content="telephone=no" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <link rel="stylesheet" href="css/index.css" type="text/css">
+    <script type="text/javascript" src="js/jquery-3.3.1.min.js" defer></script>
+    <script type="text/javascript" src="js/jquery-observer.js" defer></script>
+    <!-- For production, make sure you use signalr.min.js -->
+    <script type="text/javascript" src="js/signalr.js" defer></script>
+    <script type="text/javascript" src="js/streamer.js" defer></script>
+    <script type="text/javascript" src="js/streamersubscriptionsnews.js" defer></script>
+    <script type="text/javascript" src="js/streamersubscriptionsorders.js" defer></script>
+    <script type="text/javascript" src="js/streamersubscriptionsquotes.js" defer></script>
+    <script type="text/javascript" src="js/instrumentcell.js" defer></script>
+    <script type="text/javascript" src="js/instrumentrow.js" defer></script>
+    <script type="text/javascript" src="js/orderbookrow.js" defer></script>
+    <script type="text/javascript" src="js/api.js" defer></script>
+    <script type="text/javascript" src="js/version.js" defer></script>
+    <script type="text/javascript" src="js/accounts.js" defer></script>
+    <script type="text/javascript" src="js/settings.js" defer></script>
+    <script type="text/javascript" src="js/sessions.js" defer></script>
+    <script type="text/javascript" src="js/instruments.js" defer></script>
+    <script type="text/javascript" src="js/quotes.js" defer></script>
+    <script type="text/javascript" src="js/news.js" defer></script>
+    <script type="text/javascript" src="js/balances.js" defer></script>
+    <script type="text/javascript" src="js/performances.js" defer></script>
+    <script type="text/javascript" src="js/positions.js" defer></script>
+    <script type="text/javascript" src="js/orders.js" defer></script>
+    <script type="text/javascript" src="js/transactions.js" defer></script>
+    <script type="text/javascript" src="js/index.js" defer></script>
+    <title>Binck API</title>
+</head>
+<body>
+    <label>Account: <select id="idEdtAccountType">
+        <option value="globalAssetManagement">Asset Management</option>
+        <option value="binckComplete" selected>Binck Complete (self investing)</option>
+        <option value="fundCoach">Fund Coach</option>
+        <option value="planEpargneAction">PEA</option>
+        <option value="planEpargneActionPme">PEA-PME</option>
+        <option value="savings">Savings</option>
+        <option value="savingsBroker">Savings Broker</option>
+    </select></label>
+    <label>Culture: <select id="idEdtCulture">
+        <option value="fr">fr</option>
+        <option value="frBE">fr-BE</option>
+        <option value="it">it</option>
+        <option value="nl" selected>nl</option>
+        <option value="nlBE">nl-BE</option>
+    </select></label>
+    <label>Realm: <input type="text" id="idEdtRealm" value=""/></label>
+    <label>Scope: <input type="text" id="idEdtScope" value="read write news quotes"/></label>
+    <input type="button" id="idBtnLoginOrLogout" value="Sign in"/> Bearer <span id="idBearerToken">-</span>
+    <div id="idUnauthenticatedPart">
+        <h2>This is a demo application. Sign in to use the API. You will be redirected to the login dialog.</h2>
+        Login URL:<div id="idLoginUrl"></div><br />
+        API URL:<div id="idEnvironment"></div><br />
+        Documentation URL:<div><a href="https://developers.binck.com" target="_blank">https://developers.binck.com</a></div><br />
+        <span id="idTestApiConnection"></span><br />
+        <span id="idTestStreamerConnection"></span><br />
+    </div>
+    <div id="idAuthenticatedPart">
+        <h2>We are in! API can now be used to get accounts and positions for the customer. If write scope has been granted, ordering is enabled.</h2>
+        <p>
+            <input type="button" id="idRefreshToken" value="Refresh token"/>
+        </p>
+        <p>
+            The account(s):
+            <div id="idAccounts"></div>
+        </p>
+        <p>
+            The active account:
+            <div id="idSelectedAccount"></div>
+            <div id="idAccountSettings"></div>
+        </p>
+        <p>
+            The position(s): <input type="button" id="idBtnUpdatePositions" value="Refresh" />
+            <div id="idPositions"></div>
+        </p>
+        <p>
+            The instrument lists:
+            <div id="idInstrumentsLists">
+                <a href="#internationalIndices" data-code="internationalIndices">Indices</a> -
+                <a href="#amsterdamAEXIndex" data-code="amsterdamAEXIndex">AEX</a> -
+                <a href="#amsterdamAMXIndex" data-code="amsterdamAMXIndex">AMX</a> -
+                <a href="#amsterdamASCXIndex" data-code="amsterdamASCXIndex">ASCX</a> -
+                <a href="#brusselsBEL20Index" data-code="brusselsBEL20Index">BEL20</a> -
+                <a href="#copenhagenOMX20Index" data-code="copenhagenOMX20Index">OMX20 (Copenhagen)</a> -
+                <a href="#dublinISEQ20Index" data-code="dublinISEQ20Index">ISEQ20</a> -
+                <a href="#frankfurtDAX30Index" data-code="frankfurtDAX30Index">DAX30</a> -
+                <a href="#helsinkiHEX25Index" data-code="helsinkiHEX25Index">HEX25</a> -
+                <a href="#lisbonPSI20Index" data-code="lisbonPSI20Index">PSI20</a> -
+                <a href="#londonFTSE100Index" data-code="londonFTSE100Index">FTSE100</a> -
+                <a href="#madridIBEX35Index" data-code="madridIBEX35Index">IBEX35</a> -
+                <a href="#milanMIB30Index" data-code="milanMIB30Index">MIB30</a> -
+                <a href="#newYorkAMEXIndex" data-code="newYorkAMEXIndex">AMEX</a> -
+                <a href="#newYorkDowJones30Index" data-code="newYorkDowJones30Index">DowJones30</a> -
+                <a href="#newYorkNASDAQ100Index" data-code="newYorkNASDAQ100Index">NASDAQ100</a> -
+                <a href="#newYorkNASDAQIndex" data-code="newYorkNASDAQIndex">NASDAQ</a> -
+                <a href="#newYorkNYSEIndex" data-code="newYorkNYSEIndex">NYSE</a> -
+                <a href="#osloOBXIndex" data-code="osloOBXIndex">OBX</a> -
+                <a href="#parisCAC40Index" data-code="parisCAC40Index">CAC40</a> -
+                <a href="#parisCACLarge60Index" data-code="parisCACLarge60Index">CACLarge60</a> -
+                <a href="#parisCACMid20Index" data-code="parisCACMid20Index">CACMid20</a> -
+                <a href="#parisCACMidAndSmallIndex" data-code="parisCACMidAndSmallIndex">CACMidAndSmall</a> -
+                <a href="#parisCACNext20Index" data-code="parisCACNext20Index">CACNext20</a> -
+                <a href="#parisCACPMEIndex" data-code="parisCACPMEIndex">CACPME</a> -
+                <a href="#parisCACSmallIndex" data-code="parisCACSmallIndex">CACSmall</a> -
+                <a href="#stockholmOMX30Index" data-code="stockholmOMX30Index">OMX30 (Stockholm)</a> -
+                <a href="#torontoSPTSX60Index" data-code="torontoSPTSX60Index">SPTSX60</a> -
+                <a href="#torontoVentureIndex" data-code="torontoVentureIndex">Venture (Toronto)</a> -
+                <a href="#viennaATX20Index" data-code="viennaATX20Index">ATX20</a> -
+                <a href="#zurichSMIIndex" data-code="zurichSMIIndex">SMI</a> -
+                <a href="#popularItalyFutures" data-code="popularItalyFutures">PopularFutures (Italy)</a> -
+                <a href="#popularFranceFutures" data-code="popularItalyFutures">PopularFutures (France)</a> -
+                <a href="#popularNetherlandsFutures" data-code="popularNetherlandsFutures">PopularFutures (Netherlands)</a> -
+                <a href="#proRealTimeUniverse" data-code="proRealTimeUniverse">PRT</a>
+            </div>
+        </p>
+        <p>
+            The instruments of a list:
+            <div id="idInstrumentsList">
+                <div><span class="instrumentName">Instrument</span><span class="price">Last</span><span class="price">Bid</span><span class="price">Ask</span><span class="price">High</span><span class="price">Low</span><span class="price">Open</span><span class="price">Close</span><span class="price">Volume</span><span class="dateTime">Time</span></div>
+            </div>
+        </p>
+        <p>
+            News:
+            <input type="button" id="idBtnActivateRealtimeNews" value="Activate realtime news"/>
+            <div id="idNews"></div>
+        </p>
+        <p>
+            Option sheet:
+            <div id="idOptionSheet"></div>
+        </p>
+        <p>
+            The transaction(s):
+            <div id="idTransactionsFilter">
+                <a href="#buyAndSell" data-code="buyAndSell">Buy/Sell</a> -
+                <a href="#cost" data-code="cost">Cost</a> -
+                <a href="#couponPayment" data-code="couponPayment">Coupons</a> -
+                <a href="#dividendPayment" data-code="dividendPayment">Dividends</a> -
+                <a href="#interestPayment" data-code="interestPayment">Interest</a> -
+                <a href="#moneyTransfer" data-code="moneyTransfer">Deposits/withdrawals</a> -
+                <a href="#positionMutation" data-code="positionMutation">Position mutations</a>
+            </div>
+            <div id="idTransactions"></div>
+        </p>
+        <p>
+            The performance:
+            <div id="idPerformance"></div>
+        </p>
+        <p>
+            <input type="button" id="idBtnOrders" value="Get pending orders"/>
+            <input type="button" id="idBtnActivateRealtimeOrderUpdates" value="Activate realtime order updates"/>
+            <div id="idOrders"></div>
+        </p>
+        <p>
+            Find an instrument: <input type="text" id="idEdtInstrumentName" value="Binck" />
+            <input type="button" id="idBtnFind" value="Find" /><br />
+            <label><input type="radio" name="instrumentSearchType" value="all" />All</label>
+            <label><input type="radio" name="instrumentSearchType" value="bond" />Bonds</label>
+            <label><input type="radio" name="instrumentSearchType" value="equity" checked />Equities</label>
+            <label><input type="radio" name="instrumentSearchType" value="future" />Futures</label>
+            <label><input type="radio" name="instrumentSearchType" value="option" />Options</label>
+            <label><input type="radio" name="instrumentSearchType" value="srd" />SRDs</label>
+            <label><input type="radio" name="instrumentSearchType" value="tracker" />Trackers</label>
+            <label><input type="radio" name="instrumentSearchType" value="turbo" />Turbos</label>
+            <label><input type="radio" name="instrumentSearchType" value="warrant" />Warrants</label>
+            <br />
+            <div id="idSearchResults"></div><br />
+            <label>Tick size(s): <select id="idEdtTickSizes"></select></label>
+            <label><input type="radio" name="orderType" id="idOrderTypeMarket" value="market" checked />Market</label>
+            <label><input type="radio" name="orderType" id="idOrderTypeLimit" value="limit" />Limit</label>
+            <label><input type="radio" name="orderType" id="idOrderTypeStop" value="stop" />Stop</label>
+            <label><input type="radio" name="orderType" id="idOrderTypeStopLimit" value="stopLimit" />Stop limit</label>
+            <div>
+                <textarea id="idEdtOrderModel" rows="15" cols="150"></textarea><br />
+                <input type="button" id="idBtnOrderCosts" value="Order costs"/>
+                <input type="button" id="idBtnOrderKID" value="KID document(s)"/>
+                <input type="button" id="idBtnOrder" value="Order"/>
+                <input type="button" id="idBtnQuotesHist" value="Historical quotes"/>
+                <div id="idOrderWarningsToShow"></div>
+                <div id="idOrderWarningsToConfirm"></div>
+            </div>
+            <br />
+            Click on found instrument for the order book:
+            <div id="idOrderBook">
+                <div><span class="price">Orders</span><span class="price">Volume</span><span class="price">Bid</span><span class="price">Ask</span><span class="price">Volume</span><span class="price">Orders</span></div>
+            </div>
+            <br />
+            <div id="idHistoricalQuotesForInstrumentWeek"></div><br />
+            <div id="idHistoricalQuotesForInstrumentQuarter"></div>
+            <div id="idNewsForInstrument"></div>
+        </p>
+    </div>
+    <img id="idQrCode" src="" width="500" height="500">
+</body>
+</html>
