@@ -112,7 +112,7 @@ function InstrumentCell(containerElm, cellType, infoToShow, priceDecimals, hasHi
             } else {
                 resetHighlighting("black");
             }
-        }, 640);
+        }, 240);
     }
 
     /**

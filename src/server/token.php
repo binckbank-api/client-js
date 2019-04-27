@@ -13,14 +13,29 @@
 // Set your return content type
 header('Content-Type: application/json; charset=utf-8');
 
+// Configuration for Sandbox:
+$configuration = json_decode('{
+    "clientId": "enter_sandbox_client_id",
+    "clientSecret": "enter_sandbox_secret",
+    "authenticationProviderUrl": "https://login.sandbox.binck.com/am/oauth2/",
+    "redirectUrl": "https://your.host.here/app",
+    "apiUrl": "https://api.sandbox.binck.com/api/v1",
+    "streamerUrl": "https://realtime.sandbox.binck.com/stream/v1",
+    "websiteUrl": "https://web.sandbox.binck.{country}/Logon"
+}');
+
+// Configuration for Production:
+/*
 $configuration = json_decode('{
     "clientId": "enter_production_client_id",
     "clientSecret": "enter_production_secret",
     "authenticationProviderUrl": "https://login.binck.com/am/oauth2/",
     "redirectUrl": "https://your.host.here/app",
     "apiUrl": "https://api.binck.com/api/v1",
-    "streamerUrl": "https://realtime.binck.com/stream/v1"
+    "streamerUrl": "https://realtime.binck.com/stream/v1",
+    "websiteUrl": "https://web.binck.{country}/Logon"
 }');
+*/
 
 /**
  * Return an error in the same format as used by the API
@@ -51,7 +66,8 @@ function handleConfigResponse() {
             'authenticationProviderUrl' => $configuration->authenticationProviderUrl,
             'apiUrl' => $configuration->apiUrl,
             'streamerUrl' => $configuration->streamerUrl,
-            'redirectUrl' => $configuration->redirectUrl
+            'redirectUrl' => $configuration->redirectUrl,
+            'websiteUrl' => $configuration->websiteUrl
         )
     );
 }
@@ -118,7 +134,7 @@ if (isset($_GET['config'])) {
         false,  // Not a refresh
         filter_input(INPUT_GET, 'realm', FILTER_SANITIZE_STRING),
         filter_input(INPUT_GET, 'code', FILTER_SANITIZE_STRING)
-    );
+		);
 } elseif (isset($_GET['realm']) && isset($_GET['refresh_token'])) {
     handleAuthenticationResponse(
         true,  // Refresh

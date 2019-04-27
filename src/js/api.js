@@ -328,7 +328,7 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
         $.ajax({
             "dataType": "json",
             "type": "GET",
-            "url": configurationObject.appServerUrl + "token.php",
+            "url": configurationObject.appServerUrl,
             "data": data,
             "cache": false,  // No caching. Multiple tokens can be retrieved with same code when page is refreshed.
             "success": function (tokenObject) {

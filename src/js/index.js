@@ -19,15 +19,9 @@ $(function () {
     /** @type {boolean} */
     var isFirstToken = true;
     /** @type {string} */
-    var clientId = "";  // This is the identifier of your application. Both clientId and secret are available server side.
-    /** @type {string} */
-    var authenticationProviderUrl = "";  // This is the URL of the authentication provider to be used.
-    /** @type {string} */
-    var apiUrl = "";  // This is the URL to the API of Binck of the local process.
-    /** @type {string} */
-    var streamerUrl = "";  // This is the URL to the streamer, providing real time prices, order updates, portfolio updates and news.
-    /** @type {string} */
-    var redirectUrl = "";  // This is the landing URL of your application, after logging in. HTTPS is required for production use.
+    var appServerUrl = "http://localhost/server/token.php";  // Points to the application backend, containing configuration and token retrieval functions. SSL for production!
+    /** @type {Object} */
+    var configurationFromBackend;  // The configuration is supplied by the app server, so configuration is centralized and can be changed in a deploy pipeline.
 
     /**
      * Get the selected realm.
@@ -51,13 +45,15 @@ $(function () {
      */
     function getConfiguration() {
         return {
-            "clientId": clientId,
+            "clientId": configurationFromBackend.clientId,  // This is the identifier of your application. Both clientId and secret are available server side.
             "accountType": $("#idEdtAccountType").val(),
-            "redirectUrl": redirectUrl,
+            "redirectUrl": configurationFromBackend.redirectUrl,  // This is the landing URL of your application, after logging in. HTTPS is required for production use.
             "realm": "bincknlapi",
-            "authenticationProviderUrl": authenticationProviderUrl,
-            "apiUrl": apiUrl,
-            "streamerUrl": streamerUrl,
+            "authenticationProviderUrl": configurationFromBackend.authenticationProviderUrl,  // This is the URL of the authentication provider to be used.
+            "apiUrl": configurationFromBackend.apiUrl,  // This is the URL to the API of Binck of the local process.
+            "streamerUrl": configurationFromBackend.streamerUrl,  // This is the URL to the streamer, providing real time prices, order updates, portfolio updates and news.
+            "websiteUrl": configurationFromBackend.websiteUrl,  // This is the website where you can test is the functionality is implemented correctly.
+            "appServerUrl": appServerUrl,
             "language": getCultureForLogin(),
             "scope": $("#idEdtScope").val()
         };
@@ -594,6 +590,10 @@ $(function () {
                 for (i = 0; i < data.newsCollection.news.length; i += 1) {
                     newsItem = data.newsCollection.news[i];
                     newsHtml += "<p>" + new Date(newsItem.publishedDateTime).toLocaleString() + ": <b>" + newsItem.headline + "</b></p>";
+                    console.log(newsItem.headline);
+                    if (newsItem.hasOwnProperty("body")) {
+                        console.log(newsItem.body);
+                    }
                 }
                 $("#idNewsForInstrument").html(newsHtml);
             },
@@ -632,6 +632,7 @@ $(function () {
             "quantity": 1,
             "duration": "day"
         };
+        var instrumentIdForNews;
         if (instrumentsData.instrumentsCollection.instruments.length === 0) {
             window.alert("No instrument found with the name '" + $("#idEdtInstrumentName").val().toString() + "'.\n\nMaybe the instrument is not available for the selected account type?");
         } else {
@@ -653,6 +654,7 @@ $(function () {
             // Populate the newOrderObject
             switch (instrument.type) {
             case "option":
+                instrumentIdForNews = instrument.id;
                 newOrderObject.option = {
                     "leg1": {
                         "side": "buy",
@@ -661,18 +663,21 @@ $(function () {
                 };
                 break;
             case "future":
+                instrumentIdForNews = instrument.id;
                 newOrderObject.future = {
                     "side": "buy",
                     "instrumentId": instrument.id
                 };
                 break;
             case "srdClass":
+                instrumentIdForNews = instrument.srdInfo.underlyingInstrumentId;
                 newOrderObject.srd = {
                     "side": "buy",
                     "instrumentId": instrument.id
                 };
                 break;
             default:
+                instrumentIdForNews = instrument.id;
                 newOrderObject.cash = {
                     "side": "buy",
                     "instrumentId": instrument.id
@@ -681,7 +686,7 @@ $(function () {
             newOrderObject.referenceId = "my correlation id";  // Better to make it unique..
             $("#idEdtOrderModel").val(JSON.stringify(newOrderObject));
             // Get recent news updates about this instrument
-            displayNews(instrument.id);
+            displayNews(instrumentIdForNews);
             // And show the instrument
             instrumentsHtml += '<a href="#" data-code="' + instrument.id + '" data-decimals="' + instrument.priceDecimals + '">' + instrument.name + "</a> (mic " + instrument.marketIdentificationCode + ")";
             // Remove previously bound events.
@@ -951,7 +956,7 @@ $(function () {
             activeAccountNumber,
             instrumentId,
             sixMonthsBack,
-            null,
+            null,  // Until now
             "OneWeek",  // Group by 1 week
             function (data) {
                 internalDisplayHistoricalQuotes(data, $("#idHistoricalQuotesForInstrumentWeek"));
@@ -963,7 +968,7 @@ $(function () {
             activeAccountNumber,
             instrumentId,
             twoDaysBack,
-            null,
+            null,  // Until now
             "fifteenMinutes",  // Group by 15 minutes
             function (data) {
                 internalDisplayHistoricalQuotes(data, $("#idHistoricalQuotesForInstrumentQuarter"));
@@ -1437,7 +1442,7 @@ $(function () {
             api.version.getVersion(
                 function (data) {
                     var newTitle = "API " + data.currentVersion + " (" + new Date(data.buildDate).toLocaleString() + ")";
-                    console.log("Received api version " + data.currentVersion + " reply @ " + new Date(data.metadata.timestamp).toLocaleString());
+                    console.log("Received api version " + data.currentVersion + " build @ " + new Date(data.buildDate).toLocaleString() + ", request time " + new Date(data.metadata.timestamp).toLocaleString());
                     if (document.title !== newTitle) {
                         document.title = newTitle;
                     }
@@ -1470,7 +1475,9 @@ $(function () {
      * @return {void}
      */
     function populateLoginUrl() {
+        var websiteUrl = getConfiguration().websiteUrl.replace("{country}", getCultureForLogin().substring(0, 2));
         $("#idLoginUrl").text(api.getLogonUrl(getRealm()));
+        $("#idWebsiteUrl").html('<a href="' + websiteUrl + '" target="_blank">' + websiteUrl + "</a>");
     }
 
     /**
@@ -1562,15 +1569,11 @@ $(function () {
 
     /**
      * This callback is triggered the configuration is retrieved from the server.
-     * @param {Object} configData Contains clientId and authentication URI.
+     * @param {Object} configData Contains clientId, authentication URI and other configuration.
      * @return {void}
      */
     function initPage(configData) {
-        clientId = configData.clientId;
-        authenticationProviderUrl = configData.authenticationProviderUrl;
-        apiUrl = configData.apiUrl;
-        streamerUrl = configData.streamerUrl;
-        redirectUrl = configData.redirectUrl;
+        configurationFromBackend = configData;
         api = new Api(getConfiguration, newTokenCallback, expirationCounterCallback);
         streamer = new Streamer(
             getConfiguration,
@@ -1590,7 +1593,7 @@ $(function () {
         api.checkState(
             function () {
                 // Not authenticated
-                $("#idEdtRealm").val("bincknlapi");
+                $("#idEdtRealm").val(getConfiguration().realm);
                 $("#idEnvironment").text(getConfiguration().apiUrl);
                 populateLoginUrl();
                 $("#idEdtCulture").on("change input", populateLoginUrlFromCulture);
@@ -1608,5 +1611,13 @@ $(function () {
     }
 
     // Retrieve a clientId from the server
-    $.getJSON("server/token.php", {"config": "y"}, initPage);
+    $.ajax({
+        "datatype": "json",
+        "url": appServerUrl,
+        "data": {"config": "y"},
+        "success": initPage,
+        "error": function (jqXhr) {
+            apiErrorCallback(JSON.stringify(jqXhr));
+        }
+    });
 });
