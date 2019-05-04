@@ -4,6 +4,12 @@
 $(function () {
     "use strict";
 
+    /** @type {Object} */
+    var serverConnection = {
+        // Points to the application backend, containing configuration and token retrieval functions. SSL for production!
+        "appServerUrl": "http://localhost/server/token.php"
+    };
+
     /** @type {string} */
     var activeAccountNumber;
     /** @type {boolean} */
@@ -18,8 +24,6 @@ $(function () {
     var instrumentList;
     /** @type {boolean} */
     var isFirstToken = true;
-    /** @type {string} */
-    var appServerUrl = "http://localhost/server/token.php";  // Points to the application backend, containing configuration and token retrieval functions. SSL for production!
     /** @type {Object} */
     var configurationFromBackend;  // The configuration is supplied by the app server, so configuration is centralized and can be changed in a deploy pipeline.
 
@@ -53,9 +57,9 @@ $(function () {
             "apiUrl": configurationFromBackend.apiUrl,  // This is the URL to the API of Binck of the local process.
             "streamerUrl": configurationFromBackend.streamerUrl,  // This is the URL to the streamer, providing real time prices, order updates, portfolio updates and news.
             "websiteUrl": configurationFromBackend.websiteUrl,  // This is the website where you can test is the functionality is implemented correctly.
-            "appServerUrl": appServerUrl,
             "language": getCultureForLogin(),
-            "scope": $("#idEdtScope").val()
+            "scope": $("#idEdtScope").val(),
+            "appServerUrl": serverConnection.appServerUrl
         };
     }
 
@@ -318,7 +322,7 @@ $(function () {
             instrumentId,
             function (data) {
                 var position = data.positionsCollection.positions[0];
-                window.alert("Position: " + position.instrument.name);
+                window.alert("Position: " + position.instrument.name + ", average historical price " + currencyCodeToSymbol(position.currency) + " " + position.averageHistoricalPrice.toFixed(2));
             },
             apiErrorCallback
         );
@@ -341,7 +345,7 @@ $(function () {
                 } else {
                     for (i = 0; i < data.positionsCollection.positions.length; i += 1) {
                         position = data.positionsCollection.positions[i];
-                        positionsHtml += '<a href="#' + position.instrument.id + '" data-code="' + position.instrument.id + '">' + position.quantity + " x " + position.instrument.name + " (" + position.currency + " " + position.value.toFixed(2) + ")</a><br />";
+                        positionsHtml += '<a href="#' + position.instrument.id + '" data-code="' + position.instrument.id + '">' + position.quantity + " x " + position.instrument.name + " (" + currencyCodeToSymbol(position.currency) + " " + position.value.toFixed(2) + ")</a><br />";
                     }
                 }
                 $("#idPositions").html(positionsHtml);
@@ -355,7 +359,7 @@ $(function () {
     }
 
     /**
-     * Show the tradable options with a certain symbol.
+     * Show the tradable option series with a certain symbol.
      * @param {string} symbol The symbol of the derivate.
      * @param {number} pagingOffset The start of the requested range.
      * @return {void}
@@ -477,15 +481,15 @@ $(function () {
             year,
             true,
             function (data) {
-                var performanceHtml = "Total " + year + ": " + data.summary.currency + " " + data.summary.total.toFixed(2) + " (realized " + data.summary.realized.toFixed(2) + ", unrealized " + data.summary.unrealized.toFixed(2) + ")<br />";
+                var performanceHtml = "Total " + year + ": " + currencyCodeToSymbol(data.summary.currency) + " " + data.summary.total.toFixed(2) + " (realized " + data.summary.realized.toFixed(2) + ", unrealized " + data.summary.unrealized.toFixed(2) + ")<br />";
                 var i;
                 var performance;
                 if (data.performancesCollection.performances.length === 0) {
-                    performanceHtml = "No performance found.";
+                    performanceHtml += "No performance on instruments found. ";
                 } else {
                     for (i = 0; i < data.performancesCollection.performances.length; i += 1) {
                         performance = data.performancesCollection.performances[i];
-                        performanceHtml += performance.instrument.name + ": " + performance.currency + " " + performance.annual.toFixed(2) + "<br />";
+                        performanceHtml += performance.instrument.name + ": " + currencyCodeToSymbol(performance.currency) + " " + performance.annual.toFixed(2) + "<br />";
                     }
                 }
                 $("#idPerformance").html(performanceHtml);
@@ -506,7 +510,7 @@ $(function () {
         api.performances.getPerformanceOverview(
             activeAccountNumber,
             function (data) {
-                var performanceHtml = "Total: " + data.summary.currency + " " + data.summary.total.toFixed(2) + " (realized " + data.summary.realized.toFixed(2) + ", unrealized " + data.summary.unrealized.toFixed(2) + ")<br />";
+                var performanceHtml = "Total: " + currencyCodeToSymbol(data.summary.currency) + " " + data.summary.total.toFixed(2) + " (realized " + data.summary.realized.toFixed(2) + ", unrealized " + data.summary.unrealized.toFixed(2) + ")<br />";
                 var i;
                 var performance;
                 if (data.performancesCollection.performances.length === 0) {
@@ -514,7 +518,7 @@ $(function () {
                 } else {
                     for (i = 0; i < data.performancesCollection.performances.length; i += 1) {
                         performance = data.performancesCollection.performances[i];
-                        performanceHtml += '<a href="#" data-code="' + performance.year + '">' + performance.year + "</a>: " + performance.currency + " " + performance.total.toFixed(2) + "<br />";
+                        performanceHtml += '<a href="#" data-code="' + performance.year + '">' + performance.year + "</a>: " + currencyCodeToSymbol(performance.currency) + " " + performance.total.toFixed(2) + "<br />";
                     }
                 }
                 $("#idPerformance").html(performanceHtml);
@@ -1539,11 +1543,15 @@ $(function () {
             $("#idBtnOrderCosts").on("click", displayOrderCosts);
             $("#idBtnOrderKID").on("click", displayOrderKid);
             $("#idBtnUpdatePositions").on("click", displayPositions);
+            $("#idBtnUpdatePerformance").on("click", displayPerformances);
             $("#idBtnFind").on("click", displayInstrumentSearchResults);
             $("input[type=radio][name=instrumentSearchType]").on("change", displayInstrumentSearchResults);
             $("input[type=radio][name=orderType]").on("change", displayInstrumentSearchResults);
             $("#idBtnActivateRealtimeOrderUpdates").on("click", activateRealtimeOrderUpdates);
             $("#idBtnActivateRealtimeNews").on("click", activateRealtimeNews);
+            $("#idBtnUpdateTransactions").on("click", function () {
+                displayTransactions("");
+            });
             $("#idTransactionsFilter a[href]").on("click", function (e) {
                 e.preventDefault();
                 displayTransactions($(this).data("code").toString());
@@ -1613,7 +1621,7 @@ $(function () {
     // Retrieve a clientId from the server
     $.ajax({
         "datatype": "json",
-        "url": appServerUrl,
+        "url": serverConnection.appServerUrl,
         "data": {"config": "y"},
         "success": initPage,
         "error": function (jqXhr) {

@@ -7,7 +7,7 @@
     <meta name="FORMAT-DETECTION" content="telephone=no" />
     <meta name="VIEWPORT" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <link rel="stylesheet" href="css/index.css" type="text/css">
-    <script type="text/javascript" src="js/jquery-3.4.0.min.js" defer></script>
+    <script type="text/javascript" src="js/jquery-3.4.1.min.js" defer></script>
     <script type="text/javascript" src="js/jquery-observer.js" defer></script>
     <!-- For production, make sure you use signalr.min.js -->
     <script type="text/javascript" src="js/signalr.js" defer></script>
@@ -137,7 +137,7 @@
             <div id="idOptionSheet"></div>
         </p>
         <p>
-            The transaction(s):
+            The transaction(s): <input type="button" id="idBtnUpdateTransactions" value="Refresh" />
             <div id="idTransactionsFilter">
                 <a href="#buyAndSell" data-code="buyAndSell">Buy/Sell</a> -
                 <a href="#cost" data-code="cost">Cost</a> -
@@ -150,7 +150,7 @@
             <div id="idTransactions"></div>
         </p>
         <p>
-            The performance:
+            The performance: <input type="button" id="idBtnUpdatePerformance" value="Refresh" />
             <div id="idPerformance"></div>
         </p>
         <p>

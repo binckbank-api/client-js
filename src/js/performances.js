@@ -25,7 +25,7 @@ function Performances(requestCallback) {
     /**
      * Load the performance of an account for a specific year.
      * @param {string} accountNumber The identifier of the account.
-     * @param {number} year The year as 4 digit number (2016).
+     * @param {number} year The year as 4 digit number (2018).
      * @param {boolean} isPerPositionRequired Get by individual derivative position, or grouped by underlying value.
      * @param {function(Object)} successCallback When successful, this function is called.
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
