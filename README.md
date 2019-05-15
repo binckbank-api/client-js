@@ -55,7 +55,7 @@ For this example we use the sandbox environment, with predefined test users and 
 
 Create a 'Log in' link sending the user to:
 
-`https://login.sandbox.binck.com/am/oauth2/realms/{realm}/authorize?ui_locales={it}&client_id={CLIENT_ID}&scope={read}&state={1234zyx}&response_type={code}&redirect_uri={REDIRECT_URI}`
+`https://login.sandbox.binck.com/am/oauth2/realms/{realm}/authorize?ui_locales={LOCALE}&client_id={CLIENT_ID}&scope={SCOPES}&state={1234zyx}&response_type={code}&redirect_uri={REDIRECT_URI}`
 
 **realm** – The bincknlapi realm is used for the Dutch Binck customers\
 **ui_locales** - The language to be used for the login pages, examples: fr, it, or nlBE\
@@ -64,6 +64,8 @@ Create a 'Log in' link sending the user to:
 **code** - Indicates that your server expects to receive an authorization code\
 **client_id** - The client ID you received when you first created the application\
 **redirect_uri** - Indicates the URI to return the user to after authorization is complete
+
+Don't forget to encode the URL parameters (from '`http://localhost/binck`' to '`http%3A%2F%2Flocalhost%2Fbinck`').
 
 The user sees the login dialog:
 ![alt text](https://raw.githubusercontent.com/binckbank-api/client-js/master/doc/login-italian-realm.png)
@@ -78,10 +80,11 @@ After logging in, the user sees a dialog to give access to the thirdparty, if ac
 
 If the user allows access, the service redirects the user back to your site (the _redirect_uri_) with an auth code in the query string.
 
-`https://{REDIRECT_URI}/?code={AUTH_CODE_HERE}&scope={read}&state={1234zyx}`
+`https://{REDIRECT_URI}/?code={AUTH_CODE_HERE}&scope={SCOPES}&state={1234zyx}`
 
 **code** - The server returns the authorization code in the query string\
-**state** - The server returns the same state value that you passed
+**state** - The server returns the same state value that you passed\
+**scope** - One or more scopes granted
 
 You should first compare this state value to ensure it matches the one you started with. You can typically store the state value in a cookie, and compare it when the user comes back. This ensures your redirection endpoint isn't able to be tricked into attempting to exchange arbitrary authorization codes.
 
@@ -89,7 +92,7 @@ You should first compare this state value to ensure it matches the one you start
 
 If the login failed, the error is returned in the query string.
 
-`https://{REDIRECT_URI}/?error_description=Resource%20Owner%20did%20not%20authorize%20the%20request&state={1234xyz}&error=access_denied`
+`https://{REDIRECT_URI}/?error_description=Resource%20Owner%20did%20not%20authorize%20the%20request&state=**1234xyz**&error=access_denied`
 
 This is an example of the error when the user denied access for your application.
 

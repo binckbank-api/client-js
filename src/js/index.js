@@ -6,7 +6,7 @@ $(function () {
 
     /** @type {Object} */
     var serverConnection = {
-        // Points to the application backend, containing configuration and token retrieval functions. SSL for production!
+        // Location of the application backend, containing configuration and token retrieval functions. Must be SSL for production!
         "appServerUrl": "http://localhost/server/token.php"
     };
 
@@ -624,11 +624,10 @@ $(function () {
 
     /**
      * Populate the order object with the found instrument from the search response.
-     * @param {Object} instrumentsData The response of the instruments endpoint.
+     * @param {Object} instrument The first instrument of the response of the instruments endpoint.
      * @return {void}
      */
-    function prepareOrder(instrumentsData) {
-        var instrument;
+    function prepareOrder(instrument) {
         var instrumentsHtml = "";
         var orderType = $("input[name=orderType]:checked").val();
         var newOrderObject = {
@@ -637,79 +636,73 @@ $(function () {
             "duration": "day"
         };
         var instrumentIdForNews;
-        if (instrumentsData.instrumentsCollection.instruments.length === 0) {
-            window.alert("No instrument found with the name '" + $("#idEdtInstrumentName").val().toString() + "'.\n\nMaybe the instrument is not available for the selected account type?");
-        } else {
-            switch (orderType) {
-            case "stop":
-                newOrderObject.stopPrice = 5;
-                break;
-            case "stopLimit":
-                newOrderObject.stopPrice = 5;
-                newOrderObject.limitPrice = 5;
-                break;
-            case "limit":
-                newOrderObject.limitPrice = 5;
-                break;
-            }
-            // We found one result
-            instrument = instrumentsData.instrumentsCollection.instruments[0];
-            displayTickSizeTable(instrument.tickSizeCollection);
-            // Populate the newOrderObject
-            switch (instrument.type) {
-            case "option":
-                instrumentIdForNews = instrument.id;
-                newOrderObject.option = {
-                    "leg1": {
-                        "side": "buy",
-                        "instrumentId": instrument.id
-                    }
-                };
-                break;
-            case "future":
-                instrumentIdForNews = instrument.id;
-                newOrderObject.future = {
-                    "side": "buy",
-                    "instrumentId": instrument.id
-                };
-                break;
-            case "srdClass":
-                instrumentIdForNews = instrument.srdInfo.underlyingInstrumentId;
-                newOrderObject.srd = {
-                    "side": "buy",
-                    "instrumentId": instrument.id
-                };
-                break;
-            default:
-                instrumentIdForNews = instrument.id;
-                newOrderObject.cash = {
-                    "side": "buy",
-                    "instrumentId": instrument.id
-                };
-            }
-            newOrderObject.referenceId = "my correlation id";  // Better to make it unique..
-            $("#idEdtOrderModel").val(JSON.stringify(newOrderObject));
-            // Get recent news updates about this instrument
-            displayNews(instrumentIdForNews);
-            // And show the instrument
-            instrumentsHtml += '<a href="#" data-code="' + instrument.id + '" data-decimals="' + instrument.priceDecimals + '">' + instrument.name + "</a> (mic " + instrument.marketIdentificationCode + ")";
-            // Remove previously bound events.
-            $("#idSearchResults a[href]").off("click");
-            $("#idSearchResults").html(instrumentsHtml);
-            $("#idSearchResults a[href]").on("click", function (e) {
-                var instrumentId = $(this).data("code").toString();
-                var decimals = parseInt($(this).data("decimals").toString(), 10);
-                e.preventDefault();
-                displayDerivativeClassesByInstrument(instrumentId);
-                // Start streaming order book. Check if streamer is already started, is done before starting.
-                streamer.start(
-                    function () {
-                        // Show the order book of the instrument
-                        displayOrderbookFeed(instrumentId, decimals);
-                    }
-                );
-            });
+        switch (orderType) {
+        case "stop":
+            newOrderObject.stopPrice = 5;
+            break;
+        case "stopLimit":
+            newOrderObject.stopPrice = 5;
+            newOrderObject.limitPrice = 5;
+            break;
+        case "limit":
+            newOrderObject.limitPrice = 5;
+            break;
         }
+        displayTickSizeTable(instrument.tickSizeCollection);
+        // Populate the newOrderObject
+        switch (instrument.type) {
+        case "option":
+            instrumentIdForNews = instrument.derivativesInfo.underlyingInstrumentId;
+            newOrderObject.option = {
+                "leg1": {
+                    "side": "buy",
+                    "instrumentId": instrument.id
+                }
+            };
+            break;
+        case "future":
+            instrumentIdForNews = instrument.derivativesInfo.underlyingInstrumentId;
+            newOrderObject.future = {
+                "side": "buy",
+                "instrumentId": instrument.id
+            };
+            break;
+        case "srdClass":
+            instrumentIdForNews = instrument.srdInfo.underlyingInstrumentId;
+            newOrderObject.srd = {
+                "side": "buy",
+                "instrumentId": instrument.id
+            };
+            break;
+        default:
+            instrumentIdForNews = instrument.id;
+            newOrderObject.cash = {
+                "side": "buy",
+                "instrumentId": instrument.id
+            };
+        }
+        newOrderObject.referenceId = "my correlation id";  // Better to make it unique..
+        $("#idEdtOrderModel").val(JSON.stringify(newOrderObject));
+        // Get recent news updates about this instrument
+        displayNews(instrumentIdForNews);
+        // And show the instrument
+        instrumentsHtml += '<a href="#" data-code="' + instrument.id + '" data-decimals="' + instrument.priceDecimals + '">' + instrument.name + "</a> (mic " + instrument.marketIdentificationCode + ")";
+        // Remove previously bound events.
+        $("#idSearchResults a[href]").off("click");
+        $("#idSearchResults").html(instrumentsHtml);
+        $("#idSearchResults a[href]").on("click", function (e) {
+            var instrumentId = $(this).data("code").toString();
+            var decimals = parseInt($(this).data("decimals").toString(), 10);
+            e.preventDefault();
+            displayDerivativeClassesByInstrument(instrumentId);
+            // Start streaming order book. Check if streamer is already started, is done before starting.
+            streamer.start(
+                function () {
+                    // Show the order book of the instrument
+                    displayOrderbookFeed(instrumentId, decimals);
+                }
+            );
+        });
     }
 
     /**
@@ -728,7 +721,19 @@ $(function () {
             1,
             activeAccountNumber,
             true,  // includeTickSizes
-            prepareOrder,
+            function (data) {
+                var instrument;
+                if (data.instrumentsCollection.instruments.length === 0) {
+                    window.alert("No instrument found with the name '" + $("#idEdtInstrumentName").val().toString() + "'.\n\nMaybe the instrument is not available for the selected account type?");
+                } else {
+                    // We found one result
+                    instrument = data.instrumentsCollection.instruments[0];
+                    prepareOrder(instrument);
+                    if (instrument.hasOptions) {
+                        displayDerivativeSeriesBySymbol(instrument.symbol, 0);
+                    }
+                }
+            },
             apiErrorCallback
         );
     }
@@ -750,7 +755,6 @@ $(function () {
                 displayTransactions("");
                 displayPerformances();
                 displayInstrumentSearchResults();
-                displayDerivativeSeriesBySymbol("BCK", 0);
                 $("#idSelectedAccount").text(account.iban + " " + account.name + " (" + account.type + ")");
                 displayBalance();
             },
@@ -1621,7 +1625,7 @@ $(function () {
     // Retrieve a clientId from the server
     $.ajax({
         "datatype": "json",
-        "url": serverConnection.appServerUrl,
+        "url": serverConnection.appServerUrl + "token.php",
         "data": {"config": "y"},
         "success": initPage,
         "error": function (jqXhr) {
