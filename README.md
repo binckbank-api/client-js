@@ -4,6 +4,7 @@ This document describes how an application can get access to customers data, sen
 
 ## Table of contents
 
+[Onboarding process for developers](#onboarding)\
 [Sign in to Binck API using Oauth2](#logon)\
 [Step 1: Sign in](#logon1)\
 [Step 2: Retrieve authorization code](#logon2)\
@@ -23,6 +24,17 @@ This document describes how an application can get access to customers data, sen
 [Step 6: Description of the data](#realtime6)\
 [Step 7: Production](#realtime7)\
 [Things to keep in mind](#realtimeSuggestions)
+
+## <a name="onboarding"></a>Onboarding process for developers
+
+### How to start
+
+Contact Binck with the announcement you want to develop an application using the API.\
+Binck will provide you an online form where you can enter the details of the application. Important are the name of the application, the scopes (ordering, quotes, news, or only viewing) and the redirect URL. This is the URL used to redirect the user to, after signing in.
+
+### Next step
+
+The API team at Binck will create a new clientId and secret with the requested privileges on sandbox and shares them with you, together with a test account. You cannot test with a real account, so orders won’t be executed on the market.
 
 ## <a name="logon"></a>Sign in to Binck API using OAuth2
 
@@ -54,7 +66,7 @@ Create a 'Log in' link sending the user to:
 **redirect_uri** - Indicates the URI to return the user to after authorization is complete
 
 The user sees the login dialog:
-TODO Add login dialog screenshot
+![alt text](https://raw.githubusercontent.com/binckbank-api/client-js/master/doc/login-italian-realm.png)
 
 Skipping entering the validation code (SMS challenge) results in a readonly session. Placing orders won’t be allowed, even if the application requested 'write' scope.
 
@@ -62,7 +74,7 @@ Skipping entering the validation code (SMS challenge) results in a readonly sess
 
 After logging in, the user sees a dialog to give access to the thirdparty, if access is not already granted. In order to authorize, the user must login with the validation code (2FA).
 
-TODO Add consent page screenshot
+![alt text](https://raw.githubusercontent.com/binckbank-api/client-js/master/doc/consent-italian-realm.png)
 
 If the user allows access, the service redirects the user back to your site (the _redirect_uri_) with an auth code in the query string.
 
