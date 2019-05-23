@@ -273,6 +273,7 @@ The description of the available endpoints is located here: <https://developers.
 9. When requesting the login page, supply the locale of the customer. If not, the fallback might not be the desired language of the country.
 10. Instrument ids might change overnight. When caching, keep this in mind.
 11. The API has a limit of 50 requests per minute. If exceeded, the customer might be logged out, resulting in an UnAuthorized response.
+12. We respect a REST convention that trailing slashes are not allowed, so `https://api.sandbox.binck.com/api/v1/accounts` is the correct notation.
 
 ## <a name="realtime"></a>Get realtime data using the Binck API
 
