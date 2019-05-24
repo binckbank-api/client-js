@@ -7,7 +7,7 @@ $(function () {
     /** @type {Object} */
     var serverConnection = {
         // Location of the application backend, containing configuration and token retrieval functions. Must be SSL for production!
-        "appServerUrl": "http://localhost/server/token.php"
+        "appServerUrl": "server/token.php"
     };
 
     /** @type {string} */
@@ -1625,7 +1625,7 @@ $(function () {
     // Retrieve a clientId from the server
     $.ajax({
         "datatype": "json",
-        "url": serverConnection.appServerUrl + "token.php",
+        "url": serverConnection.appServerUrl,
         "data": {"config": "y"},
         "success": initPage,
         "error": function (jqXhr) {
