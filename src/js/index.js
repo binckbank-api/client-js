@@ -427,7 +427,13 @@ $(function () {
             activeAccountNumber,
             function (data) {
                 var balance = data.balancesCollection.balances[0];
-                $("#idSelectedAccount").text($("#idSelectedAccount").text() + " - balance: " + balance.assetsTotalValue.toFixed(2));
+                var balanceHtml = " - balance: " + currencyCodeToSymbol(data.balancesCollection.currency) + " " + balance.assetsTotalValue.toFixed(2) + ", spending limit: " + balance.availableSpendingLimit.toFixed(2);
+                if (balance.hasOwnProperty("availableSpendingLimitSrd")) {
+                    // Only available when customer is allowed to trade in SRD.
+                    balanceHtml += ", spending limit SRD: " + balance.availableSpendingLimitSrd.toFixed(2);
+                }
+                $("#idBalances").text(balanceHtml);
+                
             },
             apiErrorCallback
         );
@@ -1546,6 +1552,7 @@ $(function () {
             $("#idBtnQuotesHist").on("click", displayHistoricalQuotes);
             $("#idBtnOrderCosts").on("click", displayOrderCosts);
             $("#idBtnOrderKID").on("click", displayOrderKid);
+            $("#idBtnUpdateBalances").on("click", displayBalance);
             $("#idBtnUpdatePositions").on("click", displayPositions);
             $("#idBtnUpdatePerformance").on("click", displayPerformances);
             $("#idBtnFind").on("click", displayInstrumentSearchResults);
