@@ -3,7 +3,6 @@
 /*
  *
  * This is the file token.php, used to retrieve a token for using the API.
- * Example: http://www.domain.com/binck/server/token.php?code=05f8d801-8399-4b1a-a66d-cadda65523a6&realm=bincknlapi
  *
  */
 
@@ -102,21 +101,40 @@ function handleAuthenticationResponse($isRefresh, $realm, $code) {
     echo $result;
 }
 
-if (isset($_GET['config'])) {
-    // Only return the configuration (clientId), to have this in one place
-    handleConfigResponse();
-} elseif (isset($_GET['realm']) && isset($_GET['code'])) {
-    handleAuthenticationResponse(
-        false,  // Not a refresh
-        filter_input(INPUT_GET, 'realm', FILTER_SANITIZE_STRING),
-        filter_input(INPUT_GET, 'code', FILTER_SANITIZE_STRING)
-    );
-} elseif (isset($_GET['realm']) && isset($_GET['refresh_token'])) {
-    handleAuthenticationResponse(
-        true,  // Refresh
-        filter_input(INPUT_GET, 'realm', FILTER_SANITIZE_STRING),
-        filter_input(INPUT_GET, 'refresh_token', FILTER_SANITIZE_STRING)
-    );
-} else {
-    handleErrorAndDie('Parameters are missing. Required are "realm" and "code" or "refresh_token".');
+/**
+ * Make sure no garbage is send to the token server
+ * @param string $input_var Input variable to clean from wrong characters
+ */
+function sanitizeInputVar($input_var) {
+    return filter_var($input_var, FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH);
+}
+
+// Get and decode the post data
+$request_params = json_decode(file_get_contents('php://input'));
+if ($request_params == null || !isset($request_params->requestType)) {
+    handleErrorAndDie('Missing parameters. Required is "requestType".');
+}
+
+// Get data
+switch (sanitizeInputVar($request_params->requestType)) {
+    case "config":
+        // Only return the configuration
+        handleConfigResponse();
+        break;
+    case "requestToken":
+        // Request a token
+        if (!isset($request_params->realm, $request_params->code)) {
+            handleErrorAndDie('Missing parameters. For a new token realm and code are required.');
+        }
+        handleAuthenticationResponse(false, sanitizeInputVar($request_params->realm), sanitizeInputVar($request_params->code));
+        break;
+    case "refreshToken":
+        // Request a new token
+        if (!isset($request_params->realm, $request_params->refreshToken)) {
+            handleErrorAndDie('Missing parameters. For a token refresh realm and refreshToken are required.');
+        }
+        handleAuthenticationResponse(true, sanitizeInputVar($request_params->realm), sanitizeInputVar($request_params->refreshToken));
+        break;
+    default:
+        handleErrorAndDie('Missing parameters. Required is "requestType".');
 }
