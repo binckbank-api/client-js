@@ -1635,7 +1635,7 @@ $(function () {
         true,
         initPage,
         function (errorObject) {
-            apiErrorCallback(JSON.parse(errorObject));
+            apiErrorCallback(JSON.stringify(errorObject));
         }
     );
 });
