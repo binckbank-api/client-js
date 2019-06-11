@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window $ console Sessions Version Settings Instruments Quotes News Accounts Balances Performances Positions Orders Transactions */
+/*global window $ console Server Sessions Version Settings Instruments Quotes News Accounts Balances Performances Positions Orders Transactions */
 
 /**
  * The API to connect with Binck
@@ -14,6 +14,8 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
 
     /** @type {Object} */
     var apiObject = this;
+    /** @type {Object} */
+    var server = new Server();
     /** @type {string} */
     var accessToken = "";
     /** @type {string} */
@@ -318,24 +320,22 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
 
     /**
      * Retrieve an access token from the server.
-     * @param {Object} data Data to be send as query string.
+     * @param {Object} data Data to be send.
      * @param {function(string)} errorCallback Callback function to invoke in case of an error.
      * @return {void}
      */
     function getToken(data, errorCallback) {
         var configurationObject = getConfiguration();
         data.realm = apiObject.getState().realm;
-        $.ajax({
-            "dataType": "json",
-            "type": "GET",
-            "url": configurationObject.appServerUrl,
-            "data": data,
-            "cache": false,  // No caching. Multiple tokens can be retrieved with same code when page is refreshed.
-            "success": function (tokenObject) {
+        server.getDataFromServer(
+            configurationObject.appServerUrl,
+            data,
+            false,  // No caching. Multiple tokens can be retrieved with same code when page is refreshed.
+            function (tokenObject) {
                 tokenReceivedCallback(tokenObject, errorCallback);
             },
-            "error": function (jqXhr) {
-                console.error("Error retrieving token.");
+            function (jqXhr) {
+                console.error(jqXhr);
                 if (jqXhr.hasOwnProperty("responseJSON") && jqXhr.responseJSON.hasOwnProperty("error") && jqXhr.responseJSON.hasOwnProperty("error_description")) {
                     if (jqXhr.responseJSON.error === "invalid_grant") {
                         apiObject.navigateToLoginPage(apiObject.getState().realm);
@@ -343,10 +343,10 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
                         errorCallback(jqXhr.responseJSON.error_description);
                     }
                 } else {
-                    errorCallback("Communication error in getToken: " + jqXhr.status);
+                    errorCallback("Communication error in request to server: " + jqXhr.status);
                 }
             }
-        });
+        );
     }
 
     /**
@@ -357,6 +357,7 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
      */
     function getAccessToken(code, errorCallback) {
         var data = {
+            "requestType": "requestToken",
             "code": code
         };
         console.log("Requesting token..");
@@ -370,7 +371,8 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
      */
     this.getRefreshToken = function (errorCallback) {
         var data = {
-            "refresh_token": refreshToken
+            "requestType": "refreshToken",
+            "refreshToken": refreshToken
         };
         console.log("Requesting token refresh..");
         getToken(data, errorCallback);

@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, single: true, long: true */
-/*global window $ console Api Streamer InstrumentRow OrderBookRow QuoteSubscriptionLevel */
+/*global window $ console Api Streamer Server InstrumentRow OrderBookRow QuoteSubscriptionLevel */
 
 $(function () {
     "use strict";
@@ -433,7 +433,6 @@ $(function () {
                     balanceHtml += ", spending limit SRD: " + balance.availableSpendingLimitSrd.toFixed(2);
                 }
                 $("#idBalances").text(balanceHtml);
-                
             },
             apiErrorCallback
         );
@@ -1629,14 +1628,14 @@ $(function () {
         );
     }
 
-    // Retrieve a clientId from the server
-    $.ajax({
-        "datatype": "json",
-        "url": serverConnection.appServerUrl,
-        "data": {"config": "y"},
-        "success": initPage,
-        "error": function (jqXhr) {
-            apiErrorCallback(JSON.stringify(jqXhr));
+    // Retrieve the application configuration from the server
+    new Server().getDataFromServer(
+        serverConnection.appServerUrl,
+        {"requestType": "config"},
+        true,
+        initPage,
+        function (errorObject) {
+            apiErrorCallback(JSON.stringify(errorObject));
         }
-    });
+    );
 });
