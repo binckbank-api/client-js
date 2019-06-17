@@ -30,7 +30,7 @@ This document describes how an application can get access to customers data, sen
 ### How to start
 
 Contact Binck with the announcement you want to develop an application using the API.\
-Binck will provide you an online form where you can enter the details of the application. Important are the name of the application, the scopes (ordering, quotes, news, or only viewing) and the redirect URL. This is the URL used to redirect the user to, after signing in.
+This can be done by submitting [this form](https://forms.office.com/Pages/ResponsePage.aspx?id=nKeZuuhuoEGdeKUD8EWjg11k67ZtZP5HvG9oP_FLXKxUQjVBUUlSUUxWQk1YNEhJVkNUSDhGTVI4SC4u "Form to request a client able to connect with the OpenApi"), where you can enter the details of the application. Important are the name of the application, the required scopes (ordering, quotes, news, or only viewing) and the redirect URL. This is the URL used to redirect the user to, after signing in.
 
 ### Next step
 
@@ -235,10 +235,12 @@ The sandbox functionality can be compared with the website. The website with the
 
 ### <a name="logon7"></a>Step 7: Production
 
-The production environment is the same as sandbox, but, with real customers and live data.
+The production environment is the same as sandbox, but, with real customers and live data.\
+The application is can go to production when development is finished and the application is thouroughly tested on sandbox. This is only for individual usage.\
+When the application is used by more accounts than yours, Binck requires a thirdparty agreement.
 
 Use these URL’s:
-`https://login.binck.com/am/oauth2/`
+`https://login.binck.com/am/oauth2/`\
 `https://api.binck.com/api/v1/`
 
 #### Releases
