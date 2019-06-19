@@ -276,6 +276,7 @@ The description of the available endpoints is located here: <https://developers.
 10. Instrument ids might change overnight. When caching, keep this in mind.
 11. The API has a limit of 50 requests per minute. If exceeded, the customer might be logged out, resulting in an UnAuthorized response.
 12. We respect a REST convention that trailing slashes are not allowed, so `https://api.sandbox.binck.com/api/v1/accounts` is the correct notation.
+13. Orders on sandbox won't go to the market. If you need a (partial) execution, send us an email with the details of the order you want to be executed.
 
 ## <a name="realtime"></a>Get realtime data using the Binck API
 
