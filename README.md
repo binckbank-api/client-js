@@ -1,4 +1,4 @@
-# Binck OpenApi documentation
+# <a name="documentation"></a>Binck OpenApi documentation
 
 This document describes how an application can get access to customers data, send orders to the market and retrieve streaming quotes, order events and news.
 
@@ -445,6 +445,26 @@ var QuoteSubscriptionLevel = {
 ```
 
 In the response the number of subscriptions is returned. Use this to validate if there are not to many instruments in the subscription. This might make the connection slow.
+
+Stop listening to the quote broadcast can be achieved by invoking UnSubscribeQuotes (no account number).
+
+```javascript
+connection.invoke(
+    "UnSubscribeQuotes",
+    instrumentIds  // Array of instrumentsIds
+)
+.then(function (subscriptionResponse) {
+    if (subscriptionResponse.isSucceeded) {
+        console.log("Unsubscribe succeeded, instrument #: " + subscriptionResponse.subcount);
+    } else {
+        // Internal issue - should never occur
+        console.log("Quote unsubscribe failed");
+    }
+})
+.catch(function (error) {
+    console.error(error);
+});
+```
 
 #### Order executions
 
