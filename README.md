@@ -5,6 +5,7 @@ This document describes how an application can get access to customers data, sen
 ## Table of contents
 
 [Onboarding process for developers](#onboarding)\
+[Important links](#links)\
 [Sign in to Binck API using Oauth2](#logon)\
 [Step 1: Sign in](#logon1)\
 [Step 2: Retrieve authorization code](#logon2)\
@@ -35,6 +36,18 @@ This can be done by submitting [this form](https://forms.office.com/Pages/Respon
 ### Next step
 
 The API team at Binck will create a new clientId and secret with the requested privileges on sandbox and shares them with you, together with a test account. You cannot test with a real account, so orders won’t be executed on the market.
+
+### <a name="links"></a>Important links
+
+Request access to the OpenApi with [this form](https://forms.office.com/Pages/ResponsePage.aspx?id=nKeZuuhuoEGdeKUD8EWjg11k67ZtZP5HvG9oP_FLXKxUQjVBUUlSUUxWQk1YNEhJVkNUSDhGTVI4SC4u "Form to request a client able to connect with the OpenApi").
+
+Documentation can be found on [developers.binck.com](https://developers.binck.com "OpenApi endpoint description").
+
+Example code and login guide can be found on Github. Great, you are here.
+
+Releases are communicated via Twitter handle [@BinckOpenApi](https://twitter.com/BinckOpenapi "BinckOpenApi on Twitter").
+
+Twitter can be used for questions, or our email address [openapi@binck.nl](mailto:openapi@binck.nl "OpenApi email support").
 
 ## <a name="logon"></a>Sign in to Binck API using OAuth2
 
@@ -641,6 +654,8 @@ The initial quote is send to prevent empty quotes and possible gaps. But, an upd
 - ivl: Implied volatility
 - idv: Implied div
 - iir: Implied IR
+- set: Settlement price
+- oir: Open interest rate
 
 **id (identification)** The hashed instrument id.
 
