@@ -14,7 +14,7 @@ function Quotes(requestCallback) {
      * Load trade or book prices for a list of instruments - if level in "none", only the subscriptions are retrieved
      * @param {string} accountNumber The identifier of the account.
      * @param {Array<string>} instrumentIds The identifier of the instrument(s).
-     * @param {string} level Get full book (bid1-bid5 and ask1-ask5), or only trades (last, high, low, etc). Can be "none" to get subscriptions.
+     * @param {string} level Get full book (bid1-bid5 and ask1-ask5) with "tradesBidAsk", or only trades (last, high, low, etc) with "tradesOnly". Can be "none" to get subscriptions.
      * @param {function(Object)} successCallback When successful, this function is called.
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
      * @return {void}

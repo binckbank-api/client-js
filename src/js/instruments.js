@@ -102,19 +102,28 @@ function Instruments(requestCallback, requestCallbackDownload) {
     /**
      * Request a derivative sheet with the symbol. Can be futures or options.
      * @param {string} symbol The symbol of the derivate.
+     * @param {null|string} mic Optional Market Identification Code.
+     * @param {null|string} currency Optional currency of instrument.
      * @param {string} accountNumber The account number.
      * @param {string} range The range to be requested.
      * @param {function(Object)} successCallback When successful, this function is called.
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
      * @return {void}
      */
-    this.getDerivativeSheetBySymbol = function (symbol, accountNumber, range, successCallback, errorCallback) {
-        console.log("Requesting derivative sheet for symbol " + symbol + " of account number " + accountNumber + "..");
-        requestCallback("GET", "instruments/derivatives", {
+    this.getDerivativeSheetBySymbol = function (symbol, mic, currency, accountNumber, range, successCallback, errorCallback) {
+        var data = {
             "accountNumber": accountNumber,
             "symbol": symbol,
             "range": range
-        }, successCallback, errorCallback);
+        };
+        if (mic !== null) {
+            data.marketIdentificationCode = mic;
+        }
+        if (currency !== null) {
+            data.currency = currency;
+        }
+        console.log("Requesting derivative sheet for symbol " + symbol + " of account number " + accountNumber + "..");
+        requestCallback("GET", "instruments/derivatives", data, successCallback, errorCallback);
     };
 
     /**
