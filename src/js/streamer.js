@@ -11,7 +11,7 @@
  * https://www.npmjs.com/package/@aspnet/signalr
  *
  * @constructor
- * @param {function()} getConfiguration Connection configuration
+ * @param {string} streamerEndpoint Url of the server.
  * @param {function()} getSubscription Subscription, with account and access token
  * @param {function(Object)} quotesCallback Callback to be called when a quote is received
  * @param {function(Object)} newsCallback Callback to be called when news is received
@@ -20,7 +20,7 @@
  * @param {function(Object)} orderEventsCallback Callback to be called when an order update is received
  * @param {function(string, string)} errorCallback Callback that will be called on an error situation
  */
-function Streamer(getConfiguration, getSubscription, quotesCallback, newsCallback, orderExecutionsCallback, orderModificationsCallback, orderEventsCallback, errorCallback) {
+function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallback, orderExecutionsCallback, orderModificationsCallback, orderEventsCallback, errorCallback) {
     "use strict";
 
     /** @type {Object} */
@@ -35,6 +35,8 @@ function Streamer(getConfiguration, getSubscription, quotesCallback, newsCallbac
     this.orders = null;
     /** @type {Object} */
     this.quotes = null;
+    /** @type {boolean} */
+    var isApplicationClosing = false;
 
     /**
      * Get the version of the API. Since this function works without token, this might be the first call to test development.
@@ -45,14 +47,14 @@ function Streamer(getConfiguration, getSubscription, quotesCallback, newsCallbac
     this.getVersion = function (successCallbackVersion, errorCallbackVersion) {
         console.log("Requesting version of streamer..");
         var parser = document.createElement("a");
-        parser.href = getConfiguration().streamerUrl;
+        parser.href = streamerEndpoint;
 
         // The version endpoint requires parameters nor token. Only GET.
         $.ajax({
             "dataType": "json",
             "type": "GET",
             "url": parser.protocol + "//" + parser.host + "/version",
-            //"url": getConfiguration().streamerUrl + "/version",
+            //"url": streamerEndpoint + "/version",
             "success": successCallbackVersion,
             "error": function (jqXhr) {
                 console.log("Version: " + JSON.stringify(jqXhr));
@@ -76,7 +78,7 @@ function Streamer(getConfiguration, getSubscription, quotesCallback, newsCallbac
             }
         };
         console.log("Setup streamer connection");
-        connection = new signalR.HubConnectionBuilder().withUrl(getConfiguration().streamerUrl, options).configureLogging(signalR.LogLevel.Information).build();
+        connection = new signalR.HubConnectionBuilder().withUrl(streamerEndpoint + "?accountNumber=" + getSubscription().activeAccountNumber, options).configureLogging(signalR.LogLevel.Information).build();
         // Configure the callback for quote events:
         connection.on("Quote", quotesCallback);
         // Configure the callback for news events:
@@ -90,7 +92,9 @@ function Streamer(getConfiguration, getSubscription, quotesCallback, newsCallbac
         connection.onclose(function () {
             console.log("The connection has been closed.");
             streamerObject.isConnected = false;
-            errorCallback("disconnected", "The streamer connection has been closed.");
+            if (!isApplicationClosing) {
+                errorCallback("disconnected", "The streamer connection has been closed.");
+            }
         });
     }
 
@@ -105,7 +109,7 @@ function Streamer(getConfiguration, getSubscription, quotesCallback, newsCallbac
             if ($.trim(error.message) !== "") {
                 errorCallback("404", error.message);
             } else {
-                errorCallback("404", "Something went wrong with the connection. Is the streamer endpoint configured on " + getConfiguration().streamerUrl + "?");
+                errorCallback("404", "Something went wrong with the connection. Is the streamer endpoint configured on " + streamerEndpoint + "?");
             }
         } else {
             console.log("Something bad happened, probably in the javascript.");
@@ -167,28 +171,40 @@ function Streamer(getConfiguration, getSubscription, quotesCallback, newsCallbac
 
     /**
      * Stop the connection.
+     * @param {function()} stoppedCallback When successful, this function is called.
      * @return {void}
      */
-    this.stop = function () {
+    this.stop = function (stoppedCallback) {
 
         function deActivateStreamerObjects() {
             console.log("Streamer stopped.");
             streamerObject.news.isActivated = false;
             streamerObject.orders.isActivated = false;
             streamerObject.isConnected = false;
+            stoppedCallback();
         }
 
         console.log("Stopping streamer..");
         if (connection !== null) {
+            isApplicationClosing = true;
             connection.stop().then(deActivateStreamerObjects).catch(processError);
         }
     };
 
-    function getConnection() {
+    /**
+     * Callback to use the connection from elsewhere.
+     * @return {Object} The connection established with the server.
+     */
+   function getConnection() {
         return connection;
     }
 
     streamerObject.news = new SubscriptionsForNews(getConnection, getSubscription, errorCallback);
     streamerObject.orders = new SubscriptionsForOrders(getConnection, getSubscription, errorCallback);
     streamerObject.quotes = new SubscriptionsForQuotes(getConnection, getSubscription, errorCallback);
+
+    // Don't send the disconnect error when page is refreshed or browser navigates elsewhere
+    $(window).on("beforeunload", function () {
+        isApplicationClosing = true;
+    });
 }

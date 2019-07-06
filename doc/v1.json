@@ -663,6 +663,20 @@
             "type": "string"
           },
           {
+            "name": "marketIdentificationCode",
+            "in": "query",
+            "description": "Can be used in combination with symbol to specify the market.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "description": "Can be used in combination with symbol to specify the currency.",
+            "required": false,
+            "type": "string"
+          },
+          {
             "name": "range",
             "in": "query",
             "description": "Paging parameter to retrieve a subset of the complete collection. Format is &lt;offset&gt;-&lt;limit&gt;. \r\nBoth values are an offset from the first entry of the complete collection. The first entry has offset '0'.\r\n(e.g. 12-21)",
@@ -798,7 +812,7 @@
         "tags": [
           "Orders"
         ],
-        "summary": "Gets all the orders of an account",
+        "summary": "Gets all active/recent orders of an account",
         "description": "The response contains the active, cancelled and recent orders. If there is no order, the collection will be empty.",
         "operationId": "Orders_GetOrders",
         "consumes": [],
@@ -931,6 +945,84 @@
         "x-throttling-tier": "Unlimited",
         "x-auth-type": "Application & Application User",
         "x-scope": "write"
+      }
+    },
+    "/accounts/{accountNumber}/orders/history": {
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Gets all the historical orders of an account",
+        "description": "The response contains the historical orders of the requested month. If there is no order, the collection will be empty.",
+        "operationId": "Orders_GetHistoricalOrders",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "accountNumber",
+            "in": "path",
+            "description": "The account number.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "description": "Paging parameter to retrieve a subset of the complete collection. Format is &lt;offset&gt;-&lt;limit&gt;. \r\nBoth values are an offset from the first entry of the complete collection. The first entry has offset '0'.\r\n(e.g. 12-21)",
+            "required": false,
+            "type": "string",
+            "pattern": "[0-9]+-[0-9]*"
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "description": "The year for which the historical orders should be retrieved",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "description": "The month for which the historical orders should be retrieved",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "[OK] A list of the orders.",
+            "schema": {
+              "$ref": "#/definitions/OrdersResponse"
+            }
+          },
+          "400": {
+            "description": "[Bad Request] The request is not valid. See response body for more detail.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          },
+          "401": {
+            "description": "[Unauthorized] Authorization has been denied for this request.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read"
+            ]
+          }
+        ],
+        "x-throttling-tier": "Unlimited",
+        "x-auth-type": "Application & Application User",
+        "x-scope": "read"
       }
     },
     "/accounts/{AccountNumber}/orders/{Number}": {
@@ -1084,7 +1176,7 @@
           "Orders"
         ],
         "summary": "Modifies an already existing order",
-        "description": "",
+        "description": "First, validate the modification",
         "operationId": "Orders_ModifyOrder",
         "consumes": [
           "application/json",
@@ -1158,7 +1250,7 @@
           "Orders"
         ],
         "summary": "Validates the modification of an already existing order",
-        "description": "",
+        "description": "This allows you to validate an order modification without sending it to the market. The order will not be created.\r\nThe response will contain information about if the order can be processed.\r\nIt also might includes warnings to show to the customer. And Confirmations, which are warnings to be approved by the customer, before placing the order modification.",
         "operationId": "Orders_PreviewModifyOrder",
         "consumes": [
           "application/json",
@@ -1762,7 +1854,7 @@
           {
             "name": "interval",
             "in": "query",
-            "description": "Interval for historical quotes\r\nDepending on the interval, the historical quotes collection returned will be limited to a certain period:\r\nMax. number of days for one minute interval is 5.\r\nMax. number of days for five minute interval is 20.\r\nMax. number of days for ten minute interval is 20.\r\nMax. number of days for fifteen minute interval is 60.\r\nMax. number of days for one hour interval is 120.\r\nMax. number of years for one day interval is 5.\r\nMax. number of years for one week interval is 10.",
+            "description": "Interval for historical quotes\r\nDepending on the interval, the historical quotes collection returned will be limited to a certain period:\r\nMax. number of days for one minute interval is 5.\r\nMax. number of days for five minute interval is 20.\r\nMax. number of days for ten minute interval is 20.\r\nMax. number of days for fifteen minute interval is 60.\r\nMax. number of days for one hour interval is 120.\r\nMax. number of years for one day interval is 10.\r\nMax. number of years for one week interval is 10.",
             "required": true,
             "type": "string",
             "enum": [
@@ -2742,6 +2834,14 @@
         "underlyingInstrumentId": {
           "description": "Selection on the ID of the underlying equity.\r\nCannot be used in combination with 'symbol'.",
           "type": "string"
+        },
+        "marketIdentificationCode": {
+          "description": "Can be used in combination with symbol to specify the market.",
+          "type": "string"
+        },
+        "currency": {
+          "description": "Can be used in combination with symbol to specify the currency.",
+          "type": "string"
         }
       }
     },
@@ -3113,7 +3213,6 @@
         "number",
         "instrument",
         "type",
-        "statusHistory",
         "currency",
         "duration",
         "quantity",
@@ -3524,6 +3623,26 @@
         "metadata": {
           "$ref": "#/definitions/MetadataModel",
           "description": "API response meta data"
+        }
+      }
+    },
+    "HistoricalOrdersQueryParams": {
+      "description": "Historical Order status parameters",
+      "required": [
+        "year",
+        "month"
+      ],
+      "type": "object",
+      "properties": {
+        "year": {
+          "format": "int64",
+          "description": "The year for which the historical orders should be retrieved",
+          "type": "integer"
+        },
+        "month": {
+          "format": "int64",
+          "description": "The month for which the historical orders should be retrieved",
+          "type": "integer"
         }
       }
     },
@@ -4213,11 +4332,15 @@
         },
         "implDiv": {
           "$ref": "#/definitions/PriceModel",
-          "description": "Implied divident quote"
+          "description": "Implied dividend quote"
         },
-        "cumVol": {
+        "settlement": {
+          "$ref": "#/definitions/PriceModel",
+          "description": "Settlement quote"
+        },
+        "openInterest": {
           "$ref": "#/definitions/VolumeModel",
-          "description": "Cumulative volume quote"
+          "description": "Open interest quote"
         },
         "theoreticalPrice": {
           "$ref": "#/definitions/PriceModel",
@@ -4226,6 +4349,10 @@
         "implIr": {
           "$ref": "#/definitions/PriceModel",
           "description": "Implied interest rate quote"
+        },
+        "cumVol": {
+          "$ref": "#/definitions/VolumeModel",
+          "description": "Cumulative volume quote"
         },
         "bid": {
           "description": "Bid book",
@@ -4375,7 +4502,7 @@
           "type": "string"
         },
         "interval": {
-          "description": "Interval for historical quotes\r\nDepending on the interval, the historical quotes collection returned will be limited to a certain period:\r\nMax. number of days for one minute interval is 5.\r\nMax. number of days for five minute interval is 20.\r\nMax. number of days for ten minute interval is 20.\r\nMax. number of days for fifteen minute interval is 60.\r\nMax. number of days for one hour interval is 120.\r\nMax. number of years for one day interval is 5.\r\nMax. number of years for one week interval is 10.",
+          "description": "Interval for historical quotes\r\nDepending on the interval, the historical quotes collection returned will be limited to a certain period:\r\nMax. number of days for one minute interval is 5.\r\nMax. number of days for five minute interval is 20.\r\nMax. number of days for ten minute interval is 20.\r\nMax. number of days for fifteen minute interval is 60.\r\nMax. number of days for one hour interval is 120.\r\nMax. number of years for one day interval is 10.\r\nMax. number of years for one week interval is 10.",
           "enum": [
             "oneMinute",
             "fiveMinutes",

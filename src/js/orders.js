@@ -11,7 +11,7 @@ function Orders(requestCallback) {
     "use strict";
 
     /**
-     * This function retrieves a list of orders.
+     * This function retrieves a list of active and/or recent orders.
      * @param {string} accountNumber The account to display the orders for.
      * @param {string} status 'all', 'open', 'executed', 'canceled'.
      * @param {string} range Use paging (0-19), or leave empty.
@@ -19,9 +19,33 @@ function Orders(requestCallback) {
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
      * @return {void}
      */
-    this.getOrders = function (accountNumber, status, range, successCallback, errorCallback) {
+    this.getOrdersActive = function (accountNumber, status, range, successCallback, errorCallback) {
+        var data = {
+            "status": status,
+            "range": range
+        };
         console.log("Requesting orders for account " + accountNumber + "..");
-        requestCallback("GET", "accounts/" + accountNumber + "/orders?range=" + range + "&status=" + status, {}, successCallback, errorCallback);
+        requestCallback("GET", "accounts/" + accountNumber + "/orders", data, successCallback, errorCallback);
+    };
+
+    /**
+     * This function retrieves a list of orders, created in one month.
+     * @param {string} accountNumber The account to display the orders for.
+     * @param {number} month The month (1-12).
+     * @param {number} year The year (max. 5 years in the past).
+     * @param {string} range Use paging (0-19), or leave empty.
+     * @param {function(Object)} successCallback When successful, this function is called.
+     * @param {function(string)} errorCallback The function to be called in case of a failed request.
+     * @return {void}
+     */
+    this.getOrdersHistory = function (accountNumber, month, year, range, successCallback, errorCallback) {
+        var data = {
+            "month": month,
+            "year": year,
+            "range": range
+        };
+        console.log("Requesting historical orders for account " + accountNumber + "..");
+        requestCallback("GET", "accounts/" + accountNumber + "/orders/history", data, successCallback, errorCallback);
     };
 
     /**

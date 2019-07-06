@@ -1,10 +1,11 @@
-# Binck OpenApi documentation
+# <a name="documentation"></a>Binck OpenApi documentation
 
 This document describes how an application can get access to customers data, send orders to the market and retrieve streaming quotes, order events and news.
 
 ## Table of contents
 
 [Onboarding process for developers](#onboarding)\
+[Important links](#links)\
 [Sign in to Binck API using Oauth2](#logon)\
 [Step 1: Sign in](#logon1)\
 [Step 2: Retrieve authorization code](#logon2)\
@@ -35,6 +36,18 @@ This can be done by submitting [this form](https://forms.office.com/Pages/Respon
 ### Next step
 
 The API team at Binck will create a new clientId and secret with the requested privileges on sandbox and shares them with you, together with a test account. You cannot test with a real account, so orders won’t be executed on the market.
+
+### <a name="links"></a>Important links
+
+Request access to the OpenApi with [this form](https://forms.office.com/Pages/ResponsePage.aspx?id=nKeZuuhuoEGdeKUD8EWjg11k67ZtZP5HvG9oP_FLXKxUQjVBUUlSUUxWQk1YNEhJVkNUSDhGTVI4SC4u "Form to request a client able to connect with the OpenApi").
+
+Documentation can be found on [developers.binck.com](https://developers.binck.com "OpenApi endpoint description").
+
+Example code and login guide can be found on Github. Great, you are here.
+
+Releases are communicated via Twitter handle [@BinckOpenApi](https://twitter.com/BinckOpenapi "BinckOpenApi on Twitter").
+
+Twitter can be used for questions, or our email address [openapi@binck.nl](mailto:openapi@binck.nl "OpenApi email support").
 
 ## <a name="logon"></a>Sign in to Binck API using OAuth2
 
@@ -276,6 +289,7 @@ The description of the available endpoints is located here: <https://developers.
 10. Instrument ids might change overnight. When caching, keep this in mind.
 11. The API has a limit of 50 requests per minute. If exceeded, the customer might be logged out, resulting in an UnAuthorized response.
 12. We respect a REST convention that trailing slashes are not allowed, so `https://api.sandbox.binck.com/api/v1/accounts` is the correct notation.
+13. Orders on sandbox won't go to the market. If you need a (partial) execution, send us an email with the details of the order you want to be executed.
 
 ## <a name="realtime"></a>Get realtime data using the Binck API
 
@@ -444,6 +458,26 @@ var QuoteSubscriptionLevel = {
 ```
 
 In the response the number of subscriptions is returned. Use this to validate if there are not to many instruments in the subscription. This might make the connection slow.
+
+Stop listening to the quote broadcast can be achieved by invoking UnSubscribeQuotes (no account number).
+
+```javascript
+connection.invoke(
+    "UnSubscribeQuotes",
+    instrumentIds  // Array of instrumentsIds
+)
+.then(function (subscriptionResponse) {
+    if (subscriptionResponse.isSucceeded) {
+        console.log("Unsubscribe succeeded, instrument #: " + subscriptionResponse.subcount);
+    } else {
+        // Internal issue - should never occur
+        console.log("Quote unsubscribe failed");
+    }
+})
+.catch(function (error) {
+    console.error(error);
+});
+```
 
 #### Order executions
 
@@ -620,6 +654,8 @@ The initial quote is send to prevent empty quotes and possible gaps. But, an upd
 - ivl: Implied volatility
 - idv: Implied div
 - iir: Implied IR
+- set: Settlement price
+- oir: Open interest rate
 
 **id (identification)** The hashed instrument id.
 

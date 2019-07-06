@@ -22,6 +22,8 @@ $(function () {
     var nextDelayLogTime = new Date();  // Log the delay on the connection every minute.
     /** @type {Array<Object>} */
     var instrumentList;
+    /** @type {Object} */
+    var activeInstrument = null;
     /** @type {boolean} */
     var isFirstToken = true;
     /** @type {Object} */
@@ -55,8 +57,6 @@ $(function () {
             "realm": "bincknlapi",
             "authenticationProviderUrl": configurationFromBackend.authenticationProviderUrl,  // This is the URL of the authentication provider to be used.
             "apiUrl": configurationFromBackend.apiUrl,  // This is the URL to the API of Binck of the local process.
-            "streamerUrl": configurationFromBackend.streamerUrl,  // This is the URL to the streamer, providing real time prices, order updates, portfolio updates and news.
-            "websiteUrl": configurationFromBackend.websiteUrl,  // This is the website where you can test is the functionality is implemented correctly.
             "language": getCultureForLogin(),
             "scope": $("#idEdtScope").val(),
             "appServerUrl": serverConnection.appServerUrl
@@ -106,6 +106,7 @@ $(function () {
      */
     function apiStreamerErrorCallback(errorCode, description) {
         window.alert("Something went wrong: " + description + " (" + errorCode + ")");
+        // From version 3.0, SignalR automatically reconnects.
         if (errorCode === "disconnected" && window.confirm("Restart streamer?")) {
             streamer.start(function () {
                 console.log("Reconnected to the streamer.");
@@ -361,14 +362,18 @@ $(function () {
     /**
      * Show the tradable option series with a certain symbol.
      * @param {string} symbol The symbol of the derivate.
+     * @param {null|string} mic The Market Identification Code.
+     * @param {null|string} currency The currency.
      * @param {number} pagingOffset The start of the requested range.
      * @return {void}
      */
-    function displayDerivativeSeriesBySymbol(symbol, pagingOffset) {
+    function displayDerivativeSeriesBySymbol(symbol, mic, currency, pagingOffset) {
         var maxArrayLength = 50;  // This is an example of the use of the paging. The default max is 100.
         var limit = pagingOffset + (maxArrayLength - 1);
         api.instruments.getDerivativeSheetBySymbol(
             symbol,
+            mic,
+            currency,
             activeAccountNumber,
             pagingOffset + "-" + limit,
             function (data) {
@@ -406,7 +411,7 @@ $(function () {
                 if (data.paging.offset + maxArrayLength < data.count) {
                     // Retrieve the next range.
                     // Alternatively (advisable!), this can be done using the paging.next string, until paging.next is unavailable.
-                    displayDerivativeSeriesBySymbol(symbol, data.paging.offset + maxArrayLength);
+                    displayDerivativeSeriesBySymbol(symbol, mic, currency, data.paging.offset + maxArrayLength);
                 } else {
                     $("#idOptionSheet a[href]").on("click", function (e) {
                         e.preventDefault();
@@ -538,12 +543,11 @@ $(function () {
 
     /**
      * Display the symbols of the derivatives available for an instrument.
-     * @param {string} instrumentId The id of the underlying instrument.
      * @return {void}
      */
-    function displayDerivativeClassesByInstrument(instrumentId) {
+    function displayDerivativeClassesByInstrument() {
         api.instruments.getDerivativeSheetByInstrument(
-            instrumentId,
+            activeInstrument.id,
             activeAccountNumber,
             "",
             function (data) {
@@ -567,18 +571,21 @@ $(function () {
 
     /**
      * Display the order book updates.
-     * @param {string} instrumentId instrument for which to show the streaming order book.
-     * @param {number} priceDecimals Number of decimals used to format the price.
      * @return {void}
      */
-    function displayOrderbookFeed(instrumentId, priceDecimals) {
-        var i;
-        // Delete all active subscriptions
-        $.topic("RemoveOrderBook").publish();
-        for (i = 1; i <= 5; i += 1) {
-            new OrderBookRow(streamer, $("#idOrderBook"), instrumentId, i, priceDecimals);
-        }
-        streamer.quotes.activateSubscriptions();
+    function displayOrderBookFeed() {
+        // Start streaming order book. Check if streamer is already started, is done before starting.
+        streamer.start(
+            function () {
+                var i;
+                // Delete all active subscriptions
+                $.topic("RemoveOrderBook").publish();
+                for (i = 1; i <= 5; i += 1) {
+                    new OrderBookRow(streamer, $("#idOrderBook"), activeInstrument.id, i, activeInstrument.priceDecimals);
+                }
+                streamer.quotes.activateSubscriptions();
+            }
+        );
     }
 
     /**
@@ -612,27 +619,25 @@ $(function () {
 
     /**
      * Populate the tickSizes.
-     * @param {Object} data The tickSize steps array from the instruments endpoint.
      * @return {void}
      */
-    function displayTickSizeTable(data) {
+    function displayTickSizeTable() {
         var tickSizeStep;
         var i;
         // Clear tick sizes
         $("#idEdtTickSizes").children().remove();
         // Populate tick size list
-        for (i = 0; i < data.tickSizes.length; i += 1) {
-            tickSizeStep = data.tickSizes[i];
+        for (i = 0; i < activeInstrument.tickSizeCollection.tickSizes.length; i += 1) {
+            tickSizeStep = activeInstrument.tickSizeCollection.tickSizes[i];
             $("#idEdtTickSizes").append('<option value="' + tickSizeStep.from + '">From ' + tickSizeStep.from + ": " + tickSizeStep.size + "</option>");
         }
     }
 
     /**
      * Populate the order object with the found instrument from the search response.
-     * @param {Object} instrument The first instrument of the response of the instruments endpoint.
      * @return {void}
      */
-    function prepareOrder(instrument) {
+    function prepareOrder() {
         var instrumentsHtml = "";
         var orderType = $("input[name=orderType]:checked").val();
         var newOrderObject = {
@@ -653,37 +658,37 @@ $(function () {
             newOrderObject.limitPrice = 5;
             break;
         }
-        displayTickSizeTable(instrument.tickSizeCollection);
+        displayTickSizeTable();
         // Populate the newOrderObject
-        switch (instrument.type) {
+        switch (activeInstrument.type) {
         case "option":
-            instrumentIdForNews = instrument.derivativesInfo.underlyingInstrumentId;
+            instrumentIdForNews = activeInstrument.derivativesInfo.underlyingInstrumentId;
             newOrderObject.option = {
                 "leg1": {
                     "side": "buy",
-                    "instrumentId": instrument.id
+                    "instrumentId": activeInstrument.id
                 }
             };
             break;
         case "future":
-            instrumentIdForNews = instrument.derivativesInfo.underlyingInstrumentId;
+            instrumentIdForNews = activeInstrument.derivativesInfo.underlyingInstrumentId;
             newOrderObject.future = {
                 "side": "buy",
-                "instrumentId": instrument.id
+                "instrumentId": activeInstrument.id
             };
             break;
         case "srdClass":
-            instrumentIdForNews = instrument.srdInfo.underlyingInstrumentId;
+            instrumentIdForNews = activeInstrument.srdInfo.underlyingInstrumentId;
             newOrderObject.srd = {
                 "side": "buy",
-                "instrumentId": instrument.id
+                "instrumentId": activeInstrument.id
             };
             break;
         default:
-            instrumentIdForNews = instrument.id;
+            instrumentIdForNews = activeInstrument.id;
             newOrderObject.cash = {
                 "side": "buy",
-                "instrumentId": instrument.id
+                "instrumentId": activeInstrument.id
             };
         }
         newOrderObject.referenceId = "my correlation id";  // Better to make it unique..
@@ -691,22 +696,13 @@ $(function () {
         // Get recent news updates about this instrument
         displayNews(instrumentIdForNews);
         // And show the instrument
-        instrumentsHtml += '<a href="#" data-code="' + instrument.id + '" data-decimals="' + instrument.priceDecimals + '">' + instrument.name + "</a> (mic " + instrument.marketIdentificationCode + ")";
+        instrumentsHtml += '<a href="#">' + activeInstrument.name + "</a> (mic " + activeInstrument.marketIdentificationCode + ")";
         // Remove previously bound events.
         $("#idSearchResults a[href]").off("click");
         $("#idSearchResults").html(instrumentsHtml);
         $("#idSearchResults a[href]").on("click", function (e) {
-            var instrumentId = $(this).data("code").toString();
-            var decimals = parseInt($(this).data("decimals").toString(), 10);
             e.preventDefault();
-            displayDerivativeClassesByInstrument(instrumentId);
-            // Start streaming order book. Check if streamer is already started, is done before starting.
-            streamer.start(
-                function () {
-                    // Show the order book of the instrument
-                    displayOrderbookFeed(instrumentId, decimals);
-                }
-            );
+            displayDerivativeClassesByInstrument();
         });
     }
 
@@ -727,15 +723,14 @@ $(function () {
             activeAccountNumber,
             true,  // includeTickSizes
             function (data) {
-                var instrument;
                 if (data.instrumentsCollection.instruments.length === 0) {
                     window.alert("No instrument found with the name '" + $("#idEdtInstrumentName").val().toString() + "'.\n\nMaybe the instrument is not available for the selected account type?");
                 } else {
-                    // We found one result
-                    instrument = data.instrumentsCollection.instruments[0];
-                    prepareOrder(instrument);
-                    if (instrument.hasOptions) {
-                        displayDerivativeSeriesBySymbol(instrument.symbol, 0);
+                    // We found one result - make this the active instrument for example calls
+                    activeInstrument = data.instrumentsCollection.instruments[0];
+                    prepareOrder();
+                    if (activeInstrument.hasOptions) {
+                        displayDerivativeSeriesBySymbol(activeInstrument.symbol, null, activeInstrument.currency, 0);
                     }
                 }
             },
@@ -950,6 +945,12 @@ $(function () {
      */
     function displayHistoricalQuotes() {
 
+    /**
+     * Add history to the list.
+     * @param {Object} data The response object of the quotes endpoint.
+     * @param {Object} targetElm The element where to show the data.
+     * @return {void}
+     */
         function internalDisplayHistoricalQuotes(data, targetElm) {
             var historicalQuotesHtml = "";
             var i;
@@ -961,13 +962,12 @@ $(function () {
             targetElm.html(historicalQuotesHtml);
         }
 
-        var instrumentId = $("#idSearchResults a[href]").data("code").toString();
         var sixMonthsBack = new Date();
         var twoDaysBack = new Date();
         sixMonthsBack.setMonth(sixMonthsBack.getMonth() - 6);
         api.quotes.getHistoricalQuotes(
             activeAccountNumber,
-            instrumentId,
+            activeInstrument.id,
             sixMonthsBack,
             null,  // Until now
             "OneWeek",  // Group by 1 week
@@ -979,7 +979,7 @@ $(function () {
         twoDaysBack.setDate(twoDaysBack.getDate() - 2);
         api.quotes.getHistoricalQuotes(
             activeAccountNumber,
-            instrumentId,
+            activeInstrument.id,
             twoDaysBack,
             null,  // Until now
             "fifteenMinutes",  // Group by 15 minutes
@@ -988,45 +988,90 @@ $(function () {
             },
             apiErrorCallback
         );
+        // Get all current quotes, to show the settlement price and open interest of a future for example
+        api.quotes.getLatestQuotes(activeAccountNumber, [activeInstrument.id], "tradesBidAsk", function (data) {
+            console.log(data.quotesCollection.quotes);
+        }, apiErrorCallback);
+    }
+
+    /**
+     * Create the html with the order descriptions.
+     * @param {Object} data The response object or the orders endpoint.
+     * @return {string} The orders in HTML format.
+     */
+    function generateOrdersList(data) {
+        var ordersHtml = "";
+        var orderHtml;
+        var i;
+        var order;
+        for (i = 0; i < data.ordersCollection.orders.length; i += 1) {
+            order = data.ordersCollection.orders[i];
+            orderHtml = '<a href="#order" data-code="' + order.number + '">' + order.number + "</a> " + (
+                order.hasOwnProperty("side")
+                ? order.side + " "
+                : ""
+            ) + order.quantity + " x " + order.instrument.name + " (expires " + new Date(order.expirationDate).toLocaleDateString() + ") state: " + order.lastStatus;
+            if (order.hasOwnProperty("referenceId")) {
+                orderHtml += " /order has reference '" + order.referenceId + "'/";
+            }
+            if (order.lastStatus === "placed") {
+                orderHtml += ' <a href="#cancel" data-code="' + order.number + '">cancel</a>';
+            } else if (order.lastStatus === "placementConfirmed" || order.lastStatus === "modified") {
+                orderHtml += ' <a href="#modify" data-code="' + order.number + '">modify</a>';
+                orderHtml += ' <a href="#cancel" data-code="' + order.number + '">cancel</a>';
+            }
+            ordersHtml += orderHtml + "<br />";
+        }
+        return ordersHtml;
     }
 
     /**
      * Display orders.
      * @return {void}
      */
-    function displayOrders() {
-        api.orders.getOrders(
+    function displayOrdersActive() {
+        api.orders.getOrdersActive(
             activeAccountNumber,
             "all",
             "",
             function (data) {
-                var ordersHtml = "";
-                var orderHtml;
-                var i;
-                var order;
+                var ordersHtml;
                 if (data.ordersCollection.orders.length === 0) {
                     ordersHtml = "No recent orders found.";
                 } else {
-                    for (i = 0; i < data.ordersCollection.orders.length; i += 1) {
-                        order = data.ordersCollection.orders[i];
-                        orderHtml = '<a href="#order" data-code="' + order.number + '">' + order.number + "</a> " + (
-                            order.hasOwnProperty("side")
-                            ? order.side + " "
-                            : ""
-                        ) + order.quantity + " x " + order.instrument.name + " (expires " + new Date(order.expirationDate).toLocaleDateString() + ") state: " + order.lastStatus;
-                        if (order.hasOwnProperty("referenceId")) {
-                            orderHtml += " /order has reference '" + order.referenceId + "'/";
-                        }
-                        if (order.lastStatus === "placed") {
-                            orderHtml += ' <a href="#cancel" data-code="' + order.number + '">cancel</a>';
-                        } else if (order.lastStatus === "placementConfirmed" || order.lastStatus === "modified") {
-                            orderHtml += ' <a href="#modify" data-code="' + order.number + '">modify</a>';
-                            orderHtml += ' <a href="#cancel" data-code="' + order.number + '">cancel</a>';
-                        }
-                        ordersHtml += orderHtml + "<br />";
-                    }
+                    ordersHtml = generateOrdersList(data);
                 }
-                populateOrdersList(ordersHtml, displayOrders);
+                populateOrdersList(ordersHtml, displayOrdersActive);
+            },
+            apiErrorCallback
+        );
+    }
+
+    /**
+     * Display historical orders.
+     * @return {void}
+     */
+    function displayOrdersHistory() {
+        var date = new Date();
+        var month;
+        var year;
+        // Retrieve orders from last month
+        date.setDate(date.getDate() - 30);
+        month = date.getMonth() + 1;
+        year = date.getFullYear();
+        api.orders.getOrdersHistory(
+            activeAccountNumber,
+            month,
+            year,
+            "",
+            function (data) {
+                var ordersHtml;
+                if (data.ordersCollection.orders.length === 0) {
+                    ordersHtml = "No order history found in month " + month + " of year " + year + ".";
+                } else {
+                    ordersHtml = generateOrdersList(data);
+                }
+                populateOrdersList(ordersHtml, displayOrdersActive);
             },
             apiErrorCallback
         );
@@ -1082,7 +1127,7 @@ $(function () {
                 orderHtml += " /order has reference '" + orderObject.referenceId + "'/";
             }
             currentOrdersHtml = orderHtml + "<br />" + currentOrdersHtml;
-            populateOrdersList(currentOrdersHtml, displayOrders);
+            populateOrdersList(currentOrdersHtml, displayOrdersActive);
         } else {
             window.alert("You just received an order update for another account: " + orderObject.accountNumber);
         }
@@ -1181,13 +1226,13 @@ $(function () {
                     // Replace the object with one without the validationCode
                     $("#idEdtOrderModel").val(JSON.stringify(internalNewOrderObject));
                     if (!streamer.orders.isActive) {
-                        displayOrders();
+                        displayOrdersActive();
                     }
                 },
                 function (error) {
                     // Something went wrong, for example, there is no money to buy something.
                     // However, show the list of orders.
-                    displayOrders();
+                    displayOrdersActive();
                     apiErrorCallback(error);
                 }
             );
@@ -1488,7 +1533,7 @@ $(function () {
      * @return {void}
      */
     function populateLoginUrl() {
-        var websiteUrl = getConfiguration().websiteUrl.replace("{country}", getCultureForLogin().substring(0, 2));
+        var websiteUrl = configurationFromBackend.websiteUrl.replace("{country}", getCultureForLogin().substring(0, 2));
         $("#idLoginUrl").text(api.getLogonUrl(getRealm()));
         $("#idWebsiteUrl").html('<a href="' + websiteUrl + '" target="_blank">' + websiteUrl + "</a>");
     }
@@ -1546,8 +1591,10 @@ $(function () {
                 }, apiErrorCallback);
             });
             $("#idEdtAccountType").val(api.getState().account);
-            $("#idBtnOrders").on("click", displayOrders);
+            $("#idBtnOrdersActive").on("click", displayOrdersActive);
+            $("#idBtnOrdersHistory").on("click", displayOrdersHistory);
             $("#idBtnOrder").on("click", placeOrder);
+            $("#idBtnQuotesBook").on("click", displayOrderBookFeed);
             $("#idBtnQuotesHist").on("click", displayHistoricalQuotes);
             $("#idBtnOrderCosts").on("click", displayOrderCosts);
             $("#idBtnOrderKID").on("click", displayOrderKid);
@@ -1594,7 +1641,7 @@ $(function () {
         configurationFromBackend = configData;
         api = new Api(getConfiguration, newTokenCallback, expirationCounterCallback);
         streamer = new Streamer(
-            getConfiguration,
+            configurationFromBackend.streamerUrl,
             getSubscription,
             quotesCallback,
             newsCallback,
@@ -1603,16 +1650,16 @@ $(function () {
             orderEventsCallback,
             apiStreamerErrorCallback
         );
-        // Not authenticated yet. Hide login stuff.
+        // Not authenticated yet - hide login stuff
         $("#idAuthenticatedPart").hide();
         // Show QR Code, for demo purposes
         document.getElementById("idQrCode").src = "https://chart.googleapis.com/chart?cht=qr&chs=500x500&chl=" + encodeURIComponent(window.location.href);
-        // Authorize.
+        // Authorize
         api.checkState(
             function () {
                 // Not authenticated
                 $("#idEdtRealm").val(getConfiguration().realm);
-                $("#idEnvironment").text(getConfiguration().apiUrl);
+                $("#idEnvironment").text(configurationFromBackend.apiUrl);
                 populateLoginUrl();
                 $("#idEdtCulture").on("change input", populateLoginUrlFromCulture);
                 $("#idEdtAccountType, #idEdtCulture, #idEdtRealm, #idEdtScope").on("change input", populateLoginUrl);
