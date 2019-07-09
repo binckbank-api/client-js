@@ -78,7 +78,11 @@ function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallbac
             }
         };
         console.log("Setup streamer connection");
-        connection = new signalR.HubConnectionBuilder().withUrl(streamerEndpoint + "?accountNumber=" + getSubscription().activeAccountNumber, options).configureLogging(signalR.LogLevel.Information).build();
+        connection = new signalR.HubConnectionBuilder()
+            .withUrl(streamerEndpoint + "?accountNumber=" + getSubscription().activeAccountNumber, options)
+            .configureLogging(signalR.LogLevel.Information)
+            //.withAutomaticReconnect()  // Available from .NET Core 3
+            .build();
         // Configure the callback for quote events:
         connection.on("Quote", quotesCallback);
         // Configure the callback for news events:

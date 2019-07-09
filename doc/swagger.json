@@ -429,7 +429,7 @@
           {
             "name": "id",
             "in": "path",
-            "description": "Ids of the equity to retrieve. If there are multiple ids, seperate them by comma's.",
+            "description": "Ids of the equity to retrieve. If there are multiple ids, separate them by comma's.",
             "required": true,
             "type": "string"
           },
@@ -756,7 +756,7 @@
           {
             "name": "instrumentIds",
             "in": "query",
-            "description": "Optional ids of the instruments to retrieve.\r\nIf there are multiple ids, seperate them by comma's.",
+            "description": "Optional ids of the instruments to retrieve.\r\nIf there are multiple ids, separate them by comma's.",
             "required": false,
             "type": "string"
           },
@@ -1025,7 +1025,7 @@
         "x-scope": "read"
       }
     },
-    "/accounts/{AccountNumber}/orders/{Number}": {
+    "/accounts/{accountNumber}/orders/{number}": {
       "get": {
         "tags": [
           "Orders"
@@ -1040,30 +1040,19 @@
         ],
         "parameters": [
           {
-            "name": "number",
-            "in": "query",
+            "name": "accountNumber",
+            "in": "path",
+            "description": "The account number used to register the order.",
             "required": true,
             "type": "string"
           },
           {
             "name": "number",
-            "in": "query",
+            "in": "path",
+            "description": "The order number for this account.",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "ordersQueryParams.accountNumber",
-            "in": "query",
-            "description": "Mandatory Account Number",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "ordersQueryParams.number",
-            "in": "query",
-            "description": "Mandatory Order number",
-            "required": true,
-            "type": "string"
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "responses": {
@@ -1102,9 +1091,7 @@
         "x-throttling-tier": "Unlimited",
         "x-auth-type": "Application & Application User",
         "x-scope": "read"
-      }
-    },
-    "/accounts/{accountNumber}/orders/{number}": {
+      },
       "delete": {
         "tags": [
           "Orders"
@@ -1523,7 +1510,7 @@
         ],
         "summary": "Gets the financial performance information for an account, per year.",
         "description": "Only applicable for the years the account was active.",
-        "operationId": "Performances_GetPerformances",
+        "operationId": "Performances_GetPerformance",
         "consumes": [],
         "produces": [
           "application/json",
@@ -1743,7 +1730,7 @@
           {
             "name": "instrumentIds",
             "in": "query",
-            "description": "Ids of the instruments to retrieve. If there are multiple ids, seperate them by comma's.",
+            "description": "Ids of the instruments to retrieve. If there are multiple ids, separate them by comma's.",
             "required": true,
             "type": "string"
           },
@@ -2165,16 +2152,8 @@
             }
           }
         },
-        "security": [
-          {
-            "oauth2": [
-              ""
-            ]
-          }
-        ],
         "x-throttling-tier": "Unlimited",
-        "x-auth-type": "None",
-        "x-scope": ""
+        "x-auth-type": "None"
       }
     }
   },
@@ -2312,7 +2291,7 @@
             "sessionExpiredMaxDuration",
             "sessionExpiredMaxInactivity",
             "sessionInvalid",
-            "faildToCreateAmSession",
+            "failedToCreateSession",
             "orderNumberIsIncorrect",
             "hashIdError",
             "productNotEnabled",
@@ -3019,7 +2998,7 @@
           "type": "string"
         },
         "instrumentIds": {
-          "description": "Optional ids of the instruments to retrieve.\r\nIf there are multiple ids, seperate them by comma's.",
+          "description": "Optional ids of the instruments to retrieve.\r\nIf there are multiple ids, separate them by comma's.",
           "type": "string"
         }
       }
@@ -3343,7 +3322,7 @@
           "type": "string"
         },
         "condition": {
-          "description": "Pay or receive condition, only applicable for multileg orders",
+          "description": "Pay or receive condition, only applicable for multi-leg orders",
           "enum": [
             "pay",
             "receive"
@@ -3646,24 +3625,6 @@
         }
       }
     },
-    "OrdersQueryParams": {
-      "description": "GetOrders query parameters model",
-      "required": [
-        "accountNumber",
-        "number"
-      ],
-      "type": "object",
-      "properties": {
-        "accountNumber": {
-          "description": "Mandatory Account Number",
-          "type": "string"
-        },
-        "number": {
-          "description": "Mandatory Order number",
-          "type": "string"
-        }
-      }
-    },
     "ModifyOrderModel": {
       "description": "Modify order model",
       "required": [
@@ -3720,7 +3681,7 @@
         },
         "expectedExpirationDate": {
           "format": "date-time",
-          "description": "For GTD en GTC orders the enddate will be limited to about 2 weeks maximum",
+          "description": "For GTD en GTC orders the end date will be limited to about 2 weeks maximum",
           "type": "string"
         },
         "positionEffect": {
@@ -3729,7 +3690,7 @@
         },
         "effectOnSpendingLimit": {
           "format": "double",
-          "description": "Effect of a succesfully placed order on the spending limit of the account",
+          "description": "Effect of a successfully placed order on the spending limit of the account",
           "type": "number"
         },
         "currentSpendingLimit": {
@@ -4222,7 +4183,7 @@
           "type": "string"
         },
         "instrumentIds": {
-          "description": "Ids of the instruments to retrieve. If there are multiple ids, seperate them by comma's.",
+          "description": "Ids of the instruments to retrieve. If there are multiple ids, separate them by comma's.",
           "type": "string"
         },
         "level": {
@@ -4645,7 +4606,7 @@
       }
     },
     "SessionModel": {
-      "description": "Session information used by internal applications to replace the login and retrieve the Topline session id for the default account",
+      "description": "Session information used by internal applications to replace the login and retrieve the session id for the default account",
       "required": [
         "accountNumber",
         "internalSessionId"
@@ -5050,22 +5011,22 @@
       "authorizationUrl": "https://login.sandbox.binck.com/am/oauth2/realms/{realm}/authorize",
       "tokenUrl": "https://login.sandbox.binck.com/am/oauth2/realms/{realm}/access_token",
       "scopes": {
-        "Read": "Read access to account(s) with portfolio.",
-        "Write": "Access to ordering.",
-        "Internal": "Internal use.",
-        "News": "Access to news.",
-        "Quotes": "Access to quotes."
+        "read": "Read access to account(s) with portfolio.",
+        "write": "Access to ordering.",
+        "internal": "Internal use.",
+        "news": "Access to news.",
+        "quotes": "Access to quotes."
       }
     }
   },
   "security": [
     {
       "oauth2": [
-        "Read",
-        "Write",
-        "Internal",
-        "News",
-        "Quotes"
+        "read",
+        "write",
+        "internal",
+        "news",
+        "quotes"
       ]
     }
   ],
@@ -5073,31 +5034,31 @@
     "apim": {
       "x-wso2-scopes": [
         {
-          "name": "Read",
+          "name": "read",
           "description": "",
           "key": "read",
           "roles": ""
         },
         {
-          "name": "Write",
+          "name": "write",
           "description": "",
           "key": "write",
           "roles": ""
         },
         {
-          "name": "Internal",
+          "name": "internal",
           "description": "",
           "key": "internal",
           "roles": ""
         },
         {
-          "name": "News",
+          "name": "news",
           "description": "",
           "key": "news",
           "roles": ""
         },
         {
-          "name": "Quotes",
+          "name": "quotes",
           "description": "",
           "key": "quotes",
           "roles": ""

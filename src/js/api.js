@@ -48,7 +48,13 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
          * @return {Object} The constructed header, to be sent with a request.
          */
         function getAccessHeader() {
-            if (accessToken === "" && urlParams !== "version") {
+            var header = {
+                "Accept": "application/json; charset=utf-8"
+            };
+            if (urlParams === "version") {
+                return header;
+            }
+            if (accessToken === "") {
                 throw "Not logged in.";
             }
             if (new Date() > accessTokenExpirationTime) {
@@ -57,10 +63,8 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
                 window.clearTimeout(accessTokenRefreshTimer);
                 apiObject.navigateToLoginPage(apiObject.getState().realm);
             }
-            return {
-                "Accept": "application/json; charset=utf-8",
-                "Authorization": "Bearer " + accessToken
-            };
+            header.Authorization = "Bearer " + accessToken;
+            return header;
         }
 
         /**
