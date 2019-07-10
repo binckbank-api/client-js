@@ -127,6 +127,10 @@ function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallbac
      */
     this.start = function (startedCallback) {
 
+        /**
+         * This function is called after connecting.
+         * @return {void}
+         */
         function reactivateSubscriptions() {
             streamerObject.isConnected = true;
             if (streamerObject.quotes.hasSubscriptionsToBeActivated()) {
@@ -158,6 +162,10 @@ function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallbac
      */
     this.extendSubscriptions = function () {
 
+        /**
+         * This function is called after subscription has been extended.
+         * @return {void}
+         */
         function logRefreshTime() {
             var currentTime = new Date();
             // Session is extended with 60 minutes
@@ -175,17 +183,23 @@ function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallbac
 
     /**
      * Stop the connection.
-     * @param {function()} stoppedCallback When successful, this function is called.
+     * @param {function()=} stoppedCallback When successful, this function is called.
      * @return {void}
      */
     this.stop = function (stoppedCallback) {
 
+        /**
+         * This function is called after stopping the connection.
+         * @return {void}
+         */
         function deActivateStreamerObjects() {
             console.log("Streamer stopped.");
             streamerObject.news.isActivated = false;
             streamerObject.orders.isActivated = false;
             streamerObject.isConnected = false;
-            stoppedCallback();
+            if (stoppedCallback !== undefined) {
+                stoppedCallback();
+            }
         }
 
         console.log("Stopping streamer..");
