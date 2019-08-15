@@ -829,20 +829,20 @@
             "type": "string"
           },
           {
-            "name": "range",
-            "in": "query",
-            "description": "Paging parameter to retrieve a subset of the complete collection. Format is &lt;offset&gt;-&lt;limit&gt;. \r\nBoth values are an offset from the first entry of the complete collection. The first entry has offset '0'.\r\n(e.g. 12-21)",
-            "required": false,
-            "type": "string",
-            "pattern": "[0-9]+-[0-9]*"
-          },
-          {
             "name": "status",
             "in": "query",
             "description": "'all' will select all the orders. Other possible values are 'open', 'executed' and 'canceled'.",
             "required": false,
             "type": "string",
             "pattern": "^all$|^open$|^executed$|^canceled$"
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "description": "Paging parameter to retrieve a subset of the complete collection. Format is &lt;offset&gt;-&lt;limit&gt;. \r\nBoth values are an offset from the first entry of the complete collection. The first entry has offset '0'.\r\n(e.g. 12-21)",
+            "required": false,
+            "type": "string",
+            "pattern": "[0-9]+-[0-9]*"
           }
         ],
         "responses": {
@@ -969,14 +969,6 @@
             "type": "string"
           },
           {
-            "name": "range",
-            "in": "query",
-            "description": "Paging parameter to retrieve a subset of the complete collection. Format is &lt;offset&gt;-&lt;limit&gt;. \r\nBoth values are an offset from the first entry of the complete collection. The first entry has offset '0'.\r\n(e.g. 12-21)",
-            "required": false,
-            "type": "string",
-            "pattern": "[0-9]+-[0-9]*"
-          },
-          {
             "name": "year",
             "in": "query",
             "description": "The year for which the historical orders should be retrieved",
@@ -991,6 +983,14 @@
             "required": true,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "description": "Paging parameter to retrieve a subset of the complete collection. Format is &lt;offset&gt;-&lt;limit&gt;. \r\nBoth values are an offset from the first entry of the complete collection. The first entry has offset '0'.\r\n(e.g. 12-21)",
+            "required": false,
+            "type": "string",
+            "pattern": "[0-9]+-[0-9]*"
           }
         ],
         "responses": {
@@ -2488,6 +2488,7 @@
         "currency",
         "priceDecimals",
         "tickerSymbol",
+        "isTradable",
         "isKidApplicable",
         "hasOptions",
         "hasFutures",
@@ -2561,6 +2562,10 @@
           "$ref": "#/definitions/BondInfoModel",
           "description": "Bond only information"
         },
+        "leveragedProduct": {
+          "$ref": "#/definitions/LeveragedProductInformationModel",
+          "description": "Leveraged Product information"
+        },
         "currency": {
           "description": "Currency of the instrument",
           "type": "string"
@@ -2573,6 +2578,10 @@
         "tickerSymbol": {
           "description": "Ticker symbol of the instrument",
           "type": "string"
+        },
+        "isTradable": {
+          "description": "Indicates if orders for this instrument can be processed",
+          "type": "boolean"
         },
         "isKidApplicable": {
           "description": "Indicates whether KID document must be shown before placing an order",
@@ -2656,6 +2665,62 @@
       "description": "Bond information\r\nIntentionally left empty",
       "type": "object",
       "properties": {}
+    },
+    "LeveragedProductInformationModel": {
+      "description": "Leveraged product information",
+      "type": "object",
+      "properties": {
+        "bonus": {
+          "format": "double",
+          "description": "Bonus",
+          "type": "number"
+        },
+        "cap": {
+          "format": "double",
+          "description": "Cap",
+          "type": "number"
+        },
+        "endedDateTime": {
+          "format": "date-time",
+          "description": "Enddate and time",
+          "type": "string"
+        },
+        "exchangeRatio": {
+          "format": "double",
+          "description": "Exchange ratio",
+          "type": "number"
+        },
+        "financingLevel": {
+          "format": "double",
+          "description": "Financing level",
+          "type": "number"
+        },
+        "leverage": {
+          "format": "double",
+          "description": "Leverage",
+          "type": "number"
+        },
+        "remainingValue": {
+          "format": "double",
+          "description": "Remaining Value",
+          "type": "number"
+        },
+        "stopLossLevel": {
+          "format": "double",
+          "description": "Stoploss minimum",
+          "type": "number"
+        },
+        "stopLossLevel2": {
+          "format": "double",
+          "description": "Stoploss maximum",
+          "type": "number"
+        },
+        "strike": {
+          "format": "double",
+          "description": "Strike value",
+          "type": "number"
+        }
+      }
     },
     "TickSizesModel": {
       "description": "Collection of TickSize steps used in the Instrument Model",
