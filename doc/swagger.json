@@ -2343,18 +2343,19 @@
       "required": [
         "assetsTotalValue",
         "cashBalance",
-        "portfolioValue"
+        "portfolioValue",
+        "cashBalancesCollection"
       ],
       "type": "object",
       "properties": {
         "assetsTotalValue": {
           "format": "double",
-          "description": "Assets total value",
+          "description": "Assets total value in Euro",
           "type": "number"
         },
         "cashBalance": {
           "format": "double",
-          "description": "Cash balance",
+          "description": "Total cash balance in Euro",
           "type": "number"
         },
         "portfolioValue": {
@@ -2370,6 +2371,42 @@
         "availableSpendingLimitSrd": {
           "format": "double",
           "description": "Spending power for SRD",
+          "type": "number"
+        },
+        "cashBalancesCollection": {
+          "$ref": "#/definitions/CashBalancesCollectionModel",
+          "description": "Collection of one or more cash accounts per currency"
+        }
+      }
+    },
+    "CashBalancesCollectionModel": {
+      "description": "Collection of one or more money accounts - always the cash of the base currency and if available Dollar, and/or other money accounts.",
+      "type": "object",
+      "properties": {
+        "cashBalances": {
+          "description": "CashBalances collection",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CashBalanceModel"
+          }
+        }
+      }
+    },
+    "CashBalanceModel": {
+      "description": "Cash balance containing the balance for the Euro account, and if available, other cash balances",
+      "required": [
+        "currency",
+        "cashBalance"
+      ],
+      "type": "object",
+      "properties": {
+        "currency": {
+          "description": "The currency",
+          "type": "string"
+        },
+        "cashBalance": {
+          "format": "double",
+          "description": "Cash balance",
           "type": "number"
         }
       }
@@ -2563,7 +2600,7 @@
           "description": "Bond only information"
         },
         "leveragedProduct": {
-          "$ref": "#/definitions/LeveragedProductInformationModel",
+          "$ref": "#/definitions/LeveragedProductInfoModel",
           "description": "Leveraged Product information"
         },
         "currency": {
@@ -2666,7 +2703,7 @@
       "type": "object",
       "properties": {}
     },
-    "LeveragedProductInformationModel": {
+    "LeveragedProductInfoModel": {
       "description": "Leveraged product information",
       "type": "object",
       "properties": {
