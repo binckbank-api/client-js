@@ -23,7 +23,7 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
     /** @type {Date} */
     var accessTokenExpirationTime;
     /** @type {number} */
-    var accessTokenExpirationTimer;  // Show the time left the token is active, for debug purposes.
+    var accessTokenExpirationTimer = null;  // Show the time left the token is active, for debug purposes.
     /** @type {number} */
     var accessTokenRefreshTimer;  // Request a new token just before the token expires.
     // CSRF-token is optional but highly recommended. You should store the value of this (CSRF) token in the users session to be validated when they return.
@@ -260,20 +260,22 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
         accessTokenExpirationTime = new Date();
         accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + expiresInSeconds);
         console.log("New token will expire at " + accessTokenExpirationTime.toLocaleString());
-        // Start a timer, to log the time until expiration - for debug purposes, not for production.
-        accessTokenExpirationTimer = window.setInterval(
-            function () {
-                var difference = accessTokenExpirationTime - new Date();
-                var minutesTillExpiration = Math.round(difference / 1000 / 60);
-                if (difference > 0) {
-                    expirationCounterCallback(minutesTillExpiration);
-                } else {
-                    console.log("Token expired.");
-                    window.clearInterval(accessTokenExpirationTimer);
-                }
-            },
-            60 * 1000
-        );
+        // Start a timer once, to log the time until expiration - for debug purposes, not for production.
+        if (accessTokenExpirationTimer === null) {
+            accessTokenExpirationTimer = window.setInterval(
+                function () {
+                    var difference = accessTokenExpirationTime - new Date();
+                    var minutesTillExpiration = Math.round(difference / 1000 / 60);
+                    if (difference > 0) {
+                        expirationCounterCallback(minutesTillExpiration);
+                    } else {
+                        console.log("Token expired.");
+                        window.clearInterval(accessTokenExpirationTimer);
+                    }
+                },
+                60 * 1000
+            );
+        }
     }
 
     /**

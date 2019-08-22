@@ -74,6 +74,8 @@ function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallbac
             accessTokenFactory: function () {
                 var accessToken = getSubscription().accessToken;
                 console.log("AccessToken used in streamer request: " + accessToken);
+                // If you are here looking for the reason your connection is disconnected right after connecting,
+                // you might check your token. It should only contain the codes separated by hyphens (no "Bearer " as postfix).
                 return accessToken;
             }
         };
