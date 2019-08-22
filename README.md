@@ -41,13 +41,14 @@ The API team at Binck will create a new clientId and secret with the requested p
 
 Request access to the OpenApi with [this form](https://forms.office.com/Pages/ResponsePage.aspx?id=nKeZuuhuoEGdeKUD8EWjg11k67ZtZP5HvG9oP_FLXKxUQjVBUUlSUUxWQk1YNEhJVkNUSDhGTVI4SC4u "Form to request a client able to connect with the OpenApi").
 
-Documentation can be found on [developers.binck.com](https://developers.binck.com "OpenApi endpoint description").
+Documentation of the individual endpoints can be found on [developers.binck.com](https://developers.binck.com "OpenApi endpoint description").
 
 Example code and login guide can be found on Github. Great, you are here.
 
 Releases are communicated via Twitter handle [@BinckOpenApi](https://twitter.com/BinckOpenapi "BinckOpenApi on Twitter").
 
-Twitter can be used for questions, or our email address [openapi@binck.nl](mailto:openapi@binck.nl "OpenApi email support").
+Twitter can be used for questions, or our email address [openapi@binck.nl](mailto:openapi@binck.nl "OpenApi email support").\
+Some questions already have an answer in the [Wiki](https://github.com/binckbank-api/client-js/wiki "GitHub Wiki").
 
 ## <a name="logon"></a>Sign in to Binck API using OAuth2
 

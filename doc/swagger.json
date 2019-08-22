@@ -429,7 +429,7 @@
           {
             "name": "id",
             "in": "path",
-            "description": "Ids of the equity to retrieve. If there are multiple ids, seperate them by comma's.",
+            "description": "Ids of the equity to retrieve. If there are multiple ids, separate them by comma's.",
             "required": true,
             "type": "string"
           },
@@ -756,7 +756,7 @@
           {
             "name": "instrumentIds",
             "in": "query",
-            "description": "Optional ids of the instruments to retrieve.\r\nIf there are multiple ids, seperate them by comma's.",
+            "description": "Optional ids of the instruments to retrieve.\r\nIf there are multiple ids, separate them by comma's.",
             "required": false,
             "type": "string"
           },
@@ -829,20 +829,20 @@
             "type": "string"
           },
           {
-            "name": "range",
-            "in": "query",
-            "description": "Paging parameter to retrieve a subset of the complete collection. Format is &lt;offset&gt;-&lt;limit&gt;. \r\nBoth values are an offset from the first entry of the complete collection. The first entry has offset '0'.\r\n(e.g. 12-21)",
-            "required": false,
-            "type": "string",
-            "pattern": "[0-9]+-[0-9]*"
-          },
-          {
             "name": "status",
             "in": "query",
             "description": "'all' will select all the orders. Other possible values are 'open', 'executed' and 'canceled'.",
             "required": false,
             "type": "string",
             "pattern": "^all$|^open$|^executed$|^canceled$"
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "description": "Paging parameter to retrieve a subset of the complete collection. Format is &lt;offset&gt;-&lt;limit&gt;. \r\nBoth values are an offset from the first entry of the complete collection. The first entry has offset '0'.\r\n(e.g. 12-21)",
+            "required": false,
+            "type": "string",
+            "pattern": "[0-9]+-[0-9]*"
           }
         ],
         "responses": {
@@ -969,14 +969,6 @@
             "type": "string"
           },
           {
-            "name": "range",
-            "in": "query",
-            "description": "Paging parameter to retrieve a subset of the complete collection. Format is &lt;offset&gt;-&lt;limit&gt;. \r\nBoth values are an offset from the first entry of the complete collection. The first entry has offset '0'.\r\n(e.g. 12-21)",
-            "required": false,
-            "type": "string",
-            "pattern": "[0-9]+-[0-9]*"
-          },
-          {
             "name": "year",
             "in": "query",
             "description": "The year for which the historical orders should be retrieved",
@@ -991,6 +983,14 @@
             "required": true,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "description": "Paging parameter to retrieve a subset of the complete collection. Format is &lt;offset&gt;-&lt;limit&gt;. \r\nBoth values are an offset from the first entry of the complete collection. The first entry has offset '0'.\r\n(e.g. 12-21)",
+            "required": false,
+            "type": "string",
+            "pattern": "[0-9]+-[0-9]*"
           }
         ],
         "responses": {
@@ -1025,7 +1025,7 @@
         "x-scope": "read"
       }
     },
-    "/accounts/{AccountNumber}/orders/{Number}": {
+    "/accounts/{accountNumber}/orders/{number}": {
       "get": {
         "tags": [
           "Orders"
@@ -1040,30 +1040,19 @@
         ],
         "parameters": [
           {
-            "name": "number",
-            "in": "query",
+            "name": "accountNumber",
+            "in": "path",
+            "description": "The account number used to register the order.",
             "required": true,
             "type": "string"
           },
           {
             "name": "number",
-            "in": "query",
+            "in": "path",
+            "description": "The order number for this account.",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "ordersQueryParams.accountNumber",
-            "in": "query",
-            "description": "Mandatory Account Number",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "ordersQueryParams.number",
-            "in": "query",
-            "description": "Mandatory Order number",
-            "required": true,
-            "type": "string"
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "responses": {
@@ -1102,9 +1091,7 @@
         "x-throttling-tier": "Unlimited",
         "x-auth-type": "Application & Application User",
         "x-scope": "read"
-      }
-    },
-    "/accounts/{accountNumber}/orders/{number}": {
+      },
       "delete": {
         "tags": [
           "Orders"
@@ -1523,7 +1510,7 @@
         ],
         "summary": "Gets the financial performance information for an account, per year.",
         "description": "Only applicable for the years the account was active.",
-        "operationId": "Performances_GetPerformances",
+        "operationId": "Performances_GetPerformance",
         "consumes": [],
         "produces": [
           "application/json",
@@ -1743,7 +1730,7 @@
           {
             "name": "instrumentIds",
             "in": "query",
-            "description": "Ids of the instruments to retrieve. If there are multiple ids, seperate them by comma's.",
+            "description": "Ids of the instruments to retrieve. If there are multiple ids, separate them by comma's.",
             "required": true,
             "type": "string"
           },
@@ -2165,16 +2152,8 @@
             }
           }
         },
-        "security": [
-          {
-            "oauth2": [
-              ""
-            ]
-          }
-        ],
         "x-throttling-tier": "Unlimited",
-        "x-auth-type": "None",
-        "x-scope": ""
+        "x-auth-type": "None"
       }
     }
   },
@@ -2312,7 +2291,7 @@
             "sessionExpiredMaxDuration",
             "sessionExpiredMaxInactivity",
             "sessionInvalid",
-            "faildToCreateAmSession",
+            "failedToCreateSession",
             "orderNumberIsIncorrect",
             "hashIdError",
             "productNotEnabled",
@@ -2364,18 +2343,19 @@
       "required": [
         "assetsTotalValue",
         "cashBalance",
-        "portfolioValue"
+        "portfolioValue",
+        "cashBalancesCollection"
       ],
       "type": "object",
       "properties": {
         "assetsTotalValue": {
           "format": "double",
-          "description": "Assets total value",
+          "description": "Assets total value in Euro",
           "type": "number"
         },
         "cashBalance": {
           "format": "double",
-          "description": "Cash balance",
+          "description": "Total cash balance in Euro",
           "type": "number"
         },
         "portfolioValue": {
@@ -2391,6 +2371,42 @@
         "availableSpendingLimitSrd": {
           "format": "double",
           "description": "Spending power for SRD",
+          "type": "number"
+        },
+        "cashBalancesCollection": {
+          "$ref": "#/definitions/CashBalancesCollectionModel",
+          "description": "Collection of one or more cash accounts per currency"
+        }
+      }
+    },
+    "CashBalancesCollectionModel": {
+      "description": "Collection of one or more money accounts - always the cash of the base currency and if available Dollar, and/or other money accounts.",
+      "type": "object",
+      "properties": {
+        "cashBalances": {
+          "description": "CashBalances collection",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CashBalanceModel"
+          }
+        }
+      }
+    },
+    "CashBalanceModel": {
+      "description": "Cash balance containing the balance for the Euro account, and if available, other cash balances",
+      "required": [
+        "currency",
+        "cashBalance"
+      ],
+      "type": "object",
+      "properties": {
+        "currency": {
+          "description": "The currency",
+          "type": "string"
+        },
+        "cashBalance": {
+          "format": "double",
+          "description": "Cash balance",
           "type": "number"
         }
       }
@@ -2509,6 +2525,7 @@
         "currency",
         "priceDecimals",
         "tickerSymbol",
+        "isTradable",
         "isKidApplicable",
         "hasOptions",
         "hasFutures",
@@ -2582,6 +2599,10 @@
           "$ref": "#/definitions/BondInfoModel",
           "description": "Bond only information"
         },
+        "leveragedProduct": {
+          "$ref": "#/definitions/LeveragedProductInfoModel",
+          "description": "Leveraged Product information"
+        },
         "currency": {
           "description": "Currency of the instrument",
           "type": "string"
@@ -2594,6 +2615,10 @@
         "tickerSymbol": {
           "description": "Ticker symbol of the instrument",
           "type": "string"
+        },
+        "isTradable": {
+          "description": "Indicates if orders for this instrument can be processed",
+          "type": "boolean"
         },
         "isKidApplicable": {
           "description": "Indicates whether KID document must be shown before placing an order",
@@ -2677,6 +2702,62 @@
       "description": "Bond information\r\nIntentionally left empty",
       "type": "object",
       "properties": {}
+    },
+    "LeveragedProductInfoModel": {
+      "description": "Leveraged product information",
+      "type": "object",
+      "properties": {
+        "bonus": {
+          "format": "double",
+          "description": "Bonus",
+          "type": "number"
+        },
+        "cap": {
+          "format": "double",
+          "description": "Cap",
+          "type": "number"
+        },
+        "endedDateTime": {
+          "format": "date-time",
+          "description": "Enddate and time",
+          "type": "string"
+        },
+        "exchangeRatio": {
+          "format": "double",
+          "description": "Exchange ratio",
+          "type": "number"
+        },
+        "financingLevel": {
+          "format": "double",
+          "description": "Financing level",
+          "type": "number"
+        },
+        "leverage": {
+          "format": "double",
+          "description": "Leverage",
+          "type": "number"
+        },
+        "remainingValue": {
+          "format": "double",
+          "description": "Remaining Value",
+          "type": "number"
+        },
+        "stopLossLevel": {
+          "format": "double",
+          "description": "Stoploss minimum",
+          "type": "number"
+        },
+        "stopLossLevel2": {
+          "format": "double",
+          "description": "Stoploss maximum",
+          "type": "number"
+        },
+        "strike": {
+          "format": "double",
+          "description": "Strike value",
+          "type": "number"
+        }
+      }
     },
     "TickSizesModel": {
       "description": "Collection of TickSize steps used in the Instrument Model",
@@ -3019,7 +3100,7 @@
           "type": "string"
         },
         "instrumentIds": {
-          "description": "Optional ids of the instruments to retrieve.\r\nIf there are multiple ids, seperate them by comma's.",
+          "description": "Optional ids of the instruments to retrieve.\r\nIf there are multiple ids, separate them by comma's.",
           "type": "string"
         }
       }
@@ -3343,7 +3424,7 @@
           "type": "string"
         },
         "condition": {
-          "description": "Pay or receive condition, only applicable for multileg orders",
+          "description": "Pay or receive condition, only applicable for multi-leg orders",
           "enum": [
             "pay",
             "receive"
@@ -3646,24 +3727,6 @@
         }
       }
     },
-    "OrdersQueryParams": {
-      "description": "GetOrders query parameters model",
-      "required": [
-        "accountNumber",
-        "number"
-      ],
-      "type": "object",
-      "properties": {
-        "accountNumber": {
-          "description": "Mandatory Account Number",
-          "type": "string"
-        },
-        "number": {
-          "description": "Mandatory Order number",
-          "type": "string"
-        }
-      }
-    },
     "ModifyOrderModel": {
       "description": "Modify order model",
       "required": [
@@ -3720,7 +3783,7 @@
         },
         "expectedExpirationDate": {
           "format": "date-time",
-          "description": "For GTD en GTC orders the enddate will be limited to about 2 weeks maximum",
+          "description": "For GTD en GTC orders the end date will be limited to about 2 weeks maximum",
           "type": "string"
         },
         "positionEffect": {
@@ -3729,7 +3792,7 @@
         },
         "effectOnSpendingLimit": {
           "format": "double",
-          "description": "Effect of a succesfully placed order on the spending limit of the account",
+          "description": "Effect of a successfully placed order on the spending limit of the account",
           "type": "number"
         },
         "currentSpendingLimit": {
@@ -4222,7 +4285,7 @@
           "type": "string"
         },
         "instrumentIds": {
-          "description": "Ids of the instruments to retrieve. If there are multiple ids, seperate them by comma's.",
+          "description": "Ids of the instruments to retrieve. If there are multiple ids, separate them by comma's.",
           "type": "string"
         },
         "level": {
@@ -4645,7 +4708,7 @@
       }
     },
     "SessionModel": {
-      "description": "Session information used by internal applications to replace the login and retrieve the Topline session id for the default account",
+      "description": "Session information used by internal applications to replace the login and retrieve the session id for the default account",
       "required": [
         "accountNumber",
         "internalSessionId"
@@ -5050,22 +5113,22 @@
       "authorizationUrl": "https://login.sandbox.binck.com/am/oauth2/realms/{realm}/authorize",
       "tokenUrl": "https://login.sandbox.binck.com/am/oauth2/realms/{realm}/access_token",
       "scopes": {
-        "Read": "Read access to account(s) with portfolio.",
-        "Write": "Access to ordering.",
-        "Internal": "Internal use.",
-        "News": "Access to news.",
-        "Quotes": "Access to quotes."
+        "read": "Read access to account(s) with portfolio.",
+        "write": "Access to ordering.",
+        "internal": "Internal use.",
+        "news": "Access to news.",
+        "quotes": "Access to quotes."
       }
     }
   },
   "security": [
     {
       "oauth2": [
-        "Read",
-        "Write",
-        "Internal",
-        "News",
-        "Quotes"
+        "read",
+        "write",
+        "internal",
+        "news",
+        "quotes"
       ]
     }
   ],
@@ -5073,31 +5136,31 @@
     "apim": {
       "x-wso2-scopes": [
         {
-          "name": "Read",
+          "name": "read",
           "description": "",
           "key": "read",
           "roles": ""
         },
         {
-          "name": "Write",
+          "name": "write",
           "description": "",
           "key": "write",
           "roles": ""
         },
         {
-          "name": "Internal",
+          "name": "internal",
           "description": "",
           "key": "internal",
           "roles": ""
         },
         {
-          "name": "News",
+          "name": "news",
           "description": "",
           "key": "news",
           "roles": ""
         },
         {
-          "name": "Quotes",
+          "name": "quotes",
           "description": "",
           "key": "quotes",
           "roles": ""

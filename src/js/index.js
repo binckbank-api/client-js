@@ -432,12 +432,21 @@ $(function () {
             activeAccountNumber,
             function (data) {
                 var balance = data.balancesCollection.balances[0];
+                var cashBalance;
+                var i;
                 var balanceHtml = " - balance: " + currencyCodeToSymbol(data.balancesCollection.currency) + " " + balance.assetsTotalValue.toFixed(2) + ", spending limit: " + balance.availableSpendingLimit.toFixed(2);
                 if (balance.hasOwnProperty("availableSpendingLimitSrd")) {
                     // Only available when customer is allowed to trade in SRD.
                     balanceHtml += ", spending limit SRD: " + balance.availableSpendingLimitSrd.toFixed(2);
                 }
-                $("#idBalances").text(balanceHtml);
+                if (balance.cashBalancesCollection.cashBalances.length > 1) {
+                    balanceHtml += "<br />Money accounts: ";
+                    for (i = 0; i < balance.cashBalancesCollection.cashBalances.length; i += 1) {
+                        cashBalance = balance.cashBalancesCollection.cashBalances[i];
+                        balanceHtml += " " + currencyCodeToSymbol(cashBalance.currency) + " " + cashBalance.cashBalance.toFixed(2);
+                    }
+                }
+                $("#idBalances").html(balanceHtml);
             },
             apiErrorCallback
         );
@@ -940,54 +949,48 @@ $(function () {
     }
 
     /**
-     * Display quotes from the last 6 months.
+     * Display quotes from the last 6 months, year, etc.
      * @return {void}
      */
     function displayHistoricalQuotes() {
 
-    /**
-     * Add history to the list.
-     * @param {Object} data The response object of the quotes endpoint.
-     * @param {Object} targetElm The element where to show the data.
-     * @return {void}
-     */
-        function internalDisplayHistoricalQuotes(data, targetElm) {
-            var historicalQuotesHtml = "";
-            var i;
-            var historicalQuote;
-            for (i = 0; i < data.historicalQuotesCollection.historicalQuotes.length; i += 1) {
-                historicalQuote = data.historicalQuotesCollection.historicalQuotes[i];
-                historicalQuotesHtml += historicalQuote.last + " (" + historicalQuote.cumVol + ") @ " + new Date(historicalQuote.dateTime).toLocaleString() + "<br />";
-            }
-            targetElm.html(historicalQuotesHtml);
+        /**
+         * Add history to the list.
+         * @param {Date} fromDateTime The date of the first quotes. Can be today.
+         * @param {string} interval The frequency of the quotes (OneMinute, FiveMinutes, TenMinutes, FifteenMinutes, OneHour, OneDay, OneWeek, OneMonth), to save bandwidth.
+         * @param {Object} targetElm The element where to show the data.
+         * @return {void}
+         */
+        function internalDisplayHistoricalQuotes(fromDateTime, interval, targetElm) {
+            api.quotes.getHistoricalQuotes(
+                activeAccountNumber,
+                activeInstrument.id,
+                fromDateTime,
+                null,
+                interval,
+                function (data) {
+                    var historicalQuotesHtml = "";
+                    var i;
+                    var historicalQuote;
+                    for (i = 0; i < data.historicalQuotesCollection.historicalQuotes.length; i += 1) {
+                        historicalQuote = data.historicalQuotesCollection.historicalQuotes[i];
+                        historicalQuotesHtml += historicalQuote.last + " (" + historicalQuote.cumVol + ") @ " + new Date(historicalQuote.dateTime).toLocaleString() + "<br />";
+                    }
+                    targetElm.html(historicalQuotesHtml);
+                },
+                apiErrorCallback
+            );
         }
 
         var sixMonthsBack = new Date();
         var twoDaysBack = new Date();
-        sixMonthsBack.setMonth(sixMonthsBack.getMonth() - 6);
-        api.quotes.getHistoricalQuotes(
-            activeAccountNumber,
-            activeInstrument.id,
-            sixMonthsBack,
-            null,  // Until now
-            "OneWeek",  // Group by 1 week
-            function (data) {
-                internalDisplayHistoricalQuotes(data, $("#idHistoricalQuotesForInstrumentWeek"));
-            },
-            apiErrorCallback
-        );
+        var tenYearsBack = new Date();
         twoDaysBack.setDate(twoDaysBack.getDate() - 2);
-        api.quotes.getHistoricalQuotes(
-            activeAccountNumber,
-            activeInstrument.id,
-            twoDaysBack,
-            null,  // Until now
-            "fifteenMinutes",  // Group by 15 minutes
-            function (data) {
-                internalDisplayHistoricalQuotes(data, $("#idHistoricalQuotesForInstrumentQuarter"));
-            },
-            apiErrorCallback
-        );
+        internalDisplayHistoricalQuotes(twoDaysBack, "fifteenMinutes", $("#idHistoricalQuotesForInstrumentQuarter"));
+        tenYearsBack.setFullYear(tenYearsBack.getFullYear() - 10);
+        internalDisplayHistoricalQuotes(tenYearsBack, "oneDay", $("#idHistoricalQuotesForInstrumentDay"));
+        sixMonthsBack.setMonth(sixMonthsBack.getMonth() - 6);
+        internalDisplayHistoricalQuotes(sixMonthsBack, "OneWeek", $("#idHistoricalQuotesForInstrumentWeek"));
         // Get all current quotes, to show the settlement price and open interest of a future for example
         api.quotes.getLatestQuotes(activeAccountNumber, [activeInstrument.id], "tradesBidAsk", function (data) {
             console.log(data.quotesCollection.quotes);
@@ -1633,6 +1636,31 @@ $(function () {
     }
 
     /**
+     * Make sure there are times shown in the console logging.
+     * @return {void}
+     */
+    function prefixConsoleLog() {
+
+        /**
+         * Prefix a number with zero's, so times are displayed as 09:31:02.
+         * @param {number} num The number to be padded.
+         * @param {number} size How much zero's to add to the number (when 2: 4 will be 04 and 12 remains 12).
+         * @return {string} The padded number
+         */
+        function pad(num, size) {
+            var numWithPrefix = new Array(size).join("0") + num;
+            return numWithPrefix.substr(-size);
+        }
+
+        console.logCopy = console.log.bind(console);
+        console.log = function (data) {
+            var now = new Date();
+            var logPrefix = "[" + now.getFullYear() + "-" + pad(now.getMonth() + 1, 2) + "-" + pad(now.getDate(), 2) + " " + pad(now.getHours(), 2) + ":" + pad(now.getMinutes(), 2) + ":" + pad(now.getSeconds(), 2) + "." + pad(now.getMilliseconds(), 3) + "] ";
+            this.logCopy(logPrefix, data);
+        };
+    }
+
+    /**
      * This callback is triggered the configuration is retrieved from the server.
      * @param {Object} configData Contains clientId, authentication URI and other configuration.
      * @return {void}
@@ -1675,6 +1703,12 @@ $(function () {
         );
     }
 
+    prefixConsoleLog();
+    // This app cannot be loaded in the browser using the file: protocol (file:///C:/inetpub/wwwroot/index.html).
+    if (location.protocol === "file:") {
+        window.alert("This app must run in a web server, since there is a backend involved.");
+        throw "Protocol 'file:' not allowed.";
+    }
     // Retrieve the application configuration from the server
     new Server().getDataFromServer(
         serverConnection.appServerUrl,
