@@ -123,6 +123,38 @@
             </div>
         </p>
         <p>
+            Lookup leveraged products:
+            <label>Category: <select id="idEdtStructuredProductsCategory">
+                <option value="bonds">Bonds</option>
+                <option value="commodities">Commodities</option>
+                <option value="currencies">Currencies</option>
+                <option value="equities">Equities</option>
+                <option value="indices" selected>Indices</option>
+            </select></label>
+            <label>Publisher: <select id="idEdtStructuredProductsPublisher">
+                <option value="all">---</option>
+                <option value="binckBank" selected>BinckBank</option>
+                <option value="bnpParibas">BNP Paribas</option>
+                <option value="citigroup">Citigroup</option>
+                <option value="commerzBank">Commerzbank</option>
+                <option value="goldmanSachs">Goldman Sachs Wertpapier</option>
+                <option value="ing">ING</option>
+            </select></label>
+            <label>Long/Short: <select id="idEdtStructuredProductsLongShort">
+                <option value="all" selected>All</option>
+                <option value="long">Long</option>
+                <option value="short">Short</option>
+            </select></label>
+            <label>Type: <select id="idEdtStructuredProductsType">
+                <option value="all" selected>All</option>
+                <option value="regular">Regular</option>
+                <option value="xl">Best/XL</option>
+            </select></label>
+            <label>Stoploss range min.: <input id="idEdtStructuredProductsStoplossMin" value="0" /></label>
+            <label>max.: <input id="idEdtStructuredProductsStoplossMax" value="1000" /></label>
+            <input type="button" id="idBtnUpdateLeveragedProducts" value="Get"/>
+        </p>
+        <p>
             The instruments of a list:
             <div id="idInstrumentsList">
                 <div><span class="instrumentName">Instrument</span><span class="price">Last</span><span class="price">Bid</span><span class="price">Ask</span><span class="price">High</span><span class="price">Low</span><span class="price">Open</span><span class="price">Close</span><span class="price">Volume</span><span class="dateTime">Time</span></div>
@@ -200,6 +232,6 @@
             <div id="idNewsForInstrument"></div>
         </p>
     </div>
-    <img id="idQrCode" src="" width="500" height="500" alt="QR wit URL">
+    <img id="idQrCode" src="" width="500" height="500" alt="QR with URL">
 </body>
 </html>

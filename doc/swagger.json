@@ -3,7 +3,7 @@
   "info": {
     "version": "v1",
     "title": "BinckBank.OpenApi",
-    "description": "BinckBank OpenAPI is a Restful API Platform to access BinckBank's trading services."
+    "description": "\r\nBinckBank OpenAPI is an API Platform to access BinckBank's trading services.\r\n\r\nCurious? Request your access key after reading the documentation on Github: https://github.com/binckbank-api/client-js#binck-openapi-documentation\r\n  "
   },
   "host": "api.sandbox.binck.com",
   "schemes": [
@@ -370,6 +370,145 @@
             "description": "Additional optional selection on Market Identification Code, to be used only in combination with 'Isin'",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "description": "Paging parameter to retrieve a subset of the complete collection. Format is &lt;offset&gt;-&lt;limit&gt;. \r\nBoth values are an offset from the first entry of the complete collection. The first entry has offset '0'.\r\n(e.g. 12-21)",
+            "required": false,
+            "type": "string",
+            "pattern": "[0-9]+-[0-9]*"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "[OK] A list of 1 or more instruments.",
+            "schema": {
+              "$ref": "#/definitions/InstrumentsResponseModel"
+            }
+          },
+          "400": {
+            "description": "[Bad Request] The request is not valid. See response body for more detail.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          },
+          "401": {
+            "description": "[Unauthorized] Authorization has been denied for this request.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read"
+            ]
+          }
+        ],
+        "x-throttling-tier": "Unlimited",
+        "x-auth-type": "Application & Application User",
+        "x-scope": "read"
+      }
+    },
+    "/instruments/leveragedproducts": {
+      "get": {
+        "tags": [
+          "Instruments"
+        ],
+        "summary": "Gets instrument information for leveraged products like Turbo's",
+        "description": "Provide one or more filter criteria in the query parameters. When a filter value is not specified, the default value is used.",
+        "operationId": "Instruments_GetLeveragedProducts",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "includeTickSizes",
+            "in": "query",
+            "description": "When set to true, the response will include a table with the Ticksizes for the instrument, default = false",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "accountNumber",
+            "in": "query",
+            "description": "Mandatory Account Number",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "publisher",
+            "in": "query",
+            "description": "Name of the publishing company, default is 'binckBank'",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "all",
+              "binckBank",
+              "bnpParibas",
+              "citigroup",
+              "commerzBank",
+              "goldmanSachs",
+              "ing"
+            ]
+          },
+          {
+            "name": "longShort",
+            "in": "query",
+            "description": "Long or short, default is 'all' (both long and short)",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "all",
+              "long",
+              "short"
+            ]
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Category, default is 'indices'",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "bonds",
+              "commodities",
+              "currencies",
+              "equities",
+              "indices"
+            ]
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Specifies type (Turbo or XL), default is 'all' (both Turbo and XL)",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "all",
+              "regular",
+              "xl"
+            ]
+          },
+          {
+            "name": "stoplossMin",
+            "in": "query",
+            "description": "Specifies minimum stop loss",
+            "required": false,
+            "type": "number",
+            "format": "float"
+          },
+          {
+            "name": "stoplossMax",
+            "in": "query",
+            "description": "Specifies maximum stop loss",
+            "required": false,
+            "type": "number",
+            "format": "float"
           },
           {
             "name": "range",
@@ -1097,7 +1236,7 @@
           "Orders"
         ],
         "summary": "Requests to cancel an order",
-        "description": "Cancellation is possible only if the order has not already been executed.",
+        "description": "Cancellation is possible only if the order has not already been executed (order.lastStatus is “placed”, “placementConfirmed”, or “modified”).",
         "operationId": "Orders_CancelOrder",
         "consumes": [],
         "produces": [
@@ -1163,7 +1302,7 @@
           "Orders"
         ],
         "summary": "Modifies an already existing order",
-        "description": "First, validate the modification",
+        "description": "First, validate the modification - modification is possible if the order has not already been executed (order.lastStatus is “placementConfirmed”, or “modified”).",
         "operationId": "Orders_ModifyOrder",
         "consumes": [
           "application/json",
@@ -2842,6 +2981,71 @@
         "mic": {
           "description": "Additional optional selection on Market Identification Code, to be used only in combination with 'Isin'",
           "type": "string"
+        }
+      }
+    },
+    "LeveragedProductsQueryParams": {
+      "description": "GetLeveragedProducts query parameters model",
+      "required": [
+        "accountNumber"
+      ],
+      "type": "object",
+      "properties": {
+        "accountNumber": {
+          "description": "Mandatory Account Number",
+          "type": "string"
+        },
+        "publisher": {
+          "description": "Name of the publishing company, default is 'binckBank'",
+          "enum": [
+            "all",
+            "binckBank",
+            "bnpParibas",
+            "citigroup",
+            "commerzBank",
+            "goldmanSachs",
+            "ing"
+          ],
+          "type": "string"
+        },
+        "longShort": {
+          "description": "Long or short, default is 'all' (both long and short)",
+          "enum": [
+            "all",
+            "long",
+            "short"
+          ],
+          "type": "string"
+        },
+        "category": {
+          "description": "Category, default is 'indices'",
+          "enum": [
+            "bonds",
+            "commodities",
+            "currencies",
+            "equities",
+            "indices"
+          ],
+          "type": "string"
+        },
+        "type": {
+          "description": "Specifies type (Turbo or XL), default is 'all' (both Turbo and XL)",
+          "enum": [
+            "all",
+            "regular",
+            "xl"
+          ],
+          "type": "string"
+        },
+        "stoplossMin": {
+          "format": "float",
+          "description": "Specifies minimum stop loss",
+          "type": "number"
+        },
+        "stoplossMax": {
+          "format": "float",
+          "description": "Specifies maximum stop loss",
+          "type": "number"
         }
       }
     },

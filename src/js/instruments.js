@@ -32,6 +32,43 @@ function Instruments(requestCallback, requestCallbackDownload) {
     };
 
     /**
+     * This function loads a filtered list of leveraged products.
+     * @param {string} category The leveraged products category.
+     * @param {string} publisher The publisher. Default no filter (all).
+     * @param {string} longShort Filter list on long or short. Default no filter (all).
+     * @param {string} type Filter list on type. Default no filter (all).
+     * @param {string} stopLossRange The range of the stoploss level.
+     * @param {string} accountNumber The account number.
+     * @param {null|string} range The range to be requested.
+     * @param {function(Object)} successCallback When successful, this function is called.
+     * @param {function(string)} errorCallback The function to be called in case of a failed request.
+     * @return {void}
+     */
+    this.getLeveragedProducts = function (category, publisher, longShort, type, stopLossRange, accountNumber, range, successCallback, errorCallback) {
+        var data = {
+            "stopLossRange": stopLossRange,
+            "accountNumber": accountNumber
+        };
+        if (category !== "indices") {
+            data.category = category;
+        }
+        if (publisher !== "all") {
+            data.publisher = publisher;
+        }
+        if (longShort !== "all") {
+            data.longShort = longShort;
+        }
+        if (type !== "all") {
+            data.type = type;
+        }
+        if (range !== null) {
+            data.range = range;
+        }
+        console.log("Requesting leveraged products list of category " + category + "..");
+        requestCallback("GET", "instruments/leveragedproducts", data, successCallback, errorCallback);
+    };
+
+    /**
      * This function tries to find a stock by (part of) its name.
      * @param {string} q The search text.
      * @param {null|string} instrumentType The type of instrument (eg. equity, option, tracker, or index).

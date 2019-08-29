@@ -81,8 +81,8 @@ function handleAuthenticationResponse($isRefresh, $realm, $code) {
         'ssl' => array(
             // This Mozilla CA certificate store is downloaded from:
             // https://curl.haxx.se/docs/caextract.html
-            // This bundle was generated at Wed Jan 23 04:12:09 2019 GMT.
-            'cafile' => 'cacert-2019-01-23.pem',
+            // This bundle was generated at Wed Aug 28 03:12:10 2019 GMT.
+            'cafile' => 'cacert-2019-08-28.pem',
             'verify_peer' => true,
             'verify_peer_name' => true
         )

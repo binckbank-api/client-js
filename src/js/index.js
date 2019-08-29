@@ -289,6 +289,31 @@ $(function () {
     }
 
     /**
+     * Do something with requested leveraged products.
+     * @return {void}
+     */
+    function displayLeveragedProducts() {
+        api.instruments.getLeveragedProducts(
+            $("#idEdtStructuredProductsCategory").val().toString(),
+            $("#idEdtStructuredProductsPublisher").val().toString(),
+            $("#idEdtStructuredProductsLongShort").val().toString(),
+            $("#idEdtStructuredProductsType").val().toString(),
+            $("#idEdtStructuredProductsStoplossMin").val().toString() + "-" + $("#idEdtStructuredProductsStoplossMax").val().toString(),
+            activeAccountNumber,
+            null,
+            function (data) {
+                // Check if streamer is already started, is done before starting.
+                streamer.start(
+                    function () {
+                        displayQuotesFeed(data.instrumentsCollection.instruments);
+                    }
+                );
+            },
+            apiErrorCallback
+        );
+    }
+
+    /**
      * Show the subscriptions of this account.
      * @return {void}
      */
@@ -1601,6 +1626,7 @@ $(function () {
             $("#idBtnQuotesHist").on("click", displayHistoricalQuotes);
             $("#idBtnOrderCosts").on("click", displayOrderCosts);
             $("#idBtnOrderKID").on("click", displayOrderKid);
+            $("#idBtnUpdateLeveragedProducts").on("click", displayLeveragedProducts);
             $("#idBtnUpdateBalances").on("click", displayBalance);
             $("#idBtnUpdatePositions").on("click", displayPositions);
             $("#idBtnUpdatePerformance").on("click", displayPerformances);
