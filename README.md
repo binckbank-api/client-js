@@ -30,12 +30,14 @@ This document describes how an application can get access to customers data, sen
 
 ### How to start
 
-Contact Binck with the announcement you want to develop an application using the API.\
+If you are not interested in developing software, but want to use the API in Excel, visit the [README for that example project](https://github.com/binckbank-api/client-excel#realtime-quotes-in-excel "Use Binck OpenApi with realtime quotes in Excel").
+
+Otherwise, continue reading and contact Binck with the announcement you want to develop an application using the API.\
 This can be done by submitting [this form](https://forms.office.com/Pages/ResponsePage.aspx?id=nKeZuuhuoEGdeKUD8EWjg11k67ZtZP5HvG9oP_FLXKxUQjVBUUlSUUxWQk1YNEhJVkNUSDhGTVI4SC4u "Form to request a client able to connect with the OpenApi"), where you can enter the details of the application. Important are the name of the application, the required scopes (ordering, quotes, news, or only viewing) and the redirect URL. This is the URL used to redirect the user to, after signing in.
 
 ### Next step
 
-The API team at Binck will create a new clientId and secret with the requested privileges on sandbox and shares them with you, together with a test account. You cannot test with a real account, so orders won’t be executed on the market.
+The API team at Binck will create a new clientId and secret with the requested privileges and sends them to you, together with a test account. The environment to test the application is sandbox. You cannot test with a real account, so orders won’t be executed on the market.
 
 ### <a name="links"></a>Important links
 
@@ -45,9 +47,9 @@ Documentation of the individual endpoints can be found on [developers.binck.com]
 
 Example code and login guide can be found on Github. Great, you are here.
 
-Releases are communicated via Twitter handle [@BinckOpenApi](https://twitter.com/BinckOpenapi "BinckOpenApi on Twitter").
+Releases and status updates are communicated via Twitter handle [@BinckOpenApi](https://twitter.com/BinckOpenapi "BinckOpenApi on Twitter").
 
-Twitter can be used for questions, or our email address [openapi@binck.nl](mailto:openapi@binck.nl "OpenApi email support").\
+Twitter can also be used for questions, or our email address [openapi@binck.nl](mailto:openapi@binck.nl "OpenApi email support").\
 Some questions already have an answer in the [Wiki](https://github.com/binckbank-api/client-js/wiki "GitHub Wiki").
 
 ## <a name="logon"></a>Sign in to Binck API using OAuth2
