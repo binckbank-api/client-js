@@ -858,6 +858,7 @@ $(function () {
         api.orders.getOrder(
             activeAccountNumber,
             orderNumber,
+            true,
             function (data) {
                 window.alert("Number of legs in order " + orderNumber + ": " + data.ordersCollection.orders.length);
             },
@@ -1055,12 +1056,14 @@ $(function () {
 
     /**
      * Display orders.
+     * @param {boolean} includeStatusHistory Include the status history for all orders in the response. If false, the response is faster.
      * @return {void}
      */
-    function displayOrdersActive() {
+    function displayOrdersActive(includeStatusHistory) {
         api.orders.getOrdersActive(
             activeAccountNumber,
             "all",
+            includeStatusHistory,
             "",
             function (data) {
                 var ordersHtml;
@@ -1619,7 +1622,12 @@ $(function () {
                 }, apiErrorCallback);
             });
             $("#idEdtAccountType").val(api.getState().account);
-            $("#idBtnOrdersActive").on("click", displayOrdersActive);
+            $("#idBtnOrdersActive").on("click", function () {
+                displayOrdersActive(true);
+            });
+            $("#idBtnOrdersActiveFast").on("click", function () {
+                displayOrdersActive(false);
+            });
             $("#idBtnOrdersHistory").on("click", displayOrdersHistory);
             $("#idBtnOrder").on("click", placeOrder);
             $("#idBtnQuotesBook").on("click", displayOrderBookFeed);

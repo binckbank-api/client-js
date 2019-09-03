@@ -13,19 +13,38 @@ function Orders(requestCallback) {
     /**
      * This function retrieves a list of active and/or recent orders.
      * @param {string} accountNumber The account to display the orders for.
-     * @param {string} status 'all', 'open', 'executed', 'canceled'.
+     * @param {string} statusFilter 'all', 'open', 'executed', 'canceled'.
+     * @param {boolean} includeStatusHistory Include the status history for all orders in the response (default true). If false, the response is faster.
      * @param {string} range Use paging (0-19), or leave empty.
      * @param {function(Object)} successCallback When successful, this function is called.
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
      * @return {void}
      */
-    this.getOrdersActive = function (accountNumber, status, range, successCallback, errorCallback) {
+    this.getOrdersActive = function (accountNumber, statusFilter, includeStatusHistory, range, successCallback, errorCallback) {
         var data = {
-            "status": status,
+            "status": statusFilter,
+            "includeStatusHistory": includeStatusHistory,
             "range": range
         };
         console.log("Requesting orders for account " + accountNumber + "..");
         requestCallback("GET", "accounts/" + accountNumber + "/orders", data, successCallback, errorCallback);
+    };
+
+    /**
+     * Load the details of a single order.
+     * @param {string} accountNumber The identifier of the account.
+     * @param {number} orderNumber The identifier of the order.
+     * @param {boolean} includeStatusHistory Include the status history for all orders in the response (default true). If false, the response is faster.
+     * @param {function(Object)} successCallback When successful, this function is called.
+     * @param {function(string)} errorCallback The function to be called in case of a failed request.
+     * @return {void}
+     */
+    this.getOrder = function (accountNumber, orderNumber, includeStatusHistory, successCallback, errorCallback) {
+        var data = {
+            "includeStatusHistory": includeStatusHistory
+        };
+        console.log("Requesting account " + accountNumber + "..");
+        requestCallback("GET", "accounts/" + accountNumber + "/orders/" + orderNumber, data, successCallback, errorCallback);
     };
 
     /**
@@ -46,19 +65,6 @@ function Orders(requestCallback) {
         };
         console.log("Requesting historical orders for account " + accountNumber + "..");
         requestCallback("GET", "accounts/" + accountNumber + "/orders/history", data, successCallback, errorCallback);
-    };
-
-    /**
-     * Load the details of a single order.
-     * @param {string} accountNumber The identifier of the account.
-     * @param {number} orderNumber The identifier of the order.
-     * @param {function(Object)} successCallback When successful, this function is called.
-     * @param {function(string)} errorCallback The function to be called in case of a failed request.
-     * @return {void}
-     */
-    this.getOrder = function (accountNumber, orderNumber, successCallback, errorCallback) {
-        console.log("Requesting account " + accountNumber + "..");
-        requestCallback("GET", "accounts/" + accountNumber + "/orders/" + orderNumber, {}, successCallback, errorCallback);
     };
 
     /**
