@@ -15,8 +15,8 @@
         "tags": [
           "Accounts"
         ],
-        "summary": "Gets all the active accounts of the customer.",
-        "description": "If there is no account, the collection will be empty.",
+        "summary": "All",
+        "description": "Get all the active accounts of the customer. If there is no account, the collection will be empty.",
         "operationId": "Accounts_GetAccounts",
         "consumes": [],
         "produces": [
@@ -54,8 +54,8 @@
         "tags": [
           "Accounts"
         ],
-        "summary": "Gets the specific account details.",
-        "description": "Only active accounts are returned.",
+        "summary": "Account info",
+        "description": "Get the specific account details. Only active accounts are returned.",
         "operationId": "Accounts_GetAccount",
         "consumes": [],
         "produces": [
@@ -114,8 +114,8 @@
         "tags": [
           "Balances"
         ],
-        "summary": "Gets the balance for a specific account",
-        "description": "This call can be used to get the spending limit and total asset value.",
+        "summary": "Balance info",
+        "description": "Get the balance for a specific account. This call can be used to get the spending limit and total asset value.",
         "operationId": "Balances_GetAccountBalances",
         "consumes": [],
         "produces": [
@@ -169,131 +169,13 @@
         "x-scope": "read"
       }
     },
-    "/instruments/lists/{id}": {
-      "get": {
-        "tags": [
-          "Instruments"
-        ],
-        "summary": "Gets all instruments in a predefined list",
-        "description": "List are a fast way to retrieve a group of instruments. Count in the response might be an 'educated guess'.",
-        "operationId": "Instruments_GetListContents",
-        "consumes": [],
-        "produces": [
-          "application/json",
-          "text/json"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "id of the list",
-            "required": true,
-            "type": "string",
-            "enum": [
-              "amsterdamAEXIndex",
-              "amsterdamAMXIndex",
-              "amsterdamASCXIndex",
-              "brusselsBEL20Index",
-              "copenhagenOMX20Index",
-              "dublinISEQ20Index",
-              "frankfurtDAX30Index",
-              "helsinkiHEX25Index",
-              "internationalIndices",
-              "lisbonPSI20Index",
-              "londonFTSE100Index",
-              "madridIBEX35Index",
-              "milanMIB40Index",
-              "newYorkAMEXIndex",
-              "newYorkDowJones30Index",
-              "newYorkNASDAQ100Index",
-              "newYorkNASDAQIndex",
-              "newYorkNYSEIndex",
-              "osloOBXIndex",
-              "parisCAC40Index",
-              "parisCACLarge60Index",
-              "parisCACMid60Index",
-              "parisCACMidAndSmallIndex",
-              "parisCACNext20Index",
-              "parisCACPMEIndex",
-              "parisCACSmallIndex",
-              "stockholmOMX30Index",
-              "torontoSPTSX60Index",
-              "torontoVentureIndex",
-              "viennaATX20Index",
-              "zurichSMIIndex",
-              "popularItalyFutures",
-              "popularNetherlandsFutures",
-              "popularFranceFutures"
-            ]
-          },
-          {
-            "name": "includeTickSizes",
-            "in": "query",
-            "description": "When set to true, the response will include a table with the Ticksizes for the instrument, default = false",
-            "required": false,
-            "type": "boolean"
-          },
-          {
-            "name": "accountNumber",
-            "in": "query",
-            "description": "Mandatory Account Number",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "range",
-            "in": "query",
-            "description": "Paging parameter to retrieve a subset of the complete collection. Format is &lt;offset&gt;-&lt;limit&gt;. \r\nBoth values are an offset from the first entry of the complete collection. The first entry has offset '0'.\r\n(e.g. 12-21)",
-            "required": false,
-            "type": "string",
-            "pattern": "[0-9]+-[0-9]*"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "[OK] A list of 1 or more instruments.",
-            "schema": {
-              "$ref": "#/definitions/InstrumentsResponseModel"
-            }
-          },
-          "400": {
-            "description": "[Bad Request] The request is not valid. See response body for more detail.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          },
-          "401": {
-            "description": "[Unauthorized] Authorization has been denied for this request.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          },
-          "404": {
-            "description": "[NotFound] The list is not found.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          }
-        },
-        "security": [
-          {
-            "oauth2": [
-              "read"
-            ]
-          }
-        ],
-        "x-throttling-tier": "Unlimited",
-        "x-auth-type": "Application & Application User",
-        "x-scope": "read"
-      }
-    },
     "/instruments": {
       "get": {
         "tags": [
           "Instruments"
         ],
-        "summary": "Gets instrument information",
-        "description": "Parameter 'SearchText' or 'Isin' is required. 'Type' is optional, 'Mic' can only be used together with 'Isin'.",
+        "summary": "Find instrument",
+        "description": "Get instrument information. Parameter 'SearchText', or 'Isin' is required. 'Type' is optional, 'Mic' can only be used together with 'Isin'.",
         "operationId": "Instruments_GetInstruments",
         "consumes": [],
         "produces": [
@@ -412,13 +294,205 @@
         "x-scope": "read"
       }
     },
+    "/instruments/{id}": {
+      "get": {
+        "tags": [
+          "Instruments"
+        ],
+        "summary": "Instrument info",
+        "description": "Get instrument information for a specific instrument. Multiple instruments can be retrieved if separated by comma, for example to get the instrument data from the positions (GET /instruments/{id1,id2}).",
+        "operationId": "Instruments_GetInstrument",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Ids of the equity to retrieve. If there are multiple ids, separate them by comma's.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "includeTickSizes",
+            "in": "query",
+            "description": "When set to true, the response will include a table with the Ticksizes for the instrument, default = false",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "accountNumber",
+            "in": "query",
+            "description": "Mandatory Account Number",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "[OK] The instrument information is successfully retrieved.",
+            "schema": {
+              "$ref": "#/definitions/InstrumentsResponseModel"
+            }
+          },
+          "400": {
+            "description": "[Bad Request] The request is not valid. See response body for more detail.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          },
+          "401": {
+            "description": "[Unauthorized] Authorization has been denied for this request.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          },
+          "404": {
+            "description": "[NotFound] The instrument is not found.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read"
+            ]
+          }
+        ],
+        "x-throttling-tier": "Unlimited",
+        "x-auth-type": "Application & Application User",
+        "x-scope": "read"
+      }
+    },
+    "/instruments/lists/{id}": {
+      "get": {
+        "tags": [
+          "Instruments"
+        ],
+        "summary": "Instrument list",
+        "description": "Get a predefined list of instruments. List are a fast way to retrieve a group of instruments. Count in the response might be an 'educated guess'.",
+        "operationId": "Instruments_GetListContents",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id of the list",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "amsterdamAEXIndex",
+              "amsterdamAMXIndex",
+              "amsterdamASCXIndex",
+              "brusselsBEL20Index",
+              "copenhagenOMX20Index",
+              "dublinISEQ20Index",
+              "frankfurtDAX30Index",
+              "helsinkiHEX25Index",
+              "internationalIndices",
+              "lisbonPSI20Index",
+              "londonFTSE100Index",
+              "madridIBEX35Index",
+              "milanMIB40Index",
+              "newYorkAMEXIndex",
+              "newYorkDowJones30Index",
+              "newYorkNASDAQ100Index",
+              "newYorkNASDAQIndex",
+              "newYorkNYSEIndex",
+              "osloOBXIndex",
+              "parisCAC40Index",
+              "parisCACLarge60Index",
+              "parisCACMid60Index",
+              "parisCACMidAndSmallIndex",
+              "parisCACNext20Index",
+              "parisCACPMEIndex",
+              "parisCACSmallIndex",
+              "stockholmOMX30Index",
+              "torontoSPTSX60Index",
+              "torontoVentureIndex",
+              "viennaATX20Index",
+              "zurichSMIIndex",
+              "popularItalyFutures",
+              "popularNetherlandsFutures",
+              "popularFranceFutures"
+            ]
+          },
+          {
+            "name": "includeTickSizes",
+            "in": "query",
+            "description": "When set to true, the response will include a table with the Ticksizes for the instrument, default = false",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "accountNumber",
+            "in": "query",
+            "description": "Mandatory Account Number",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "description": "Paging parameter to retrieve a subset of the complete collection. Format is &lt;offset&gt;-&lt;limit&gt;. \r\nBoth values are an offset from the first entry of the complete collection. The first entry has offset '0'.\r\n(e.g. 12-21)",
+            "required": false,
+            "type": "string",
+            "pattern": "[0-9]+-[0-9]*"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "[OK] A list of 1 or more instruments.",
+            "schema": {
+              "$ref": "#/definitions/InstrumentsResponseModel"
+            }
+          },
+          "400": {
+            "description": "[Bad Request] The request is not valid. See response body for more detail.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          },
+          "401": {
+            "description": "[Unauthorized] Authorization has been denied for this request.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          },
+          "404": {
+            "description": "[NotFound] The list is not found.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read"
+            ]
+          }
+        ],
+        "x-throttling-tier": "Unlimited",
+        "x-auth-type": "Application & Application User",
+        "x-scope": "read"
+      }
+    },
     "/instruments/leveragedproducts": {
       "get": {
         "tags": [
           "Instruments"
         ],
-        "summary": "Gets instrument information for leveraged products like Turbo's",
-        "description": "Provide one or more filter criteria in the query parameters. When a filter value is not specified, the default value is used.",
+        "summary": "Leveraged products",
+        "description": "Get instrument information for leveraged products like Turbo's. Provide one or more filter criteria in the query parameters. When a filter value is not specified, the default value is used.",
         "operationId": "Instruments_GetLeveragedProducts",
         "consumes": [],
         "produces": [
@@ -521,6 +595,87 @@
         ],
         "responses": {
           "200": {
+            "description": "[OK] A list of instruments.",
+            "schema": {
+              "$ref": "#/definitions/InstrumentsResponseModel"
+            }
+          },
+          "400": {
+            "description": "[Bad Request] The request is not valid. See response body for more detail.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          },
+          "401": {
+            "description": "[Unauthorized] Authorization has been denied for this request.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read"
+            ]
+          }
+        ],
+        "x-throttling-tier": "Unlimited",
+        "x-auth-type": "Application & Application User",
+        "x-scope": "read"
+      }
+    },
+    "/instruments/certificates": {
+      "get": {
+        "tags": [
+          "Instruments"
+        ],
+        "summary": "Certificates",
+        "description": "Get certificate information. Provide a name for the Exchange, when no name is specified, the default (Sedex) will be used",
+        "operationId": "Instruments_GetCertificates",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "includeTickSizes",
+            "in": "query",
+            "description": "When set to true, the response will include a table with the Ticksizes for the instrument, default = false",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "accountNumber",
+            "in": "query",
+            "description": "Mandatory Account Number",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "exchange",
+            "in": "query",
+            "description": "Name of the Exchange, default is 'sedex'",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "sedex",
+              "euroTLX",
+              "euroNext"
+            ]
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "description": "Paging parameter to retrieve a subset of the complete collection. Format is &lt;offset&gt;-&lt;limit&gt;. \r\nBoth values are an offset from the first entry of the complete collection. The first entry has offset '0'.\r\n(e.g. 12-21)",
+            "required": false,
+            "type": "string",
+            "pattern": "[0-9]+-[0-9]*"
+          }
+        ],
+        "responses": {
+          "200": {
             "description": "[OK] A list of 1 or more instruments.",
             "schema": {
               "$ref": "#/definitions/InstrumentsResponseModel"
@@ -551,228 +706,13 @@
         "x-scope": "read"
       }
     },
-    "/instruments/{id}": {
-      "get": {
-        "tags": [
-          "Instruments"
-        ],
-        "summary": "Gets instrument information for the specific id",
-        "description": "Multiple instruments can be retrieved if separated by comma, for example to get the instruments from the positions.",
-        "operationId": "Instruments_GetInstrument",
-        "consumes": [],
-        "produces": [
-          "application/json",
-          "text/json"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Ids of the equity to retrieve. If there are multiple ids, separate them by comma's.",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "includeTickSizes",
-            "in": "query",
-            "description": "When set to true, the response will include a table with the Ticksizes for the instrument, default = false",
-            "required": false,
-            "type": "boolean"
-          },
-          {
-            "name": "accountNumber",
-            "in": "query",
-            "description": "Mandatory Account Number",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "[OK] The instrument information is successfully retrieved.",
-            "schema": {
-              "$ref": "#/definitions/InstrumentsResponseModel"
-            }
-          },
-          "400": {
-            "description": "[Bad Request] The request is not valid. See response body for more detail.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          },
-          "401": {
-            "description": "[Unauthorized] Authorization has been denied for this request.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          },
-          "404": {
-            "description": "[NotFound] The instrument is not found.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          }
-        },
-        "security": [
-          {
-            "oauth2": [
-              "read"
-            ]
-          }
-        ],
-        "x-throttling-tier": "Unlimited",
-        "x-auth-type": "Application & Application User",
-        "x-scope": "read"
-      }
-    },
-    "/instruments/{id}/kid": {
-      "get": {
-        "tags": [
-          "Instruments"
-        ],
-        "summary": "Gets KID document information for an instrument",
-        "description": "Use this for instruments which have the isKidApplicable flag set to true. This endpoint searches for documentation. Still, it might be the case there is no documentation for a specific instrument, in the language of the customer. It can also be the case there are multiple documents for a certain instrument.",
-        "operationId": "Instruments_SearchKidDocument",
-        "consumes": [],
-        "produces": [
-          "application/json",
-          "text/json"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Id of the instrument.",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "accountNumber",
-            "in": "query",
-            "description": "Mandatory Account Number",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "[OK] The instrument information is successfully retrieved.",
-            "schema": {
-              "$ref": "#/definitions/KidResponseModel"
-            }
-          },
-          "400": {
-            "description": "[Bad Request] The request is not valid. See response body for more detail.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          },
-          "401": {
-            "description": "[Unauthorized] Authorization has been denied for this request.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          },
-          "404": {
-            "description": "[NotFound] The instrument or KID document is not found.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          }
-        },
-        "security": [
-          {
-            "oauth2": [
-              "write"
-            ]
-          }
-        ],
-        "x-throttling-tier": "Unlimited",
-        "x-auth-type": "Application & Application User",
-        "x-scope": "write"
-      }
-    },
-    "/instruments/{id}/kid/{kidId}": {
-      "get": {
-        "tags": [
-          "Instruments"
-        ],
-        "summary": "Get KID document",
-        "description": "The document is a PDF file.",
-        "operationId": "Instruments_ReadKidDocument",
-        "consumes": [],
-        "produces": [
-          "attachment/PDF"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Id of the equity to retrieve.",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "kidId",
-            "in": "path",
-            "description": "Id of the Kid document.",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "accountNumber",
-            "in": "query",
-            "description": "Mandatory Account Number",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "[OK] The instrument information is successfully retrieved.",
-            "schema": {
-              "format": "byte",
-              "type": "string"
-            }
-          },
-          "400": {
-            "description": "[Bad Request] The request is not valid. See response body for more detail.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          },
-          "401": {
-            "description": "[Unauthorized] Authorization has been denied for this request.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          },
-          "404": {
-            "description": "[NotFound] The instrument or KID document is not found.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          }
-        },
-        "security": [
-          {
-            "oauth2": [
-              "write"
-            ]
-          }
-        ],
-        "x-throttling-tier": "Unlimited",
-        "x-auth-type": "Application & Application User",
-        "x-scope": "write"
-      }
-    },
     "/instruments/derivatives": {
       "get": {
         "tags": [
           "Instruments"
         ],
-        "summary": "Gets the series for a derivatives class (options/futures)",
-        "description": "This endpoint can be used to get an option sheet.",
+        "summary": "Derivatives",
+        "description": "Get the series for a derivatives class (options/futures). This endpoint can be used to get an option sheet.",
         "operationId": "Instruments_GetDerivatives",
         "consumes": [],
         "produces": [
@@ -856,12 +796,154 @@
         "x-scope": "read"
       }
     },
+    "/instruments/{id}/kid": {
+      "get": {
+        "tags": [
+          "Instruments"
+        ],
+        "summary": "KID availability",
+        "description": "Get KID document information for an instrument. Use this for instruments which have the isKidApplicable flag set to true. This endpoint searches for documentation. Still, it might be the case there is no documentation for a specific instrument, in the language of the customer. It can also be the case there are multiple documents for a certain instrument.",
+        "operationId": "Instruments_SearchKidDocument",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of the instrument.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "accountNumber",
+            "in": "query",
+            "description": "Mandatory Account Number",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "[OK] The instrument information is successfully retrieved.",
+            "schema": {
+              "$ref": "#/definitions/KidResponseModel"
+            }
+          },
+          "400": {
+            "description": "[Bad Request] The request is not valid. See response body for more detail.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          },
+          "401": {
+            "description": "[Unauthorized] Authorization has been denied for this request.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          },
+          "404": {
+            "description": "[NotFound] The instrument or KID document is not found.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write"
+            ]
+          }
+        ],
+        "x-throttling-tier": "Unlimited",
+        "x-auth-type": "Application & Application User",
+        "x-scope": "write"
+      }
+    },
+    "/instruments/{id}/kid/{kidId}": {
+      "get": {
+        "tags": [
+          "Instruments"
+        ],
+        "summary": "KID document",
+        "description": "Get KID document. The document is a PDF file.",
+        "operationId": "Instruments_ReadKidDocument",
+        "consumes": [],
+        "produces": [
+          "attachment/PDF"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of the equity to retrieve.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "kidId",
+            "in": "path",
+            "description": "Id of the Kid document.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "accountNumber",
+            "in": "query",
+            "description": "Mandatory Account Number",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "[OK] The instrument information is successfully retrieved.",
+            "schema": {
+              "format": "byte",
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "[Bad Request] The request is not valid. See response body for more detail.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          },
+          "401": {
+            "description": "[Unauthorized] Authorization has been denied for this request.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          },
+          "404": {
+            "description": "[NotFound] The instrument or KID document is not found.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write"
+            ]
+          }
+        ],
+        "x-throttling-tier": "Unlimited",
+        "x-auth-type": "Application & Application User",
+        "x-scope": "write"
+      }
+    },
     "/news": {
       "get": {
         "tags": [
           "News"
         ],
-        "summary": "Returns news for the specified selection\r\nOnly the first 250 news messages for the selection in the news history are available.",
+        "summary": "All",
+        "description": "Get news for the specified selection. The first 250 news messages for the selection in the news history are available.",
         "operationId": "News_GetNews",
         "consumes": [],
         "produces": [
@@ -951,8 +1033,8 @@
         "tags": [
           "Orders"
         ],
-        "summary": "Gets all active/recent orders of an account",
-        "description": "The response contains the active, cancelled and recent orders. If there is no order, the collection will be empty.",
+        "summary": "Recent",
+        "description": "Get all active/recent orders of an account. The response contains the active, cancelled and recent orders. If there is no order, the collection will be empty.",
         "operationId": "Orders_GetOrders",
         "consumes": [],
         "produces": [
@@ -970,10 +1052,17 @@
           {
             "name": "status",
             "in": "query",
-            "description": "'all' will select all the orders. Other possible values are 'open', 'executed' and 'canceled'.",
+            "description": "Status 'all' will select all the orders. Other possible values are 'open', 'executed' and 'canceled'.",
             "required": false,
             "type": "string",
             "pattern": "^all$|^open$|^executed$|^canceled$"
+          },
+          {
+            "name": "includeStatusHistory",
+            "in": "query",
+            "description": "When set to True, orders will include a detailed status history overview. When set to false the response doesn't contain the status history, but the request will be handled faster. Default is True.",
+            "required": false,
+            "type": "boolean"
           },
           {
             "name": "range",
@@ -1019,8 +1108,8 @@
         "tags": [
           "Orders"
         ],
-        "summary": "Register an order to sent to the market",
-        "description": "This order will be sent to the market and executed according to the specifications. Something to be aware of: the response of this call might arrive after the order event from the realtime feed.",
+        "summary": "New",
+        "description": "Register an order to sent to the market. This order will be sent to the market and executed according to the specifications. Something to be aware of: the response of this call might arrive after the order event from the realtime feed.",
         "operationId": "Orders_RegisterOrder",
         "consumes": [
           "application/json",
@@ -1091,8 +1180,8 @@
         "tags": [
           "Orders"
         ],
-        "summary": "Gets all the historical orders of an account",
-        "description": "The response contains the historical orders of the requested month. If there is no order, the collection will be empty.",
+        "summary": "History",
+        "description": "Get all the historical orders of an account. The response contains the historical orders of the requested month. If there is no order yet, the collection will be empty.",
         "operationId": "Orders_GetHistoricalOrders",
         "consumes": [],
         "produces": [
@@ -1169,8 +1258,8 @@
         "tags": [
           "Orders"
         ],
-        "summary": "Gets a specific order for an account",
-        "description": "If the order has multiple legs, multiple order objects are returned.",
+        "summary": "Order info",
+        "description": "Get a specific order for an account. If the order has multiple legs, multiple order objects are returned.",
         "operationId": "Orders_GetOrder",
         "consumes": [],
         "produces": [
@@ -1192,6 +1281,13 @@
             "required": true,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "includeStatusHistory",
+            "in": "query",
+            "description": "When set to True, order will include a detailed status history overview. When set to False, the response doesn't contain the status history, but the request will be handled faster. Default is True.",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "responses": {
@@ -1235,8 +1331,8 @@
         "tags": [
           "Orders"
         ],
-        "summary": "Requests to cancel an order",
-        "description": "Cancellation is possible only if the order has not already been executed (order.lastStatus is “placed”, “placementConfirmed”, or “modified”).",
+        "summary": "Cancellation",
+        "description": "Cancel an order. Cancellation is possible only if the order has not already been executed (order.lastStatus is “placed”, “placementConfirmed”, or “modified”).",
         "operationId": "Orders_CancelOrder",
         "consumes": [],
         "produces": [
@@ -1301,8 +1397,8 @@
         "tags": [
           "Orders"
         ],
-        "summary": "Modifies an already existing order",
-        "description": "First, validate the modification - modification is possible if the order has not already been executed (order.lastStatus is “placementConfirmed”, or “modified”).",
+        "summary": "Modification",
+        "description": "Modify an existing order. First, make sure the modification is valid by doing a preview - modification is possible if the order has not already been executed (order.lastStatus is “placementConfirmed”, or “modified”).",
         "operationId": "Orders_ModifyOrder",
         "consumes": [
           "application/json",
@@ -1370,153 +1466,13 @@
         "x-scope": "write"
       }
     },
-    "/accounts/{accountNumber}/orders/{number}/preview": {
-      "post": {
-        "tags": [
-          "Orders"
-        ],
-        "summary": "Validates the modification of an already existing order",
-        "description": "This allows you to validate an order modification without sending it to the market. The order will not be created.\r\nThe response will contain information about if the order can be processed.\r\nIt also might includes warnings to show to the customer. And Confirmations, which are warnings to be approved by the customer, before placing the order modification.",
-        "operationId": "Orders_PreviewModifyOrder",
-        "consumes": [
-          "application/json",
-          "text/json"
-        ],
-        "produces": [
-          "application/json",
-          "text/json"
-        ],
-        "parameters": [
-          {
-            "name": "accountNumber",
-            "in": "path",
-            "description": "An account number.",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "number",
-            "in": "path",
-            "description": "The order number.",
-            "required": true,
-            "type": "integer",
-            "format": "int64"
-          },
-          {
-            "name": "modifiedOrder",
-            "in": "body",
-            "description": "Modifications to be used for the order.",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/ModifyOrderModel"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/PreviewOrderResponse"
-            }
-          },
-          "400": {
-            "description": "[Bad Request] The request is not valid. See response body for more detail.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          },
-          "401": {
-            "description": "[Unauthorized] Authorization has been denied for this request.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          }
-        },
-        "security": [
-          {
-            "oauth2": [
-              "write"
-            ]
-          }
-        ],
-        "x-throttling-tier": "Unlimited",
-        "x-auth-type": "Application & Application User",
-        "x-scope": "write"
-      }
-    },
-    "/accounts/{accountNumber}/orders/preview": {
-      "post": {
-        "tags": [
-          "Orders"
-        ],
-        "summary": "Previews an order",
-        "description": "This allows you to validate an order without sending it to the market. The order will not be created. The response will contain information about if the order can be processed.\r\nIt also includes warnings to show to the customer. And Confirmations, which are warnings to be approved by the customer, before placing the order.",
-        "operationId": "Orders_PreviewOrder",
-        "consumes": [
-          "application/json",
-          "text/json"
-        ],
-        "produces": [
-          "application/json",
-          "text/json"
-        ],
-        "parameters": [
-          {
-            "name": "accountNumber",
-            "in": "path",
-            "description": "The account number to register the order.",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "newOrder",
-            "in": "body",
-            "description": "Specifications to be used for the order.",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/NewOrderModel"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "[OK] The preview is successful. For more information about the order, check the response.",
-            "schema": {
-              "$ref": "#/definitions/PreviewOrderResponse"
-            }
-          },
-          "400": {
-            "description": "[Bad Request] The request is not valid. See response body for more detail.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          },
-          "401": {
-            "description": "[Unauthorized] Authorization has been denied for this request.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          }
-        },
-        "security": [
-          {
-            "oauth2": [
-              "write"
-            ]
-          }
-        ],
-        "x-throttling-tier": "Unlimited",
-        "x-auth-type": "Application & Application User",
-        "x-scope": "write"
-      }
-    },
     "/accounts/{accountNumber}/orders/costs": {
       "post": {
         "tags": [
           "Orders"
         ],
-        "summary": "Previews the costs for an order",
-        "description": "This allows you to check costs for an order without sending it to the market.",
+        "summary": "Costs",
+        "description": "Preview the costs for an order. This allows you to check costs for an order without sending it to the market.",
         "operationId": "Orders_PreviewOrderCosts",
         "consumes": [
           "application/json",
@@ -1582,13 +1538,153 @@
         "x-scope": "write"
       }
     },
+    "/accounts/{accountNumber}/orders/preview": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Validate new",
+        "description": "Preview an order. This allows you to validate an order without sending it to the market. The order will not be created. The response will contain information about if the order can be processed.\r\nIt also includes warnings to show to the customer. And confirmations, which are warnings to be approved by the customer, before placing the order.",
+        "operationId": "Orders_PreviewOrder",
+        "consumes": [
+          "application/json",
+          "text/json"
+        ],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "accountNumber",
+            "in": "path",
+            "description": "The account number to register the order.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "newOrder",
+            "in": "body",
+            "description": "Specifications to be used for the order.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/NewOrderModel"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "[OK] The preview is successful. For more information about the order, check the response.",
+            "schema": {
+              "$ref": "#/definitions/PreviewOrderResponse"
+            }
+          },
+          "400": {
+            "description": "[Bad Request] The request is not valid. See response body for more detail.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          },
+          "401": {
+            "description": "[Unauthorized] Authorization has been denied for this request.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write"
+            ]
+          }
+        ],
+        "x-throttling-tier": "Unlimited",
+        "x-auth-type": "Application & Application User",
+        "x-scope": "write"
+      }
+    },
+    "/accounts/{accountNumber}/orders/{number}/preview": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Validate modification",
+        "description": "Validate the modification of an order. This allows you to validate an order modification without sending it to the market. The order will not be created.\r\nThe response will contain information about if the order can be processed.\r\nIt also might include warnings to show to the customer. And confirmations, which are warnings to be approved by the customer, before placing the order modification.",
+        "operationId": "Orders_PreviewModifyOrder",
+        "consumes": [
+          "application/json",
+          "text/json"
+        ],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "accountNumber",
+            "in": "path",
+            "description": "An account number.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "description": "The order number.",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "modifiedOrder",
+            "in": "body",
+            "description": "Modifications to be used for the order.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ModifyOrderModel"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "[OK] The preview is successful. For more information about the order, check the response.",
+            "schema": {
+              "$ref": "#/definitions/PreviewOrderResponse"
+            }
+          },
+          "400": {
+            "description": "[Bad Request] The request is not valid. See response body for more detail.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          },
+          "401": {
+            "description": "[Unauthorized] Authorization has been denied for this request.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write"
+            ]
+          }
+        ],
+        "x-throttling-tier": "Unlimited",
+        "x-auth-type": "Application & Application User",
+        "x-scope": "write"
+      }
+    },
     "/accounts/{accountNumber}/performances": {
       "get": {
         "tags": [
           "Performances"
         ],
-        "summary": "Gets the financial performance information for an account.",
-        "description": "Yearly performance.",
+        "summary": "All",
+        "description": "Get the financial performance information for an account.",
         "operationId": "Performances_GetPerformances",
         "consumes": [],
         "produces": [
@@ -1647,8 +1743,8 @@
         "tags": [
           "Performances"
         ],
-        "summary": "Gets the financial performance information for an account, per year.",
-        "description": "Only applicable for the years the account was active.",
+        "summary": "Year",
+        "description": "Get the financial performance information for an account, per year. Only applicable for the years the account was active.",
         "operationId": "Performances_GetPerformance",
         "consumes": [],
         "produces": [
@@ -1722,8 +1818,8 @@
         "tags": [
           "Positions"
         ],
-        "summary": "Gets all the positions of an account",
-        "description": "If there is no position, the collection will be empty.",
+        "summary": "All",
+        "description": "Get the instrument positions of an account (portfolio). If there is no position, the collection will be empty.",
         "operationId": "Positions_GetPositions",
         "consumes": [],
         "produces": [
@@ -1784,8 +1880,8 @@
         "tags": [
           "Positions"
         ],
-        "summary": "Gets the specific position for an account",
-        "description": "Positions are identified by the instrument.",
+        "summary": "Position info",
+        "description": "Get a specific position. Positions are identified by the instrument.",
         "operationId": "Positions_GetPosition",
         "consumes": [],
         "produces": [
@@ -1851,7 +1947,8 @@
         "tags": [
           "Quotes"
         ],
-        "summary": "Returns current quotes and quote subscription (realtime/delayed) for one or more instruments",
+        "summary": "Latest",
+        "description": "Get current quotes and quote subscription (realtime/delayed) for one or more instruments.",
         "operationId": "Quotes_GetQuotes",
         "consumes": [],
         "produces": [
@@ -1938,8 +2035,8 @@
         "tags": [
           "Quotes"
         ],
-        "summary": "Returns historical quotes for one instrument over a period",
-        "description": "The different intervals each have different maximum period lengths, ranging from five days for one minute, to 10 years for one week.",
+        "summary": "History",
+        "description": "Get historical quotes for an instrument over a period. The different intervals each have different maximum period lengths, ranging from five days for one minute, to 10 years for one week.",
         "operationId": "Quotes_GetHistoricalQuotes",
         "consumes": [],
         "produces": [
@@ -2038,8 +2135,8 @@
         "tags": [
           "Sessions"
         ],
-        "summary": "Gets the current active sessions",
-        "description": "Only internal use.",
+        "summary": "All",
+        "description": "Get the current active sessions. Only for internal use.",
         "operationId": "Sessions_GetSessions",
         "consumes": [],
         "produces": [
@@ -2075,8 +2172,8 @@
         "tags": [
           "Sessions"
         ],
-        "summary": "Ends the current active session",
-        "description": "Sessions must be closed, because there is a limit on the active sessions.",
+        "summary": "Sign out",
+        "description": "Close the active session. Sessions must be closed before starting a new one, because there is a limit on the number of active sessions.",
         "operationId": "Sessions_EndSession",
         "consumes": [],
         "produces": [
@@ -2114,8 +2211,8 @@
         "tags": [
           "Settings"
         ],
-        "summary": "Obtains the product settings for the specified account",
-        "description": "If the settings return an empty list, trading is not allowed. This can be the case for a savings account, or if the account is not fully activated yet.",
+        "summary": "All",
+        "description": "Get the trading settings for the specified account. If the settings return an empty list, trading is not allowed. This can be the case for a savings account, or if the account is not fully activated yet.",
         "operationId": "Settings_GetSettings",
         "consumes": [],
         "produces": [
@@ -2174,8 +2271,8 @@
         "tags": [
           "Transactions"
         ],
-        "summary": "Gets all the transactions for an account",
-        "description": "The response not only includes the executed orders, but also withdrawals and deposits.",
+        "summary": "All",
+        "description": "Get the transactions for an account. The response not only includes the executed orders, but also withdrawals and deposits.",
         "operationId": "Transactions_GetTransactions",
         "consumes": [],
         "produces": [
@@ -2276,7 +2373,8 @@
         "tags": [
           "Version"
         ],
-        "summary": "Gets the current version and the last date of build.",
+        "summary": "API version",
+        "description": "Get the version and the date of build of the API-service. This is the only call available without Bearer token.",
         "operationId": "Version_GetVersion",
         "consumes": [],
         "produces": [
@@ -2550,8 +2648,8 @@
         }
       }
     },
-    "AccountNumberQueryParam": {
-      "description": "Parameters class to validate query parameters.",
+    "InstrumentsQueryParams": {
+      "description": "GetInstruments query parameters model",
       "required": [
         "accountNumber"
       ],
@@ -2559,6 +2657,50 @@
       "properties": {
         "accountNumber": {
           "description": "Mandatory Account Number",
+          "type": "string"
+        },
+        "instrumentType": {
+          "description": "Additional optional filter on instrument type. Cannot be used alone.",
+          "enum": [
+            "bond",
+            "cashDividend",
+            "certificate",
+            "choiceDividend",
+            "claim",
+            "coupon",
+            "discounter",
+            "equity",
+            "future",
+            "futureClass",
+            "index",
+            "investmentFund",
+            "ipo",
+            "option",
+            "optionClass",
+            "otherLeveragedProduct",
+            "speeder",
+            "sprinter",
+            "srd",
+            "srdClass",
+            "stockDividend",
+            "structuredProduct",
+            "tracker",
+            "turbo",
+            "unclassified",
+            "warrant"
+          ],
+          "type": "string"
+        },
+        "searchText": {
+          "description": "Case insensitive search text, minimum length 2. Cannot be used in combination with 'Isin'.",
+          "type": "string"
+        },
+        "isin": {
+          "description": "Selection on isincode. Cannot be used in combination with 'SearchText'.",
+          "type": "string"
+        },
+        "mic": {
+          "description": "Additional optional selection on Market Identification Code, to be used only in combination with 'Isin'",
           "type": "string"
         }
       }
@@ -2927,8 +3069,8 @@
         }
       }
     },
-    "InstrumentsQueryParams": {
-      "description": "GetInstruments query parameters model",
+    "AccountNumberQueryParam": {
+      "description": "Parameters class to validate query parameters.",
       "required": [
         "accountNumber"
       ],
@@ -2936,50 +3078,6 @@
       "properties": {
         "accountNumber": {
           "description": "Mandatory Account Number",
-          "type": "string"
-        },
-        "instrumentType": {
-          "description": "Additional optional filter on instrument type. Cannot be used alone.",
-          "enum": [
-            "bond",
-            "cashDividend",
-            "certificate",
-            "choiceDividend",
-            "claim",
-            "coupon",
-            "discounter",
-            "equity",
-            "future",
-            "futureClass",
-            "index",
-            "investmentFund",
-            "ipo",
-            "option",
-            "optionClass",
-            "otherLeveragedProduct",
-            "speeder",
-            "sprinter",
-            "srd",
-            "srdClass",
-            "stockDividend",
-            "structuredProduct",
-            "tracker",
-            "turbo",
-            "unclassified",
-            "warrant"
-          ],
-          "type": "string"
-        },
-        "searchText": {
-          "description": "Case insensitive search text, minimum length 2. Cannot be used in combination with 'Isin'.",
-          "type": "string"
-        },
-        "isin": {
-          "description": "Selection on isincode. Cannot be used in combination with 'SearchText'.",
-          "type": "string"
-        },
-        "mic": {
-          "description": "Additional optional selection on Market Identification Code, to be used only in combination with 'Isin'",
           "type": "string"
         }
       }
@@ -3049,54 +3147,24 @@
         }
       }
     },
-    "KidResponseModel": {
-      "description": "OpenApi response for KID collection",
+    "CertificatesQueryParams": {
+      "description": "GetCertificates query parameters model",
       "required": [
-        "kidCollection",
-        "metadata"
+        "accountNumber"
       ],
       "type": "object",
       "properties": {
-        "kidCollection": {
-          "$ref": "#/definitions/KidCollectionModel",
-          "description": "Holds KID collection"
-        },
-        "metadata": {
-          "$ref": "#/definitions/MetadataModel",
-          "description": "API response meta data"
-        }
-      }
-    },
-    "KidCollectionModel": {
-      "description": "Model contains KID collection",
-      "required": [
-        "kids"
-      ],
-      "type": "object",
-      "properties": {
-        "kids": {
-          "description": "Holds KID collection data in name, KID id pair",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/KidInfoModel"
-          }
-        }
-      }
-    },
-    "KidInfoModel": {
-      "description": "Info model for KID",
-      "required": [
-        "name",
-        "kidId"
-      ],
-      "type": "object",
-      "properties": {
-        "name": {
-          "description": "Name of the document",
+        "accountNumber": {
+          "description": "Mandatory Account Number",
           "type": "string"
         },
-        "kidId": {
-          "description": "Id of the document",
+        "exchange": {
+          "description": "Name of the Exchange, default is 'sedex'",
+          "enum": [
+            "sedex",
+            "euroTLX",
+            "euroNext"
+          ],
           "type": "string"
         }
       }
@@ -3282,6 +3350,58 @@
         }
       }
     },
+    "KidResponseModel": {
+      "description": "OpenApi response for KID collection",
+      "required": [
+        "kidCollection",
+        "metadata"
+      ],
+      "type": "object",
+      "properties": {
+        "kidCollection": {
+          "$ref": "#/definitions/KidCollectionModel",
+          "description": "Holds KID collection"
+        },
+        "metadata": {
+          "$ref": "#/definitions/MetadataModel",
+          "description": "API response meta data"
+        }
+      }
+    },
+    "KidCollectionModel": {
+      "description": "Model contains KID collection",
+      "required": [
+        "kids"
+      ],
+      "type": "object",
+      "properties": {
+        "kids": {
+          "description": "Holds KID collection data in name, KID id pair",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KidInfoModel"
+          }
+        }
+      }
+    },
+    "KidInfoModel": {
+      "description": "Info model for KID",
+      "required": [
+        "name",
+        "kidId"
+      ],
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Name of the document",
+          "type": "string"
+        },
+        "kidId": {
+          "description": "Id of the document",
+          "type": "string"
+        }
+      }
+    },
     "NewsRequestQueryParams": {
       "description": "Query params for the news message",
       "required": [
@@ -3440,14 +3560,18 @@
         }
       }
     },
-    "OrderStatusQueryParams": {
-      "description": "Order status parameters",
+    "OrdersQueryParams": {
+      "description": "Order parameters",
       "type": "object",
       "properties": {
         "status": {
-          "description": "'all' will select all the orders. Other possible values are 'open', 'executed' and 'canceled'.",
+          "description": "Status 'all' will select all the orders. Other possible values are 'open', 'executed' and 'canceled'.",
           "pattern": "^all$|^open$|^executed$|^canceled$",
           "type": "string"
+        },
+        "includeStatusHistory": {
+          "description": "When set to True, orders will include a detailed status history overview. When set to false the response doesn't contain the status history, but the request will be handled faster. Default is True.",
+          "type": "boolean"
         }
       }
     },
@@ -3501,7 +3625,8 @@
         "currency",
         "duration",
         "quantity",
-        "lastStatus"
+        "lastStatus",
+        "lastStatusDateTime"
       ],
       "type": "object",
       "properties": {
@@ -3526,7 +3651,7 @@
           "type": "string"
         },
         "statusHistory": {
-          "description": "Status history of the order",
+          "description": "Status history of the order, populated when requested with \"includeStatusHistory != false\"",
           "type": "array",
           "items": {
             "$ref": "#/definitions/StatusHistory"
@@ -3607,6 +3732,11 @@
             "remainderExecuted",
             "other"
           ],
+          "type": "string"
+        },
+        "lastStatusDateTime": {
+          "format": "date-time",
+          "description": "Indicates the date and time of the last status change",
           "type": "string"
         },
         "stopPrice": {
@@ -3955,99 +4085,6 @@
         }
       }
     },
-    "PreviewOrderResponse": {
-      "description": "Preview Order API response",
-      "required": [
-        "metadata"
-      ],
-      "type": "object",
-      "properties": {
-        "previewOrder": {
-          "$ref": "#/definitions/PreviewOrderModel",
-          "description": "Information related to the order validation such as if the order is processable, spending power, etc."
-        },
-        "metadata": {
-          "$ref": "#/definitions/MetadataModel",
-          "description": "API response meta data"
-        }
-      }
-    },
-    "PreviewOrderModel": {
-      "description": "This object is used in the response of the order validation call.",
-      "required": [
-        "orderCanBeRegistered",
-        "warningsToBeShown",
-        "warningsToBeConfirmed"
-      ],
-      "type": "object",
-      "properties": {
-        "orderCanBeRegistered": {
-          "description": "True if the order can be placed",
-          "type": "boolean"
-        },
-        "expectedExpirationDate": {
-          "format": "date-time",
-          "description": "For GTD en GTC orders the end date will be limited to about 2 weeks maximum",
-          "type": "string"
-        },
-        "positionEffect": {
-          "description": "Contains the position effect information (open, close)",
-          "type": "string"
-        },
-        "effectOnSpendingLimit": {
-          "format": "double",
-          "description": "Effect of a successfully placed order on the spending limit of the account",
-          "type": "number"
-        },
-        "currentSpendingLimit": {
-          "format": "double",
-          "description": "The current spending limit of the account (before placing the order)",
-          "type": "number"
-        },
-        "newSpendingLimit": {
-          "format": "double",
-          "description": "The new spending limit of the account (after placing the order)",
-          "type": "number"
-        },
-        "currency": {
-          "description": "The currency of the spending limit",
-          "type": "string"
-        },
-        "oldRiskNumber": {
-          "format": "int32",
-          "description": "Risk number before placing the order",
-          "type": "integer"
-        },
-        "newRiskNumber": {
-          "format": "int32",
-          "description": "Risk number after successfully placing the order",
-          "type": "integer"
-        },
-        "recommendedRiskNumber": {
-          "format": "int32",
-          "description": "Recommended risk number",
-          "type": "integer"
-        },
-        "warningsToBeShown": {
-          "description": "Warnings or error messages about the requested order that only needs to be shown",
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "warningsToBeConfirmed": {
-          "description": "Warning messages about the requested order that explicitly need to be confirmed",
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "validationCode": {
-          "description": "(Optional) validation code (only supplied when order can be registered)",
-          "type": "string"
-        }
-      }
-    },
     "OrderCostsResponse": {
       "description": "Response for Costs request",
       "required": [
@@ -4156,6 +4193,99 @@
         },
         "extraInfo": {
           "description": "In case of null values for ValueInEuros / percentage, ExtraInfo will be be provided",
+          "type": "string"
+        }
+      }
+    },
+    "PreviewOrderResponse": {
+      "description": "Preview Order API response",
+      "required": [
+        "metadata"
+      ],
+      "type": "object",
+      "properties": {
+        "previewOrder": {
+          "$ref": "#/definitions/PreviewOrderModel",
+          "description": "Information related to the order validation such as if the order is processable, spending power, etc."
+        },
+        "metadata": {
+          "$ref": "#/definitions/MetadataModel",
+          "description": "API response meta data"
+        }
+      }
+    },
+    "PreviewOrderModel": {
+      "description": "This object is used in the response of the order validation call.",
+      "required": [
+        "orderCanBeRegistered",
+        "warningsToBeShown",
+        "warningsToBeConfirmed"
+      ],
+      "type": "object",
+      "properties": {
+        "orderCanBeRegistered": {
+          "description": "True if the order can be placed",
+          "type": "boolean"
+        },
+        "expectedExpirationDate": {
+          "format": "date-time",
+          "description": "For GTD en GTC orders the end date will be limited to about 2 weeks maximum",
+          "type": "string"
+        },
+        "positionEffect": {
+          "description": "Contains the position effect information (open, close)",
+          "type": "string"
+        },
+        "effectOnSpendingLimit": {
+          "format": "double",
+          "description": "Effect of a successfully placed order on the spending limit of the account",
+          "type": "number"
+        },
+        "currentSpendingLimit": {
+          "format": "double",
+          "description": "The current spending limit of the account (before placing the order)",
+          "type": "number"
+        },
+        "newSpendingLimit": {
+          "format": "double",
+          "description": "The new spending limit of the account (after placing the order)",
+          "type": "number"
+        },
+        "currency": {
+          "description": "The currency of the spending limit",
+          "type": "string"
+        },
+        "oldRiskNumber": {
+          "format": "int32",
+          "description": "Risk number before placing the order",
+          "type": "integer"
+        },
+        "newRiskNumber": {
+          "format": "int32",
+          "description": "Risk number after successfully placing the order",
+          "type": "integer"
+        },
+        "recommendedRiskNumber": {
+          "format": "int32",
+          "description": "Recommended risk number",
+          "type": "integer"
+        },
+        "warningsToBeShown": {
+          "description": "Warnings or error messages about the requested order that only needs to be shown",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "warningsToBeConfirmed": {
+          "description": "Warning messages about the requested order that explicitly need to be confirmed",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "validationCode": {
+          "description": "(Optional) validation code (only supplied when order can be registered)",
           "type": "string"
         }
       }

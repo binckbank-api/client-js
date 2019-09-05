@@ -69,6 +69,27 @@ function Instruments(requestCallback, requestCallbackDownload) {
     };
 
     /**
+     * This function loads a filtered list of certificates.
+     * @param {string} exchange The exchange.
+     * @param {string} accountNumber The account number.
+     * @param {null|string} range The range to be requested.
+     * @param {function(Object)} successCallback When successful, this function is called.
+     * @param {function(string)} errorCallback The function to be called in case of a failed request.
+     * @return {void}
+     */
+    this.getCertificates = function (exchange, accountNumber, range, successCallback, errorCallback) {
+        var data = {
+            "exchange": exchange,
+            "accountNumber": accountNumber
+        };
+        if (range !== null) {
+            data.range = range;
+        }
+        console.log("Requesting certificates for exchange " + exchange + "..");
+        requestCallback("GET", "instruments/certificates", data, successCallback, errorCallback);
+    };
+
+    /**
      * This function tries to find a stock by (part of) its name.
      * @param {string} q The search text.
      * @param {null|string} instrumentType The type of instrument (eg. equity, option, tracker, or index).

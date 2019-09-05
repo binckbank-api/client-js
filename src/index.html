@@ -119,19 +119,20 @@
                 <a href="#popularItalyFutures" data-code="popularItalyFutures">PopularFutures (Italy)</a> -
                 <a href="#popularFranceFutures" data-code="popularItalyFutures">PopularFutures (France)</a> -
                 <a href="#popularNetherlandsFutures" data-code="popularNetherlandsFutures">PopularFutures (Netherlands)</a> -
+                <a href="#currencies" data-code="currencies">Currencies</a> -
                 <a href="#proRealTimeUniverse" data-code="proRealTimeUniverse">PRT</a>
             </div>
         </p>
         <p>
             Lookup leveraged products:
-            <label>Category: <select id="idEdtStructuredProductsCategory">
+            <label>Category: <select id="idEdtLeveragedProductsCategory">
                 <option value="bonds">Bonds</option>
                 <option value="commodities">Commodities</option>
                 <option value="currencies">Currencies</option>
                 <option value="equities">Equities</option>
                 <option value="indices" selected>Indices</option>
             </select></label>
-            <label>Publisher: <select id="idEdtStructuredProductsPublisher">
+            <label>Publisher: <select id="idEdtLeveragedProductsPublisher">
                 <option value="all">---</option>
                 <option value="binckBank" selected>BinckBank</option>
                 <option value="bnpParibas">BNP Paribas</option>
@@ -140,19 +141,28 @@
                 <option value="goldmanSachs">Goldman Sachs Wertpapier</option>
                 <option value="ing">ING</option>
             </select></label>
-            <label>Long/Short: <select id="idEdtStructuredProductsLongShort">
+            <label>Long/Short: <select id="idEdtLeveragedProductsLongShort">
                 <option value="all" selected>All</option>
                 <option value="long">Long</option>
                 <option value="short">Short</option>
             </select></label>
-            <label>Type: <select id="idEdtStructuredProductsType">
+            <label>Type: <select id="idEdtLeveragedProductsType">
                 <option value="all" selected>All</option>
                 <option value="regular">Regular</option>
                 <option value="xl">Best/XL</option>
             </select></label>
-            <label>Stoploss range min.: <input id="idEdtStructuredProductsStoplossMin" value="0" /></label>
-            <label>max.: <input id="idEdtStructuredProductsStoplossMax" value="1000" /></label>
+            <label>Stoploss range min.: <input id="idEdtLeveragedProductsStoplossMin" value="0" /></label>
+            <label>max.: <input id="idEdtLeveragedProductsStoplossMax" value="1000" /></label>
             <input type="button" id="idBtnUpdateLeveragedProducts" value="Get"/>
+        </p>
+        <p>
+            Lookup certificates:
+            <label>Exchange: <select id="idEdtCertificatesExchange">
+                <option value="sedex">Sedex</option>
+                <option value="euroTLX">EuroTLX</option>
+                <option value="euroNext">euroNext</option>
+            </select></label>
+            <input type="button" id="idBtnUpdateCertificates" value="Get"/>
         </p>
         <p>
             The instruments of a list:
