@@ -392,12 +392,45 @@
               "amsterdamAEXIndex",
               "amsterdamAMXIndex",
               "amsterdamASCXIndex",
+              "bondsAmsterdamConvertible",
+              "bondsAmsterdamCorporate",
+              "bondsAmsterdamGovernment",
+              "bondsAmsterdamReverseConvertible",
+              "bondsBNPParibas",
+              "bondsBorsaItalianaEuroMotCorporate",
+              "bondsBorsaItalianaEuroMotGovernment",
+              "bondsBorsaItalianaExtraMot",
+              "bondsBorsaItalianaMotBot",
+              "bondsBorsaItalianaMotBtp",
+              "bondsBorsaItalianaMotCct",
+              "bondsBorsaItalianaMotCtz",
+              "bondsBorsaItalianaMotOther",
+              "bondsBorsaItalianaTop50Corporate",
+              "bondsBorsaItalianaTop50Government",
+              "bondsBrusselsConvertible",
+              "bondsBrusselsCorporate",
+              "bondsBrusselsGovernment",
+              "bondsBrusselsReverseConvertible",
+              "bondsEuroTlxCorporate",
+              "bondsEuroTlxItalianGovernment",
+              "bondsEuroTlxOtherGovernment",
+              "bondsEuroTlxTop50Corporate",
+              "bondsEuroTlxTop50Government",
+              "bondsLuxembourgConvertible",
+              "bondsLuxembourgCorporate",
+              "bondsLuxembourgGovernment",
+              "bondsLuxembourgReverseConvertible",
+              "bondsSocieteGenerale",
               "brusselsBEL20Index",
+              "certificatesEuronext",
+              "certificatesEuroTLX",
+              "certificatesSeDeX",
               "copenhagenOMX20Index",
               "dublinISEQ20Index",
               "frankfurtDAX30Index",
               "helsinkiHEX25Index",
               "internationalIndices",
+              "leveragedProducts",
               "lisbonPSI20Index",
               "londonFTSE100Index",
               "madridIBEX35Index",
@@ -631,7 +664,7 @@
           "Instruments"
         ],
         "summary": "Certificates",
-        "description": "Get certificate information. Provide a name for the Exchange, when no name is specified, the default (Sedex) will be used",
+        "description": "Get certificate information. Provide a name for the Exchange, when no name is specified, the default (SeDeX) will be used",
         "operationId": "Instruments_GetCertificates",
         "consumes": [],
         "produces": [
@@ -660,9 +693,116 @@
             "required": false,
             "type": "string",
             "enum": [
-              "sedex",
-              "euroTLX",
-              "euroNext"
+              "certificatesSeDeX",
+              "certificatesEuroTLX",
+              "certificatesEuronext"
+            ]
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "description": "Paging parameter to retrieve a subset of the complete collection. Format is &lt;offset&gt;-&lt;limit&gt;. \r\nBoth values are an offset from the first entry of the complete collection. The first entry has offset '0'.\r\n(e.g. 12-21)",
+            "required": false,
+            "type": "string",
+            "pattern": "[0-9]+-[0-9]*"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "[OK] A list of 1 or more instruments.",
+            "schema": {
+              "$ref": "#/definitions/InstrumentsResponseModel"
+            }
+          },
+          "400": {
+            "description": "[Bad Request] The request is not valid. See response body for more detail.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          },
+          "401": {
+            "description": "[Unauthorized] Authorization has been denied for this request.",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageModel"
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read"
+            ]
+          }
+        ],
+        "x-throttling-tier": "Unlimited",
+        "x-auth-type": "Application & Application User",
+        "x-scope": "read"
+      }
+    },
+    "/instruments/bonds": {
+      "get": {
+        "tags": [
+          "Instruments"
+        ],
+        "summary": "Bonds",
+        "description": "Get Bonds information. Provide a name for the Type",
+        "operationId": "Instruments_GetBonds",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "includeTickSizes",
+            "in": "query",
+            "description": "When set to true, the response will include a table with the Ticksizes for the instrument, default = false",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "accountNumber",
+            "in": "query",
+            "description": "Mandatory Account Number",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Name of the Bonds type",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "bondsAmsterdamConvertible",
+              "bondsAmsterdamCorporate",
+              "bondsAmsterdamGovernment",
+              "bondsAmsterdamReverseConvertible",
+              "bondsBNPParibas",
+              "bondsBorsaItalianaEuroMotCorporate",
+              "bondsBorsaItalianaEuroMotGovernment",
+              "bondsBorsaItalianaExtraMot",
+              "bondsBorsaItalianaMotBot",
+              "bondsBorsaItalianaMotBtp",
+              "bondsBorsaItalianaMotCct",
+              "bondsBorsaItalianaMotCtz",
+              "bondsBorsaItalianaMotOther",
+              "bondsBorsaItalianaTop50Corporate",
+              "bondsBorsaItalianaTop50Government",
+              "bondsBrusselsConvertible",
+              "bondsBrusselsCorporate",
+              "bondsBrusselsGovernment",
+              "bondsBrusselsReverseConvertible",
+              "bondsEuroTlxCorporate",
+              "bondsEuroTlxItalianGovernment",
+              "bondsEuroTlxOtherGovernment",
+              "bondsEuroTlxTop50Corporate",
+              "bondsEuroTlxTop50Government",
+              "bondsLuxembourgConvertible",
+              "bondsLuxembourgCorporate",
+              "bondsLuxembourgGovernment",
+              "bondsLuxembourgReverseConvertible",
+              "bondsSocieteGenerale"
             ]
           },
           {
@@ -712,7 +852,7 @@
           "Instruments"
         ],
         "summary": "Derivatives",
-        "description": "Get the series for a derivatives class (options/futures). This endpoint can be used to get an option sheet.",
+        "description": "Get the series for a derivatives class (options/futures). This endpoint can be used to get an option or future sheet.\r\nIf there are two classes with the same symbol, mic and currency but different contract size (due to a corporate action), there are two sheets in the response.",
         "operationId": "Instruments_GetDerivatives",
         "consumes": [],
         "produces": [
@@ -2528,7 +2668,7 @@
             "sessionExpiredMaxDuration",
             "sessionExpiredMaxInactivity",
             "sessionInvalid",
-            "failedToCreateSession",
+            "faildToCreateAmSession",
             "orderNumberIsIncorrect",
             "hashIdError",
             "productNotEnabled",
@@ -3159,11 +3299,60 @@
           "type": "string"
         },
         "exchange": {
-          "description": "Name of the Exchange, default is 'sedex'",
+          "description": "Name of the Exchange, default is 'certificatesSeDeX'",
           "enum": [
-            "sedex",
-            "euroTLX",
-            "euroNext"
+            "certificatesSeDeX",
+            "certificatesEuroTLX",
+            "certificatesEuronext"
+          ],
+          "type": "string"
+        }
+      }
+    },
+    "BondsQueryParams": {
+      "description": "GetBonds query parameters model",
+      "required": [
+        "accountNumber",
+        "type"
+      ],
+      "type": "object",
+      "properties": {
+        "accountNumber": {
+          "description": "Mandatory Account Number",
+          "type": "string"
+        },
+        "type": {
+          "description": "Name of the Bonds type",
+          "enum": [
+            "bondsAmsterdamConvertible",
+            "bondsAmsterdamCorporate",
+            "bondsAmsterdamGovernment",
+            "bondsAmsterdamReverseConvertible",
+            "bondsBNPParibas",
+            "bondsBorsaItalianaEuroMotCorporate",
+            "bondsBorsaItalianaEuroMotGovernment",
+            "bondsBorsaItalianaExtraMot",
+            "bondsBorsaItalianaMotBot",
+            "bondsBorsaItalianaMotBtp",
+            "bondsBorsaItalianaMotCct",
+            "bondsBorsaItalianaMotCtz",
+            "bondsBorsaItalianaMotOther",
+            "bondsBorsaItalianaTop50Corporate",
+            "bondsBorsaItalianaTop50Government",
+            "bondsBrusselsConvertible",
+            "bondsBrusselsCorporate",
+            "bondsBrusselsGovernment",
+            "bondsBrusselsReverseConvertible",
+            "bondsEuroTlxCorporate",
+            "bondsEuroTlxItalianGovernment",
+            "bondsEuroTlxOtherGovernment",
+            "bondsEuroTlxTop50Corporate",
+            "bondsEuroTlxTop50Government",
+            "bondsLuxembourgConvertible",
+            "bondsLuxembourgCorporate",
+            "bondsLuxembourgGovernment",
+            "bondsLuxembourgReverseConvertible",
+            "bondsSocieteGenerale"
           ],
           "type": "string"
         }

@@ -124,6 +124,50 @@
             </div>
         </p>
         <p>
+            Lookup bonds:
+            <label>Type: <select id="idEdtBondsType">
+                <option value="bondsAmsterdamConvertible">Amsterdam Convertible</option>
+                <option value="bondsAmsterdamReverseConvertible">Amsterdam Reverse Convertible</option>
+                <option value="bondsAmsterdamCorporate">Amsterdam Corporate</option>
+                <option value="bondsAmsterdamGovernment">Amsterdam Government</option>
+                <option value="bondsBNPParibas">BNP Paribas</option>
+                <option value="bondsBorsaItalianaEuroMotCorporate">Borsa Italiana EuroMot Corporate</option>
+                <option value="bondsBorsaItalianaEuroMotGovernment">Borsa Italiana EuroMot Government</option>
+                <option value="bondsBorsaItalianaExtraMot">Borsa Italiana ExtraMot</option>
+                <option value="bondsBorsaItalianaMotBot">Borsa Italiana MotBot</option>
+                <option value="bondsBorsaItalianaMotBtp">Borsa Italiana MotBtp</option>
+                <option value="bondsBorsaItalianaMotCct">Borsa Italiana MotCct</option>
+                <option value="bondsBorsaItalianaMotCtz">Borsa Italiana MotCtz</option>
+                <option value="bondsBorsaItalianaMotOther">Borsa Italiana Mot Other</option>
+                <option value="bondsBorsaItalianaTop50Corporate">Borsa Italiana Top50 Corporate</option>
+                <option value="bondsBorsaItalianaTop50Government">Borsa Italiana Top50 Government</option>
+                <option value="bondsBrusselsConvertible">Brussels Convertible</option>
+                <option value="bondsBrusselsReverseConvertible">Brussels Reverse Convertible</option>
+                <option value="bondsBrusselsCorporate">Brussels Corporate</option>
+                <option value="bondsBrusselsGovernment">Brussels Government</option>
+                <option value="bondsEuroTlxCorporate">EuroTLX Corporate</option>
+                <option value="bondsEuroTlxItalianGovernment">EuroTLX Italian Government</option>
+                <option value="bondsEuroTlxOtherGovernment">EuroTLX Other Government</option>
+                <option value="bondsEuroTlxTop50Corporate">EuroTLX Top50 Corporate</option>
+                <option value="bondsEuroTlxTop50Government">EuroTLX Top50 Government</option>
+                <option value="bondsLuxembourgConvertible">Luxembourg Convertible</option>
+                <option value="bondsLuxembourgReverseConvertible">Luxembourg Reverse Convertible</option>
+                <option value="bondsLuxembourgCorporate">Luxembourg Corporate</option>
+                <option value="bondsLuxembourgGovernment">Luxembourg Government</option>
+                <option value="bondsSocieteGenerale">SocieteGenerale</option>
+            </select></label>
+            <input type="button" id="idBtnUpdateBonds" value="Get"/>
+        </p>
+        <p>
+            Lookup certificates:
+            <label>Exchange: <select id="idEdtCertificatesExchange">
+                <option value="certificatesSeDeX">SeDeX</option>
+                <option value="certificatesEuroTLX">EuroTLX</option>
+                <option value="certificatesEuronext">Euronext</option>
+            </select></label>
+            <input type="button" id="idBtnUpdateCertificates" value="Get"/>
+        </p>
+        <p>
             Lookup leveraged products:
             <label>Category: <select id="idEdtLeveragedProductsCategory">
                 <option value="bonds">Bonds</option>
@@ -154,15 +198,6 @@
             <label>Stoploss range min.: <input id="idEdtLeveragedProductsStoplossMin" value="0" /></label>
             <label>max.: <input id="idEdtLeveragedProductsStoplossMax" value="1000" /></label>
             <input type="button" id="idBtnUpdateLeveragedProducts" value="Get"/>
-        </p>
-        <p>
-            Lookup certificates:
-            <label>Exchange: <select id="idEdtCertificatesExchange">
-                <option value="sedex">Sedex</option>
-                <option value="euroTLX">EuroTLX</option>
-                <option value="euroNext">euroNext</option>
-            </select></label>
-            <input type="button" id="idBtnUpdateCertificates" value="Get"/>
         </p>
         <p>
             The instruments of a list:

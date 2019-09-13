@@ -267,6 +267,20 @@ $(function () {
     }
 
     /**
+     * Display the instruments from the response.
+     * @param {Object} data Instruments to show in a list with streaming quotes.
+     * @return {void}
+     */
+    function startStreamerWithInstruments(data) {
+        // Check if streamer is already started, is done before starting.
+        streamer.start(
+            function () {
+                displayQuotesFeed(data.instrumentsCollection.instruments);
+            }
+        );
+    }
+
+    /**
      * Do something with requested instruments.
      * @param {string} instrumentListCode The code of the desired instrument list.
      * @return {void}
@@ -276,14 +290,21 @@ $(function () {
             instrumentListCode,
             activeAccountNumber,
             null,
-            function (data) {
-                // Check if streamer is already started, is done before starting.
-                streamer.start(
-                    function () {
-                        displayQuotesFeed(data.instrumentsCollection.instruments);
-                    }
-                );
-            },
+            startStreamerWithInstruments,
+            apiErrorCallback
+        );
+    }
+
+    /**
+     * Do something with requested bonds.
+     * @return {void}
+     */
+    function displayBonds() {
+        api.instruments.getBonds(
+            $("#idEdtBondsType").val().toString(),
+            activeAccountNumber,
+            null,
+            startStreamerWithInstruments,
             apiErrorCallback
         );
     }
@@ -301,14 +322,7 @@ $(function () {
             $("#idEdtLeveragedProductsStoplossMin").val().toString() + "-" + $("#idEdtLeveragedProductsStoplossMax").val().toString(),
             activeAccountNumber,
             null,
-            function (data) {
-                // Check if streamer is already started, is done before starting.
-                streamer.start(
-                    function () {
-                        displayQuotesFeed(data.instrumentsCollection.instruments);
-                    }
-                );
-            },
+            startStreamerWithInstruments,
             apiErrorCallback
         );
     }
@@ -322,14 +336,7 @@ $(function () {
             $("#idEdtCertificatesExchange").val().toString(),
             activeAccountNumber,
             null,
-            function (data) {
-                // Check if streamer is already started, is done before starting.
-                streamer.start(
-                    function () {
-                        displayQuotesFeed(data.instrumentsCollection.instruments);
-                    }
-                );
-            },
+            startStreamerWithInstruments,
             apiErrorCallback
         );
     }
@@ -1655,6 +1662,7 @@ $(function () {
             $("#idBtnQuotesHist").on("click", displayHistoricalQuotes);
             $("#idBtnOrderCosts").on("click", displayOrderCosts);
             $("#idBtnOrderKID").on("click", displayOrderKid);
+            $("#idBtnUpdateBonds").on("click", displayBonds);
             $("#idBtnUpdateLeveragedProducts").on("click", displayLeveragedProducts);
             $("#idBtnUpdateCertificates").on("click", displayCertificates);
             $("#idBtnUpdateBalances").on("click", displayBalance);

@@ -32,6 +32,48 @@ function Instruments(requestCallback, requestCallbackDownload) {
     };
 
     /**
+     * This function loads a filtered list of bonds.
+     * @param {string} type The type of bonds (government, corporate, etc.).
+     * @param {string} accountNumber The account number.
+     * @param {null|string} range The range to be requested.
+     * @param {function(Object)} successCallback When successful, this function is called.
+     * @param {function(string)} errorCallback The function to be called in case of a failed request.
+     * @return {void}
+     */
+    this.getBonds = function (type, accountNumber, range, successCallback, errorCallback) {
+        var data = {
+            "type": type,
+            "accountNumber": accountNumber
+        };
+        if (range !== null) {
+            data.range = range;
+        }
+        console.log("Requesting bonds of type " + type + "..");
+        requestCallback("GET", "instruments/bonds", data, successCallback, errorCallback);
+    };
+
+    /**
+     * This function loads a filtered list of certificates.
+     * @param {string} exchange The exchange.
+     * @param {string} accountNumber The account number.
+     * @param {null|string} range The range to be requested.
+     * @param {function(Object)} successCallback When successful, this function is called.
+     * @param {function(string)} errorCallback The function to be called in case of a failed request.
+     * @return {void}
+     */
+    this.getCertificates = function (exchange, accountNumber, range, successCallback, errorCallback) {
+        var data = {
+            "exchange": exchange,
+            "accountNumber": accountNumber
+        };
+        if (range !== null) {
+            data.range = range;
+        }
+        console.log("Requesting certificates for exchange " + exchange + "..");
+        requestCallback("GET", "instruments/certificates", data, successCallback, errorCallback);
+    };
+
+    /**
      * This function loads a filtered list of leveraged products.
      * @param {string} category The leveraged products category.
      * @param {string} publisher The publisher. Default no filter (all).
@@ -66,27 +108,6 @@ function Instruments(requestCallback, requestCallbackDownload) {
         }
         console.log("Requesting leveraged products list of category " + category + "..");
         requestCallback("GET", "instruments/leveragedproducts", data, successCallback, errorCallback);
-    };
-
-    /**
-     * This function loads a filtered list of certificates.
-     * @param {string} exchange The exchange.
-     * @param {string} accountNumber The account number.
-     * @param {null|string} range The range to be requested.
-     * @param {function(Object)} successCallback When successful, this function is called.
-     * @param {function(string)} errorCallback The function to be called in case of a failed request.
-     * @return {void}
-     */
-    this.getCertificates = function (exchange, accountNumber, range, successCallback, errorCallback) {
-        var data = {
-            "exchange": exchange,
-            "accountNumber": accountNumber
-        };
-        if (range !== null) {
-            data.range = range;
-        }
-        console.log("Requesting certificates for exchange " + exchange + "..");
-        requestCallback("GET", "instruments/certificates", data, successCallback, errorCallback);
     };
 
     /**
