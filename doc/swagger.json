@@ -426,6 +426,7 @@
               "certificatesEuroTLX",
               "certificatesSeDeX",
               "copenhagenOMX20Index",
+              "currencies",
               "dublinISEQ20Index",
               "frankfurtDAX30Index",
               "helsinkiHEX25Index",
@@ -689,7 +690,7 @@
           {
             "name": "exchange",
             "in": "query",
-            "description": "Name of the Exchange, default is 'sedex'",
+            "description": "Name of the Exchange, default is 'certificatesSeDeX'",
             "required": false,
             "type": "string",
             "enum": [

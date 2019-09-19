@@ -886,7 +886,7 @@ $(function () {
         api.orders.getOrder(
             activeAccountNumber,
             orderNumber,
-            true,
+            Math.random() >= 0.5,  // Sometimes include order details
             function (data) {
                 window.alert("Number of legs in order " + orderNumber + ": " + data.ordersCollection.orders.length);
             },
@@ -1114,8 +1114,8 @@ $(function () {
         var date = new Date();
         var month;
         var year;
-        // Retrieve orders from last month
-        date.setDate(date.getDate() - 30);
+        // Retrieve orders from three months ago
+        date.setDate(date.getDate() - 91);
         month = date.getMonth() + 1;
         year = date.getFullYear();
         api.orders.getOrdersHistory(

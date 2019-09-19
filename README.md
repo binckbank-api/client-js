@@ -323,7 +323,8 @@ For this example we use the sandbox environment, with predefined test users and 
 
 ### <a name="realtime1"></a>Step 1: Connect to the feed
 
-The instruction for creating the client can be found here: <https://docs.microsoft.com/en-us/aspnet/core/signalr/javascript-client>.
+The instruction for creating the client can be found here: <https://docs.microsoft.com/en-us/aspnet/core/signalr/javascript-client>.\
+The API allows only one session per token. All subsequent connections will be refused.
 
 The following code creates and starts a connection:
 
