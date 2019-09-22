@@ -976,7 +976,7 @@ $(function () {
                 activeAccountNumber,
                 parseInt($(this).data("code"), 10),
                 function () {
-                    if (streamer.isOrdersActivated) {
+                    if (!streamer.orders.isActive) {
                         refreshCallback();
                     }
                     window.alert("Order has been canceled.");
@@ -993,7 +993,7 @@ $(function () {
                     "limitPrice": 5.05
                 },
                 function () {
-                    if (streamer.isOrdersActivated) {
+                    if (!streamer.orders.isActive) {
                         refreshCallback();
                     }
                     window.alert("Order has been modified.");
