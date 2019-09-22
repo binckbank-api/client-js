@@ -674,7 +674,7 @@ The initial quote is send to prevent empty quotes and possible gaps. But, an upd
 - C (cancel): A new cycle will start. The quotes for the instrument must be removed.
 - M (market): Show the maket indicator in the bid and ask cells.
 - O (open): Show an open indicator.
-- E (exclude): Exclude this quote from intraday charts, but show in overview lists.
+- X (exclude): Exclude this quote from intraday charts, but show in overview lists.
 
 ### <a name="realtime7"></a>Step 7: Production
 
