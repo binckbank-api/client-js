@@ -1100,7 +1100,9 @@ $(function () {
                 } else {
                     ordersHtml = generateOrdersList(data);
                 }
-                populateOrdersList(ordersHtml, displayOrdersActive);
+                populateOrdersList(ordersHtml, function () {
+                    displayOrdersActive(true);
+                });
             },
             apiErrorCallback
         );
@@ -1130,7 +1132,9 @@ $(function () {
                 } else {
                     ordersHtml = generateOrdersList(data);
                 }
-                populateOrdersList(ordersHtml, displayOrdersActive);
+                populateOrdersList(ordersHtml, function () {
+                    displayOrdersActive(true);
+                });
             },
             apiErrorCallback
         );
@@ -1186,7 +1190,9 @@ $(function () {
                 orderHtml += " /order has reference '" + orderObject.referenceId + "'/";
             }
             currentOrdersHtml = orderHtml + "<br />" + currentOrdersHtml;
-            populateOrdersList(currentOrdersHtml, displayOrdersActive);
+            populateOrdersList(currentOrdersHtml, function () {
+                displayOrdersActive(true);
+            });
         } else {
             window.alert("You just received an order update for another account: " + orderObject.accountNumber);
         }
@@ -1285,13 +1291,13 @@ $(function () {
                     // Replace the object with one without the validationCode
                     $("#idEdtOrderModel").val(JSON.stringify(internalNewOrderObject));
                     if (!streamer.orders.isActive) {
-                        displayOrdersActive();
+                        displayOrdersActive(true);
                     }
                 },
                 function (error) {
                     // Something went wrong, for example, there is no money to buy something.
                     // However, show the list of orders.
-                    displayOrdersActive();
+                    displayOrdersActive(true);
                     apiErrorCallback(error);
                 }
             );

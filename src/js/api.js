@@ -23,7 +23,7 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
     /** @type {Date} */
     var accessTokenExpirationTime;
     /** @type {number} */
-    var accessTokenExpirationTimer = null;  // Show the time left the token is active, for debug purposes.
+    var accessTokenExpirationTimer = 0;  // Show the time left the token is active, for debug purposes.
     /** @type {number} */
     var accessTokenRefreshTimer;  // Request a new token just before the token expires.
     // CSRF-token is optional but highly recommended. You should store the value of this (CSRF) token in the users session to be validated when they return.
@@ -261,7 +261,7 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
         accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + expiresInSeconds);
         console.log("New token will expire at " + accessTokenExpirationTime.toLocaleString());
         // Start a timer once, to log the time until expiration - for debug purposes, not for production.
-        if (accessTokenExpirationTimer === null) {
+        if (accessTokenExpirationTimer === 0) {
             accessTokenExpirationTimer = window.setInterval(
                 function () {
                     var difference = accessTokenExpirationTime - new Date();
