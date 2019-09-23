@@ -305,7 +305,7 @@ Communication is done using WebSockets, Server-Sent Events, or Long Polling. Sig
 
 More info: <https://docs.microsoft.com/en-us/aspnet/core/signalr>.
 
-For SignalR are client libraries available in Java, Javascript and .NET. In this example Javascript is used, with the NPM package here: <https://www.npmjs.com/package/@aspnet/signalr>.
+For SignalR are client libraries available in Java, Javascript and .NET. In this example Javascript is used, with the NPM package here: <https://www.npmjs.com/package/@microsoft/signalr>.
 
 Prerequisites:
 
