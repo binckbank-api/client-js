@@ -187,17 +187,18 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
 
     /**
      * Get the state from the redirect URL.
-     * @return {*} The object saved in the state parameter.
+     * @return {null|Object} The object saved in the state parameter.
      */
     this.getState = function () {
         var stateString = getUrlParameterByName("state");
         var stateStringDecoded = window.atob(stateString);
+        var result = null;
         try {
-            return JSON.parse(stateStringDecoded);
+            result = JSON.parse(stateStringDecoded);
         } catch (ignore) {
             console.error("State returned in the URL parameter is invalid.");
-            return null;
         }
+        return result === undefined ? null : result;
     };
 
     /**

@@ -23,14 +23,15 @@ function Transactions(requestCallback) {
      * @return {void}
      */
     this.getTransactions = function (accountNumber, fromDate, toDate, mutationGroup, currency, range, successCallback, errorCallback) {
+        var data = {
+            "range": range,
+            "fromDate": fromDate,
+            "toDate": toDate,
+            "mutationGroup": mutationGroup,
+            "currency": currency
+        };
         console.log("Requesting transactions for account " + accountNumber + "..");
-        requestCallback(
-            "GET",
-            "accounts/" + accountNumber + "/transactions?range=" + range + "&fromDate=" + fromDate + "&toDate=" + toDate + "&mutationGroup=" + mutationGroup + "&currency=" + currency,
-            {},
-            successCallback,
-            errorCallback
-        );
+        requestCallback("GET", "accounts/" + accountNumber + "/transactions", data, successCallback, errorCallback);
     };
 
 }

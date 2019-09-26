@@ -171,16 +171,17 @@ function Instruments(requestCallback, requestCallbackDownload) {
      */
     this.getDerivativeSheetByInstrument = function (instrumentId, accountNumber, range, successCallback, errorCallback) {
         console.log("Requesting derivative sheet for instrument " + instrumentId + " of account number " + accountNumber + "..");
-        requestCallback("GET", "instruments/derivatives", {
+        var data = {
             "accountNumber": accountNumber,
             "underlyingInstrumentId": instrumentId,
             "range": range
-        }, successCallback, errorCallback);
+        };
+        requestCallback("GET", "instruments/derivatives", data, successCallback, errorCallback);
     };
 
     /**
      * Request a derivative sheet with the symbol. Can be futures or options.
-     * @param {string} symbol The symbol of the derivate.
+     * @param {string} symbol The symbol of the derivative.
      * @param {null|string} mic Optional Market Identification Code.
      * @param {null|string} currency Optional currency of instrument.
      * @param {string} accountNumber The account number.
@@ -214,11 +215,12 @@ function Instruments(requestCallback, requestCallbackDownload) {
      * @return {void}
      */
     this.getInstrument = function (instrumentIds, accountNumber, successCallback, errorCallback) {
+        var data = {
+            "accountNumber": accountNumber
+        };
         // More than 1 instrument can be requested, for example all instruments from a portfolio or 'watch list'.
         console.log("Requesting instrument " + instrumentIds.join(" and ") + "..");
-        requestCallback("GET", "instruments/" + encodeURIComponent(instrumentIds.join()), {
-            "accountNumber": accountNumber
-        }, successCallback, errorCallback);
+        requestCallback("GET", "instruments/" + encodeURIComponent(instrumentIds.join()), data, successCallback, errorCallback);
     };
 
     /**
@@ -230,10 +232,11 @@ function Instruments(requestCallback, requestCallbackDownload) {
      * @return {Object} The ajax request
      */
     this.getKidDocumentLink = function (instrumentId, accountNumber, successCallback, errorCallback) {
-        console.log("Requesting instrument documentation link for instrument " + instrumentId + "..");
-        return requestCallback("GET", "instruments/" + instrumentId + "/kid", {
+        var data = {
             "accountNumber": accountNumber
-        }, successCallback, errorCallback);
+        };
+        console.log("Requesting instrument documentation link for instrument " + instrumentId + "..");
+        return requestCallback("GET", "instruments/" + instrumentId + "/kid", data, successCallback, errorCallback);
     };
 
     /**
@@ -246,7 +249,10 @@ function Instruments(requestCallback, requestCallbackDownload) {
      * @return {void}
      */
     this.getKidDocument = function (instrumentId, kidId, accountNumber, successCallback, errorCallback) {
+        var data = {
+            "accountNumber": accountNumber
+        };
         console.log("Requesting instrument documentation for instrument " + instrumentId + " with id " + kidId + "..");
-        requestCallbackDownload("GET", "instruments/" + instrumentId + "/kid/" + encodeURIComponent(kidId) + "?accountNumber=" + accountNumber, {}, successCallback, errorCallback);
+        requestCallbackDownload("GET", "instruments/" + instrumentId + "/kid/" + encodeURIComponent(kidId), data, successCallback, errorCallback);
     };
 }

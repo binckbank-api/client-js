@@ -20,12 +20,13 @@ function Quotes(requestCallback) {
      * @return {void}
      */
     this.getLatestQuotes = function (accountNumber, instrumentIds, level, successCallback, errorCallback) {
-        console.log("Requesting quotes for instrument " + instrumentIds.join(" and ") + "..");
-        requestCallback("GET", "quotes", {
+        var data = {
             "accountNumber": accountNumber,
             "level": level,
             "instrumentIds": instrumentIds.join()
-        }, successCallback, errorCallback);
+        };
+        console.log("Requesting quotes for instrument " + instrumentIds.join(" and ") + "..");
+        requestCallback("GET", "quotes", data, successCallback, errorCallback);
     };
 
     /**
