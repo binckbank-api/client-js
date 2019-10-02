@@ -109,8 +109,8 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
     /**
      * This function is used to start a download.
      * @param {string} method The HTTP method, for example 'POST'.
-     * @param {string} urlParams Specify the endpoint, like 'version'.
-     * @param {Object} data Data to submit.
+     * @param {string} urlParams Specify the endpoint, like 'version', including GET query params.
+     * @param {FormData} data POST data to submit.
      * @param {function((Object|null|string))} successCallback When successful, this function is called.
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
      * @return {void}
@@ -187,18 +187,17 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
 
     /**
      * Get the state from the redirect URL.
-     * @return {null|Object} The object saved in the state parameter.
+     * @return {*} The object saved in the state parameter.
      */
     this.getState = function () {
         var stateString = getUrlParameterByName("state");
         var stateStringDecoded = window.atob(stateString);
-        var result = null;
         try {
-            result = JSON.parse(stateStringDecoded);
+            return JSON.parse(stateStringDecoded);
         } catch (ignore) {
             console.error("State returned in the URL parameter is invalid.");
+            return null;
         }
-        return result === undefined ? null : result;
     };
 
     /**

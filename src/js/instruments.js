@@ -6,7 +6,7 @@
  *
  * @constructor
  * @param {function(string, string, Object, function(Object), function(string))} requestCallback The callback for a generic way to call the API.
- * @param {function(string, string, Object, function((Object|null|string)), function(string))} requestCallbackDownload The callback for a generic way to download a document with the API.
+ * @param {function(string, string, FormData, function((Object|null|string)), function(string))} requestCallbackDownload The callback for a generic way to download a document with the API.
  */
 function Instruments(requestCallback, requestCallbackDownload) {
     "use strict";
@@ -249,10 +249,7 @@ function Instruments(requestCallback, requestCallbackDownload) {
      * @return {void}
      */
     this.getKidDocument = function (instrumentId, kidId, accountNumber, successCallback, errorCallback) {
-        var data = {
-            "accountNumber": accountNumber
-        };
         console.log("Requesting instrument documentation for instrument " + instrumentId + " with id " + kidId + "..");
-        requestCallbackDownload("GET", "instruments/" + instrumentId + "/kid/" + encodeURIComponent(kidId), data, successCallback, errorCallback);
+        requestCallbackDownload("GET", "instruments/" + instrumentId + "/kid/" + encodeURIComponent(kidId) + "?accountNumber=" + accountNumber, null, successCallback, errorCallback);
     };
 }

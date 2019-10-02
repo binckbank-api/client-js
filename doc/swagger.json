@@ -452,6 +452,7 @@
               "stockholmOMX30Index",
               "torontoSPTSX60Index",
               "torontoVentureIndex",
+              "trackers",
               "viennaATX20Index",
               "zurichSMIIndex",
               "popularItalyFutures",
@@ -1473,7 +1474,7 @@
           "Orders"
         ],
         "summary": "Cancellation",
-        "description": "Cancel an order. Cancellation is possible only if the order has not already been executed (order.lastStatus is “placed”, “placementConfirmed”, or “modified”).",
+        "description": "Cancel an order. Allowed for open orders.",
         "operationId": "Orders_CancelOrder",
         "consumes": [],
         "produces": [
@@ -1539,7 +1540,7 @@
           "Orders"
         ],
         "summary": "Modification",
-        "description": "Modify an existing order. First, make sure the modification is valid by doing a preview - modification is possible if the order has not already been executed (order.lastStatus is “placementConfirmed”, or “modified”).",
+        "description": "Modify an existing order. First, make sure the modification is valid by doing a preview.",
         "operationId": "Orders_ModifyOrder",
         "consumes": [
           "application/json",
@@ -4678,7 +4679,7 @@
         },
         "averageHistoricalPrice": {
           "format": "double",
-          "description": "Volume weighted average price paid at the time of purchase",
+          "description": "Volume weighted average price paid at the time of purchase - for futures this is based on fixing price, if held overnight",
           "type": "number"
         },
         "valueInEuro": {
