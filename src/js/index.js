@@ -863,6 +863,8 @@ $(function () {
                     }
                     account = data.accountsCollection.accounts[defaultAccount];
                     activeAccountNumber = account.number;
+                    // Populate test edit once.
+                    $("#idEdtTestEndpoint").val($("#idEdtTestEndpoint").val().replace("{accountNumber}", activeAccountNumber));
                     // Get information about the active account:
                     displayAccount();
                 }
@@ -883,10 +885,11 @@ $(function () {
      * @return {void}
      */
     function displayOrder(orderNumber) {
+        var includeStatusHistory = $('#idCbxIncludeStatusHistory').is(":checked");
         api.orders.getOrder(
             activeAccountNumber,
             orderNumber,
-            Math.random() >= 0.5,  // Sometimes include order details
+            includeStatusHistory,
             function (data) {
                 window.alert("Number of legs in order " + orderNumber + ": " + data.ordersCollection.orders.length);
             },
@@ -1084,10 +1087,10 @@ $(function () {
 
     /**
      * Display orders.
-     * @param {boolean} includeStatusHistory Include the status history for all orders in the response. If false, the response is faster.
      * @return {void}
      */
-    function displayOrdersActive(includeStatusHistory) {
+    function displayOrdersActive() {
+        var includeStatusHistory = $('#idCbxIncludeStatusHistory').is(":checked");
         api.orders.getOrdersActive(
             activeAccountNumber,
             "all",
@@ -1101,7 +1104,7 @@ $(function () {
                     ordersHtml = generateOrdersList(data);
                 }
                 populateOrdersList(ordersHtml, function () {
-                    displayOrdersActive(true);
+                    displayOrdersActive();
                 });
             },
             apiErrorCallback
@@ -1133,7 +1136,7 @@ $(function () {
                     ordersHtml = generateOrdersList(data);
                 }
                 populateOrdersList(ordersHtml, function () {
-                    displayOrdersActive(true);
+                    displayOrdersActive();
                 });
             },
             apiErrorCallback
@@ -1190,9 +1193,7 @@ $(function () {
                 orderHtml += " /order has reference '" + orderObject.referenceId + "'/";
             }
             currentOrdersHtml = orderHtml + "<br />" + currentOrdersHtml;
-            populateOrdersList(currentOrdersHtml, function () {
-                displayOrdersActive(true);
-            });
+            populateOrdersList(currentOrdersHtml, displayOrdersActive);
         } else {
             window.alert("You just received an order update for another account: " + orderObject.accountNumber);
         }
@@ -1291,13 +1292,13 @@ $(function () {
                     // Replace the object with one without the validationCode
                     $("#idEdtOrderModel").val(JSON.stringify(internalNewOrderObject));
                     if (!streamer.orders.isActive) {
-                        displayOrdersActive(true);
+                        displayOrdersActive();
                     }
                 },
                 function (error) {
                     // Something went wrong, for example, there is no money to buy something.
                     // However, show the list of orders.
-                    displayOrdersActive(true);
+                    displayOrdersActive();
                     apiErrorCallback(error);
                 }
             );
@@ -1518,6 +1519,16 @@ $(function () {
     }
 
     /**
+     * Edit a request to mimic a cheap Postman (which is recommended, see https://www.getpostman.com).
+     * @return {void}
+     */
+    function testEndpoint() {
+        api.test("GET", $("#idEdtTestEndpoint").val(), {}, function (data) {
+            console.log(data);
+        }, apiErrorCallback);
+    }
+
+    /**
      * Start listening to the news feed.
      * @return {void}
      */
@@ -1656,12 +1667,7 @@ $(function () {
                 }, apiErrorCallback);
             });
             $("#idEdtAccountType").val(api.getState().account);
-            $("#idBtnOrdersActive").on("click", function () {
-                displayOrdersActive(true);
-            });
-            $("#idBtnOrdersActiveFast").on("click", function () {
-                displayOrdersActive(false);
-            });
+            $("#idBtnOrdersActive").on("click", displayOrdersActive);
             $("#idBtnOrdersHistory").on("click", displayOrdersHistory);
             $("#idBtnOrder").on("click", placeOrder);
             $("#idBtnQuotesBook").on("click", displayOrderBookFeed);
@@ -1690,6 +1696,7 @@ $(function () {
                 e.preventDefault();
                 displayInstrumentList($(this).data("code").toString());
             });
+            $("#idBtnTestEndpoint").on("click", testEndpoint);
             displayAccounts();
         } else {
             streamer.extendSubscriptions();

@@ -133,6 +133,20 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
     }
 
     /**
+     * This function is used to test an endpoint. Remove this function in a production environment.
+     * @param {string} method The HTTP method, for example 'POST'.
+     * @param {string} urlParams Specify the endpoint, like 'version'.
+     * @param {Object} data Data to submit.
+     * @param {function(Object)} successCallback When successful, this function is called.
+     * @param {function(string)} errorCallback The function to be called in case of a failed request.
+     * @return {void}
+     */
+    this.test = function (method, urlParams, data, successCallback, errorCallback) {
+        console.log("Test endpoint.");
+        requestCallback(method, urlParams, data, successCallback, errorCallback);
+    }
+
+    /**
      * Get argument from the URL.
      * @param {string} name Name of query parameter.
      * @return {string} Value.

@@ -193,9 +193,12 @@
           {
             "name": "accountNumber",
             "in": "query",
-            "description": "Mandatory Account Number",
+            "description": "Mandatory account number",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 3,
+            "pattern": "[0-9a-zA-Z]{3,}"
           },
           {
             "name": "instrumentType",
@@ -237,21 +240,28 @@
             "in": "query",
             "description": "Case insensitive search text, minimum length 2. Cannot be used in combination with 'Isin'.",
             "required": false,
-            "type": "string"
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 2
           },
           {
             "name": "isin",
             "in": "query",
-            "description": "Selection on isincode. Cannot be used in combination with 'SearchText'.",
+            "description": "Selection on isinCode. Cannot be used in combination with 'SearchText'.",
             "required": false,
-            "type": "string"
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 5,
+            "pattern": "([A-Z]{2})([A-Z0-9]{5,})"
           },
           {
             "name": "mic",
             "in": "query",
             "description": "Additional optional selection on Market Identification Code, to be used only in combination with 'Isin'",
             "required": false,
-            "type": "string"
+            "type": "string",
+            "maxLength": 4,
+            "minLength": 1
           },
           {
             "name": "range",
@@ -325,9 +335,12 @@
           {
             "name": "accountNumber",
             "in": "query",
-            "description": "Mandatory Account Number",
+            "description": "Mandatory account number",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 3,
+            "pattern": "[0-9a-zA-Z]{3,}"
           }
         ],
         "responses": {
@@ -475,9 +488,12 @@
           {
             "name": "accountNumber",
             "in": "query",
-            "description": "Mandatory Account Number",
+            "description": "Mandatory account number",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 3,
+            "pattern": "[0-9a-zA-Z]{3,}"
           },
           {
             "name": "range",
@@ -550,9 +566,12 @@
           {
             "name": "accountNumber",
             "in": "query",
-            "description": "Mandatory Account Number",
+            "description": "Mandatory account number",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 3,
+            "pattern": "[0-9a-zA-Z]{3,}"
           },
           {
             "name": "publisher",
@@ -689,9 +708,12 @@
           {
             "name": "accountNumber",
             "in": "query",
-            "description": "Mandatory Account Number",
+            "description": "Mandatory account number",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 3,
+            "pattern": "[0-9a-zA-Z]{3,}"
           },
           {
             "name": "exchange",
@@ -770,9 +792,12 @@
           {
             "name": "accountNumber",
             "in": "query",
-            "description": "Mandatory Account Number",
+            "description": "Mandatory account number",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 3,
+            "pattern": "[0-9a-zA-Z]{3,}"
           },
           {
             "name": "type",
@@ -870,14 +895,17 @@
           {
             "name": "accountNumber",
             "in": "query",
-            "description": "Mandatory Account Number",
+            "description": "Mandatory account number",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 3,
+            "pattern": "[0-9a-zA-Z]{3,}"
           },
           {
             "name": "symbol",
             "in": "query",
-            "description": "Selection on symbol. \r\nCannot be used in combination with 'UnderlyingInstrumentId'.",
+            "description": "Selection on symbol.\r\nCannot be used in combination with 'UnderlyingInstrumentId'.",
             "required": false,
             "type": "string"
           },
@@ -967,9 +995,12 @@
           {
             "name": "accountNumber",
             "in": "query",
-            "description": "Mandatory Account Number",
+            "description": "Mandatory account number",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 3,
+            "pattern": "[0-9a-zA-Z]{3,}"
           }
         ],
         "responses": {
@@ -1040,9 +1071,12 @@
           {
             "name": "accountNumber",
             "in": "query",
-            "description": "Mandatory Account Number",
+            "description": "Mandatory account number",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 3,
+            "pattern": "[0-9a-zA-Z]{3,}"
           }
         ],
         "responses": {
@@ -1101,14 +1135,17 @@
           {
             "name": "accountNumber",
             "in": "query",
-            "description": "Mandatory Account Number",
+            "description": "Mandatory account number",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 3,
+            "pattern": "[0-9a-zA-Z]{3,}"
           },
           {
             "name": "fromDate",
             "in": "query",
-            "description": "Optional start date, if left out, fromdate will be today. If no instrument ids are supplied, only dates from the\r\nlast month are accepted, otherwise only dates from the last week are accepted.",
+            "description": "Optional start date, if left out, fromDate will be today. If no instrument ids are supplied, only dates from the\r\nlast month are accepted, otherwise only dates from the last week are accepted.",
             "required": false,
             "type": "string",
             "format": "date-time"
@@ -2106,9 +2143,12 @@
           {
             "name": "accountNumber",
             "in": "query",
-            "description": "Mandatory Account Number",
+            "description": "Mandatory account number",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 3,
+            "pattern": "[0-9a-zA-Z]{3,}"
           },
           {
             "name": "instrumentIds",
@@ -2201,9 +2241,12 @@
           {
             "name": "accountNumber",
             "in": "query",
-            "description": "Mandatory Account Number",
+            "description": "Mandatory account number",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 3,
+            "pattern": "[0-9a-zA-Z]{3,}"
           },
           {
             "name": "fromDateTime",
@@ -2803,7 +2846,10 @@
       "type": "object",
       "properties": {
         "accountNumber": {
-          "description": "Mandatory Account Number",
+          "description": "Mandatory account number",
+          "maxLength": 15,
+          "minLength": 3,
+          "pattern": "[0-9a-zA-Z]{3,}",
           "type": "string"
         },
         "instrumentType": {
@@ -2840,14 +2886,21 @@
         },
         "searchText": {
           "description": "Case insensitive search text, minimum length 2. Cannot be used in combination with 'Isin'.",
+          "maxLength": 30,
+          "minLength": 2,
           "type": "string"
         },
         "isin": {
-          "description": "Selection on isincode. Cannot be used in combination with 'SearchText'.",
+          "description": "Selection on isinCode. Cannot be used in combination with 'SearchText'.",
+          "maxLength": 15,
+          "minLength": 5,
+          "pattern": "([A-Z]{2})([A-Z0-9]{5,})",
           "type": "string"
         },
         "mic": {
           "description": "Additional optional selection on Market Identification Code, to be used only in combination with 'Isin'",
+          "maxLength": 4,
+          "minLength": 1,
           "type": "string"
         }
       }
@@ -3224,7 +3277,10 @@
       "type": "object",
       "properties": {
         "accountNumber": {
-          "description": "Mandatory Account Number",
+          "description": "Mandatory account number",
+          "maxLength": 15,
+          "minLength": 3,
+          "pattern": "[0-9a-zA-Z]{3,}",
           "type": "string"
         }
       }
@@ -3237,7 +3293,10 @@
       "type": "object",
       "properties": {
         "accountNumber": {
-          "description": "Mandatory Account Number",
+          "description": "Mandatory account number",
+          "maxLength": 15,
+          "minLength": 3,
+          "pattern": "[0-9a-zA-Z]{3,}",
           "type": "string"
         },
         "publisher": {
@@ -3302,7 +3361,10 @@
       "type": "object",
       "properties": {
         "accountNumber": {
-          "description": "Mandatory Account Number",
+          "description": "Mandatory account number",
+          "maxLength": 15,
+          "minLength": 3,
+          "pattern": "[0-9a-zA-Z]{3,}",
           "type": "string"
         },
         "exchange": {
@@ -3325,7 +3387,10 @@
       "type": "object",
       "properties": {
         "accountNumber": {
-          "description": "Mandatory Account Number",
+          "description": "Mandatory account number",
+          "maxLength": 15,
+          "minLength": 3,
+          "pattern": "[0-9a-zA-Z]{3,}",
           "type": "string"
         },
         "type": {
@@ -3373,11 +3438,14 @@
       "type": "object",
       "properties": {
         "accountNumber": {
-          "description": "Mandatory Account Number",
+          "description": "Mandatory account number",
+          "maxLength": 15,
+          "minLength": 3,
+          "pattern": "[0-9a-zA-Z]{3,}",
           "type": "string"
         },
         "symbol": {
-          "description": "Selection on symbol. \r\nCannot be used in combination with 'UnderlyingInstrumentId'.",
+          "description": "Selection on symbol.\r\nCannot be used in combination with 'UnderlyingInstrumentId'.",
           "type": "string"
         },
         "underlyingInstrumentId": {
@@ -3606,12 +3674,15 @@
       "type": "object",
       "properties": {
         "accountNumber": {
-          "description": "Mandatory Account Number",
+          "description": "Mandatory account number",
+          "maxLength": 15,
+          "minLength": 3,
+          "pattern": "[0-9a-zA-Z]{3,}",
           "type": "string"
         },
         "fromDate": {
           "format": "date-time",
-          "description": "Optional start date, if left out, fromdate will be today. If no instrument ids are supplied, only dates from the\r\nlast month are accepted, otherwise only dates from the last week are accepted.",
+          "description": "Optional start date, if left out, fromDate will be today. If no instrument ids are supplied, only dates from the\r\nlast month are accepted, otherwise only dates from the last week are accepted.",
           "type": "string"
         },
         "toDate": {
@@ -4811,7 +4882,10 @@
       "type": "object",
       "properties": {
         "accountNumber": {
-          "description": "Mandatory Account Number",
+          "description": "Mandatory account number",
+          "maxLength": 15,
+          "minLength": 3,
+          "pattern": "[0-9a-zA-Z]{3,}",
           "type": "string"
         },
         "instrumentIds": {
@@ -5081,7 +5155,10 @@
       "type": "object",
       "properties": {
         "accountNumber": {
-          "description": "Mandatory Account Number",
+          "description": "Mandatory account number",
+          "maxLength": 15,
+          "minLength": 3,
+          "pattern": "[0-9a-zA-Z]{3,}",
           "type": "string"
         },
         "fromDateTime": {

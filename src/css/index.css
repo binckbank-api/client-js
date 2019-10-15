@@ -14,3 +14,7 @@ span.dateTime {
 	width: 200px;
     text-align: right;
 }
+
+input[type=text].edit {
+    width: 50%;
+}

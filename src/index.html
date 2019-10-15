@@ -239,9 +239,9 @@
         </p>
         <p>
             <input type="button" id="idBtnOrdersActive" value="Get active/recent orders"/>
-            <input type="button" id="idBtnOrdersActiveFast" value="Get active/recent orders fast"/>
             <input type="button" id="idBtnOrdersHistory" value="Get orders from past"/>
-            <input type="button" id="idBtnActivateRealtimeOrderUpdates" value="Activate realtime order updates"/>
+            <input type="button" id="idBtnActivateRealtimeOrderUpdates" value="Activate realtime order updates"/><br />
+            <label><input type="checkbox" id="idCbxIncludeStatusHistory" checked="checked"/>includeStatusHistory (slower)</label>
             <div id="idOrders"></div>
         </p>
         <p>
@@ -282,6 +282,10 @@
             <div id="idHistoricalQuotesForInstrumentDay"></div><br />
             <div id="idHistoricalQuotesForInstrumentWeek"></div><br />
             <div id="idNewsForInstrument"></div>
+        </p>
+        <p>
+            Test request: <input type="text" id="idEdtTestEndpoint" class="edit" value="instruments?isin=FR0000120644&accountNumber={accountNumber}&includeTickSizes=true&range=0-10" />
+            <input type="button" id="idBtnTestEndpoint" value="Test" /><br />
         </p>
     </div>
     <img id="idQrCode" src="" width="500" height="500" alt="QR with URL">
