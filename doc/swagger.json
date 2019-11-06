@@ -4011,18 +4011,10 @@
           "description": "Stop price for a stop or stop limit order",
           "type": "number"
         },
-        "rejectionReason": {
-          "description": "The reason of rejection in case of a rejected order",
-          "type": "string"
-        },
         "fixingPrice": {
           "format": "double",
           "description": "Fixing price of the order",
           "type": "number"
-        },
-        "rejectionReasonDetail": {
-          "description": "Detail explanation of the reason for rejection of the order",
-          "type": "string"
         },
         "condition": {
           "description": "Pay or receive condition, only applicable for multi-leg orders",
@@ -4128,7 +4120,7 @@
           "type": "number"
         },
         "duration": {
-          "description": "Specifies the term for which the order is active",
+          "description": "Specifies the term for which the order is active - in general, duration is 'day' for market orders",
           "enum": [
             "day",
             "goodTillCancelled",

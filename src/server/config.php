@@ -5,8 +5,8 @@
  * Settings production:
  * This is the file config.php, containing the configuration of the API.
  *
- * clientId: The client identification of your app, supplied by Binck
- * clientSecret: The secret which gives access to the API
+ * clientId: The client identification of your app, supplied by Binck (App Key)
+ * clientSecret: The secret which gives access to the API (App Secret)
  * redirectUrl: The URL of your app, which is used to redirect after both a successful or unsuccessful login
  *
  */
