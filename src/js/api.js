@@ -240,13 +240,12 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
      */
     this.getLogonUrl = function (realm) {
         var configurationObject = getConfiguration();
-        var responseType = "code";
         return configurationObject.authenticationProviderUrl + "realms/" + encodeURIComponent(realm) + "/authorize?" + $.param({
             "ui_locales": configurationObject.language,
             "client_id": configurationObject.clientId,
             "scope": configurationObject.scope,
             "state": createState(configurationObject.accountType, realm),
-            "response_type": responseType,
+            "response_type": "code",
             "redirect_uri": configurationObject.redirectUrl
         });
     };

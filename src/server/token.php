@@ -93,12 +93,18 @@ function handleAuthenticationResponse($isRefresh, $realm, $code) {
     if (!$result) {
         handleErrorAndDie(error_get_last()['message']);
     }
-    if (property_exists(json_decode($result), 'error')) {
-        http_response_code(500);
-    } else if (property_exists(json_decode($result), 'code')) {
-        http_response_code(json_decode($result)->code);
+    $result_object = json_decode($result);
+    if (json_last_error() == JSON_ERROR_NONE) {
+        if (property_exists($result_object, 'error')) {
+            http_response_code(500);
+        } else if (property_exists(json_decode($result), 'code')) {
+            http_response_code(json_decode($result)->code);
+        }
+        echo $result;
+    } else {
+        // Something bad happened, no json in resonse (won't be the case for Binck, but Saxo might have this issue)...
+        handleErrorAndDie($result);
     }
-    echo $result;
 }
 
 /**

@@ -123,7 +123,7 @@ function Instruments(requestCallback, requestCallbackDownload) {
      */
     this.findByName = function (q, instrumentType, count, accountNumber, includeTickSizeTable, successCallback, errorCallback) {
         var data = {
-            "searchText": q,
+            "searchText": encodeURIComponent(q),
             "accountNumber": accountNumber,
             "includeTickSizes": includeTickSizeTable,
             "range": "0-" + (count - 1)

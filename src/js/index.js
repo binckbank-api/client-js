@@ -817,8 +817,8 @@ $(function () {
                 displayTransactions("");
                 displayPerformances();
                 displayInstrumentSearchResults();
-                $("#idSelectedAccount").text(account.iban + " " + account.name + " (" + account.type + ")");
                 displayBalance();
+                $("#idSelectedAccount").text(account.iban + " " + account.name + " (" + account.type + ")");
             },
             apiErrorCallback
         );
@@ -846,6 +846,7 @@ $(function () {
                     defaultAccountTypeToFind = state.account;
                 }
                 if (data.accountsCollection.accounts.length === 0) {
+                    // Cannot be true...
                     accountsHtml = "No accounts found.";
                 } else {
                     for (i = 0; i < data.accountsCollection.accounts.length; i += 1) {
