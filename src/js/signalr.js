@@ -1445,7 +1445,7 @@ __webpack_require__.r(__webpack_exports__);
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 // Version token that will be replaced by the prepack command
 /** The version of the SignalR client. */
-var VERSION = "3.0.0";
+var VERSION = "3.0.1";
 
 
 
@@ -4671,6 +4671,7 @@ var WebSocketTransport = /** @class */ (function () {
                             url = url.replace(/^http/, "ws");
                             var webSocket;
                             var cookies = _this.httpClient.getCookieString(url);
+                            var opened = false;
                             if (_Utils__WEBPACK_IMPORTED_MODULE_2__["Platform"].isNode && cookies) {
                                 // Only pass cookies when in non-browser environments
                                 webSocket = new _this.webSocketConstructor(url, undefined, {
@@ -4690,6 +4691,7 @@ var WebSocketTransport = /** @class */ (function () {
                             webSocket.onopen = function (_event) {
                                 _this.logger.log(_ILogger__WEBPACK_IMPORTED_MODULE_0__["LogLevel"].Information, "WebSocket connected to " + url + ".");
                                 _this.webSocket = webSocket;
+                                opened = true;
                                 resolve();
                             };
                             webSocket.onerror = function (event) {
@@ -4709,7 +4711,24 @@ var WebSocketTransport = /** @class */ (function () {
                                     _this.onreceive(message.data);
                                 }
                             };
-                            webSocket.onclose = function (event) { return _this.close(event); };
+                            webSocket.onclose = function (event) {
+                                // Don't call close handler if connection was never established
+                                // We'll reject the connect call instead
+                                if (opened) {
+                                    _this.close(event);
+                                }
+                                else {
+                                    var error = null;
+                                    // ErrorEvent is a browser only type we need to check if the type exists before using it
+                                    if (typeof ErrorEvent !== "undefined" && event instanceof ErrorEvent) {
+                                        error = event.error;
+                                    }
+                                    else {
+                                        error = new Error("There was an error with the transport.");
+                                    }
+                                    reject(error);
+                                }
+                            };
                         })];
                 }
             });
