@@ -184,7 +184,7 @@ GET https://api.sandbox.binck.com/api/v1/version
 ```javascript
 {
     "Accept": "application/json; charset=utf-8",
-    "Authorization": "Bearer ", +  ACCESS_TOKEN
+    "Authorization": "Bearer " +  ACCESS_TOKEN
 }
 ```
 
