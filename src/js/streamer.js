@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window $ console signalR, SubscriptionsForNews, SubscriptionsForOrders, SubscriptionsForQuotes */
+/*global window console signalR, SubscriptionsForNews, SubscriptionsForOrders, SubscriptionsForQuotes */
 
 /**
  * The Streamer wrapper to connect with Binck for quotes, news and order events
@@ -48,18 +48,19 @@ function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallbac
         console.log("Requesting version of streamer..");
         var parser = document.createElement("a");
         parser.href = streamerEndpoint;
-
         // The version endpoint requires parameters nor token. Only GET.
-        $.ajax({
-            "dataType": "json",
-            "type": "GET",
-            "url": parser.protocol + "//" + parser.host + "/version",
-            //"url": streamerEndpoint + "/version",
-            "success": successCallbackVersion,
-            "error": function (jqXhr) {
-                console.log("Version: " + JSON.stringify(jqXhr));
-                errorCallbackVersion("Error in version: " + jqXhr.status + " (" + jqXhr.statusText + ")");
+        fetch(parser.protocol + "//" + parser.host + "/version").then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    successCallbackVersion(responseJson);
+                });
+            } else {
+                console.error(response);
+                errorCallbackVersion("Error in version: " + response.status + " (" + response.statusText + ")");
             }
+        }).catch(function (error) {
+            console.error("Version: ", error);
+            errorCallbackVersion("Error in version: " + error);
         });
     };
 
@@ -79,21 +80,29 @@ function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallbac
                 return accessToken;
             }
         };
-        console.log("Setup streamer connection");
-        connection = new signalR.HubConnectionBuilder()
-            .withUrl(streamerEndpoint + "?accountNumber=" + getSubscription().activeAccountNumber, options)
-            .configureLogging(signalR.LogLevel.Information)
-            //.withAutomaticReconnect()  // Available from .NET Core 3
-            .build();
+        // https://docs.microsoft.com/en-us/aspnet/core/signalr/diagnostics?view=aspnetcore-3.1
+        var logLevel = (
+            window.location.hostname === "localhost"
+            ? signalR.LogLevel.Debug
+            : signalR.LogLevel.Information
+        );
+        console.log("Setup streamer connection with logLevel " + logLevel);
+        connection = new signalR.HubConnectionBuilder().withUrl(streamerEndpoint + "?accountNumber=" + getSubscription().activeAccountNumber, options).configureLogging(logLevel).build();
+        // Function .withAutomaticReconnect() is available from .NET Core 3
         // Configure the callback for quote events:
+        console.log("Configuring callback for quote events");
         connection.on("Quote", quotesCallback);
         // Configure the callback for news events:
+        console.log("Configuring callback for news events");
         connection.on("News", newsCallback);
         // Configure the callback for order execution events:
+        console.log("Configuring callback for order execution events");
         connection.on("OrderExecution", orderExecutionsCallback);
         // Configure the callback for order modification events:
+        console.log("Configuring callback for order modification events");
         connection.on("OrderModified", orderModificationsCallback);
         // Configure the callback for order status change events:
+        console.log("Configuring callback for order status change events");
         connection.on("OrderStatus", orderEventsCallback);
         connection.onclose(function () {
             console.log("The connection has been closed.");
@@ -112,7 +121,7 @@ function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallbac
     function processError(error) {
         if (error !== undefined && error !== null) {
             console.error(error);
-            if ($.trim(error.message) !== "") {
+            if (error.message.trim() !== "") {
                 errorCallback("404", error.message);
             } else {
                 errorCallback("404", "Something went wrong with the connection. Is the streamer endpoint configured on " + streamerEndpoint + "?");
@@ -172,7 +181,7 @@ function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallbac
             var currentTime = new Date();
             // Session is extended with 60 minutes
             currentTime.setTime(currentTime.getTime() + (1 * 60 * 60 * 1000));
-            console.log("Subscriptions are extended to " + currentTime.toLocaleString());
+            console.log("Streamer subscription is extended to " + currentTime.toLocaleString());
         }
 
         console.log("Extending streamer subscription..");
@@ -215,7 +224,7 @@ function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallbac
      * Callback to use the connection from elsewhere.
      * @return {Object} The connection established with the server.
      */
-   function getConnection() {
+    function getConnection() {
         return connection;
     }
 
@@ -224,7 +233,10 @@ function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallbac
     streamerObject.quotes = new SubscriptionsForQuotes(getConnection, getSubscription, errorCallback);
 
     // Don't send the disconnect error when page is refreshed or browser navigates elsewhere
-    $(window).on("beforeunload", function () {
+    window.addEventListener("beforeunload", function (event) {
+        event.preventDefault();
+        event.returnValue = "";
         isApplicationClosing = true;
     });
+
 }

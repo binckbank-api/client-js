@@ -19,8 +19,11 @@ function Positions(requestCallback) {
      * @return {void}
      */
     this.getPositions = function (accountNumber, range, successCallback, errorCallback) {
+        var data = {
+            "range": range
+        };
         console.log("Requesting positions for account " + accountNumber + "..");
-        requestCallback("GET", "accounts/" + accountNumber + "/positions/?range=" + range, {}, successCallback, errorCallback);
+        requestCallback("GET", "accounts/" + accountNumber + "/positions", data, successCallback, errorCallback);
     };
 
     /**

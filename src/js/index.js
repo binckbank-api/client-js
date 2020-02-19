@@ -1070,8 +1070,12 @@ $(function () {
             orderHtml = '<a href="#order" data-code="' + order.number + '">' + order.number + "</a> " + (
                 order.hasOwnProperty("side")
                 ? order.side + " "
+                : ""  // Might be a bid for an IPO
+            ) + order.quantity + " x " + order.instrument.name + " " + (
+                order.hasOwnProperty("expirationDate")
+                ? "(expires " + new Date(order.expirationDate).toLocaleDateString() + ") "
                 : ""
-            ) + order.quantity + " x " + order.instrument.name + " (expires " + new Date(order.expirationDate).toLocaleDateString() + ") state: " + order.lastStatus;
+            ) + "state: " + order.lastStatus;
             if (order.hasOwnProperty("referenceId")) {
                 orderHtml += " /order has reference '" + order.referenceId + "'/";
             }
@@ -1124,7 +1128,7 @@ $(function () {
         date.setDate(date.getDate() - 91);
         month = date.getMonth() + 1;
         year = date.getFullYear();
-        api.orders.getOrdersHistory(
+        api.orders.getHistoricalOrders(
             activeAccountNumber,
             month,
             year,
@@ -1791,7 +1795,6 @@ $(function () {
     new Server().getDataFromServer(
         serverConnection.appServerUrl,
         {"requestType": "config"},
-        true,
         initPage,
         function (errorObject) {
             apiErrorCallback(JSON.stringify(errorObject));

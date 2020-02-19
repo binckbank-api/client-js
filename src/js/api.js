@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window $ console Server Sessions Version Settings Instruments Quotes News Accounts Balances Performances Positions Orders Transactions */
+/*global window console Server Sessions Version Settings Instruments Quotes News Accounts Balances Performances Positions Orders Transactions */
 
 /**
  * The API to connect with Binck
@@ -32,13 +32,30 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
     var csrfToken = Math.random();
 
     /**
+     * This function constructs query parameters from an object.
+     * @param {Object<string, string>} data Key/value pairs to process.
+     * @return {string} The query parameter string, of which the first is prefixed with "?".
+     */
+    function convertObjectToQueryParameters(data) {
+        var result = "";
+        Object.entries(data).forEach(function (entry) {
+            result += (
+                result === ""
+                ? "?"
+                : "&"
+            ) + entry[0] + "=" + encodeURIComponent(entry[1]);
+        });
+        return result;
+    }
+
+    /**
      * This function is used to do the calls.
      * @param {string} method The HTTP method, for example 'POST'.
      * @param {string} urlParams Specify the endpoint, like 'version'.
      * @param {Object} data Data to submit.
      * @param {function(Object)} successCallback When successful, this function is called.
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
-     * @return {Object} Returns the ajax request, for optional triggering.
+     * @return {void}
      */
     function requestCallback(method, urlParams, data, successCallback, errorCallback) {
 
@@ -47,9 +64,11 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
          * If the token is expired, the login page will be shown instead.
          * @return {Object} The constructed header, to be sent with a request.
          */
-        function getAccessHeader() {
+        function getAccessHeaders() {
             var header = {
-                "Accept": "application/json; charset=utf-8"
+                "Accept": "application/json; charset=utf-8",
+                // We are sending JSON if using POST or PATCH. API is not accepting www-form-urlencoded.
+                "Content-Type": "application/json; charset=utf-8"
             };
             if (urlParams === "version") {
                 return header;
@@ -68,48 +87,60 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
         }
 
         /**
-         * If an error was returned from an ajax call, this function translates the xhr object to a "human readable" error text.
-         * @param {Object} jqXhr The returned xhr object.
+         * If an error was returned from a fetch, this function translates the response error object to a "human readable" error text.
+         * @param {Object} errorObject The returned error object.
          * @return {void}
          */
-        function getExtendedErrorInfo(jqXhr) {
-            var errorOrigin = method + " /" + urlParams;
-            console.log(errorOrigin + ": " + JSON.stringify(jqXhr));
-            if (jqXhr.responseJSON !== undefined && jqXhr.responseJSON.hasOwnProperty("endUserMessage") && jqXhr.responseJSON.endUserMessage !== "") {
-                errorCallback(jqXhr.status + " - " + jqXhr.responseJSON.endUserMessage + " (" + errorOrigin + ")");
-            } else if (jqXhr.responseJSON !== undefined && jqXhr.responseJSON.hasOwnProperty("developerMessage")) {
-                errorCallback(jqXhr.status + " - " + jqXhr.responseJSON.developerMessage + " (" + errorOrigin + ")");
-            } else if (jqXhr.responseJSON !== undefined && jqXhr.responseJSON.hasOwnProperty("message")) {
-                errorCallback(jqXhr.status + " - " + jqXhr.responseJSON.message + " (" + errorOrigin + ")");
-            } else {
-                errorCallback("Error in " + errorOrigin + ": " + jqXhr.status + " (" + jqXhr.statusText + ")");
-            }
+        function getExtendedErrorInfo(errorObject) {
+            var textToDisplay = "Error with " + method.toUpperCase() + " /" + urlParams + " - status " + errorObject.status + " " + errorObject.statusText;
+            console.error(textToDisplay);
+            // Some errors have a JSON-response, containing explanation of what went wrong.
+            errorObject.json().then(function (errorObjectJson) {
+                if (errorObjectJson.hasOwnProperty("endUserMessage") && errorObjectJson.endUserMessage !== "") {
+                    // EndUserMessage is translated and meant to be shown to the customer.
+                    errorCallback(errorObjectJson.endUserMessage);
+                } else if (errorObjectJson.hasOwnProperty("developerMessage")) {
+                    // DeveloperMessages shouldn't be shown to the customer. They are English and should only appear during development (for example Bad Request).
+                    errorCallback(errorObjectJson.developerMessage + " (" + textToDisplay + ")");
+                } else if (errorObjectJson.hasOwnProperty("message")) {
+                    // In rare cases a developerMessage is just called "message".
+                    errorCallback(errorObjectJson.message + " (" + textToDisplay + ")");
+                } else {
+                    errorCallback(JSON.stringify(errorObjectJson) + " (" + textToDisplay + ")");
+                }
+            }).catch(function (ignore) {
+                // Typically 401 (Unauthorized) has an empty response, this generates a SyntaxError.
+                errorCallback(textToDisplay);
+            });
         }
 
-        return $.ajax({
-            "dataType": "json",
-            // We are sending JSON if using POST or PATCH. API is not accepting www-form-urlencoded.
-            "contentType": "application/json; charset=utf-8",
-            "type": method.toUpperCase(),
-            "url": getConfiguration().apiUrl + "/" + urlParams,
-            "timeout": 30 * 1000,  // Timeout after 30 seconds.
-            "data": (
-                method.toUpperCase() === "GET"
-                ? data
-                : JSON.stringify(data)
-            ),
-            "headers": getAccessHeader(),
-            "success": successCallback,
-            "error": function (jqXhr) {
-                getExtendedErrorInfo(jqXhr);
+        var url = getConfiguration().apiUrl + "/" + urlParams;
+        var fetchInitOptions = {
+            "headers": getAccessHeaders(),
+            "method": method.toUpperCase()
+        };
+        if (method.toUpperCase() === "GET" || method.toUpperCase() === "DELETE") {
+            url += convertObjectToQueryParameters(data);
+        } else {
+            fetchInitOptions.body = JSON.stringify(data);
+        }
+        fetch(url, fetchInitOptions).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    successCallback(responseJson);
+                });
+            } else {
+                getExtendedErrorInfo(response);
             }
+        }).catch(function (error) {
+            errorCallback(error.toString());
         });
     }
 
     /**
      * This function is used to start a download.
      * @param {string} method The HTTP method, for example 'POST'.
-     * @param {string} urlParams Specify the endpoint, like 'version', including GET query params.
+     * @param {string} urlParams Specify the endpoint, like 'version', including GET query parameters.
      * @param {FormData} data POST data to submit.
      * @param {function((Object|null|string))} successCallback When successful, this function is called.
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
@@ -144,7 +175,7 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
     this.test = function (method, urlParams, data, successCallback, errorCallback) {
         console.log("Test endpoint.");
         requestCallback(method, urlParams, data, successCallback, errorCallback);
-    }
+    };
 
     /**
      * Get argument from the URL.
@@ -240,7 +271,7 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
      */
     this.getLogonUrl = function (realm) {
         var configurationObject = getConfiguration();
-        return configurationObject.authenticationProviderUrl + "realms/" + encodeURIComponent(realm) + "/authorize?" + $.param({
+        return configurationObject.authenticationProviderUrl + "realms/" + encodeURIComponent(realm) + "/authorize" + convertObjectToQueryParameters({
             "ui_locales": configurationObject.language,
             "client_id": configurationObject.clientId,
             "scope": configurationObject.scope,
@@ -252,7 +283,7 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
 
     /**
      * This function loads the page where the user enters the credentials and agreed to the consent.
-     * When authorized, the browser will navigate to the given redirect URL (which must be registered as "Callback URL" in WSO2).
+     * When authorized, the browser will navigate to the given redirect URL.
      * @param {string} realm Identification for the type of login.
      * @return {void}
      */
@@ -349,21 +380,25 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
         server.getDataFromServer(
             configurationObject.appServerUrl,
             data,
-            false,  // No caching. Multiple tokens can be retrieved with same code when page is refreshed.
             function (tokenObject) {
                 tokenReceivedCallback(tokenObject, errorCallback);
             },
-            function (jqXhr) {
-                console.error(jqXhr);
-                if (jqXhr.hasOwnProperty("responseJSON") && jqXhr.responseJSON.hasOwnProperty("error") && jqXhr.responseJSON.hasOwnProperty("error_description")) {
-                    if (jqXhr.responseJSON.error === "invalid_grant") {
-                        apiObject.navigateToLoginPage(apiObject.getState().realm);
+            function (errorResponse) {
+                console.error(errorResponse);
+                // Error comes as object. See if a new login is required.
+                errorResponse.json().then(function (errorResponseJson) {
+                    if (errorResponseJson.hasOwnProperty("error") && errorResponseJson.hasOwnProperty("error_description")) {
+                        if (errorResponseJson.error === "invalid_grant") {
+                            apiObject.navigateToLoginPage(apiObject.getState().realm);
+                        } else {
+                            errorCallback(errorResponseJson.error_description);
+                        }
                     } else {
-                        errorCallback(jqXhr.responseJSON.error_description);
+                        errorCallback("Communication error in request to server.");
                     }
-                } else {
-                    errorCallback("Communication error in request to server: " + jqXhr.status);
-                }
+                }).catch(function (ignore) {
+                    errorCallback("Communication error in request to server.");
+                });
             }
         );
     }

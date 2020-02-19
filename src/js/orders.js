@@ -57,7 +57,7 @@ function Orders(requestCallback) {
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
      * @return {void}
      */
-    this.getOrdersHistory = function (accountNumber, month, year, range, successCallback, errorCallback) {
+    this.getHistoricalOrders = function (accountNumber, month, year, range, successCallback, errorCallback) {
         var data = {
             "month": month,
             "year": year,

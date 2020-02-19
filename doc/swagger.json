@@ -186,7 +186,7 @@
           {
             "name": "includeTickSizes",
             "in": "query",
-            "description": "When set to true, the response will include a table with the Ticksizes for the instrument, default = false",
+            "description": "When set to true, the response will include a table with the TickSizes for the instrument, default = false",
             "required": false,
             "type": "boolean"
           },
@@ -321,14 +321,14 @@
           {
             "name": "id",
             "in": "path",
-            "description": "Ids of the equity to retrieve. If there are multiple ids, separate them by comma's.",
+            "description": "Ids of the equity to retrieve. If there are multiple ids, separate them by commas.",
             "required": true,
             "type": "string"
           },
           {
             "name": "includeTickSizes",
             "in": "query",
-            "description": "When set to true, the response will include a table with the Ticksizes for the instrument, default = false",
+            "description": "When set to true, the response will include a table with the TickSizes for the instrument, default = false",
             "required": false,
             "type": "boolean"
           },
@@ -475,15 +475,23 @@
               "hotFutures",
               "popularItalyFutures",
               "popularNetherlandsFutures",
-              "popularFranceFutures"
+              "popularFranceFutures",
+              "allInstruments"
             ]
           },
           {
             "name": "includeTickSizes",
             "in": "query",
-            "description": "When set to true, the response will include a table with the Ticksizes for the instrument, default = false",
+            "description": "When set to true, the response will include a table with the TickSizes for the instrument, default = false",
             "required": false,
             "type": "boolean"
+          },
+          {
+            "name": "mic",
+            "in": "query",
+            "description": "If specified, the response contains only instruments with this MarketIdentificationCode",
+            "required": false,
+            "type": "string"
           },
           {
             "name": "accountNumber",
@@ -559,7 +567,7 @@
           {
             "name": "includeTickSizes",
             "in": "query",
-            "description": "When set to true, the response will include a table with the Ticksizes for the instrument, default = false",
+            "description": "When set to true, the response will include a table with the TickSizes for the instrument, default = false",
             "required": false,
             "type": "boolean"
           },
@@ -701,7 +709,7 @@
           {
             "name": "includeTickSizes",
             "in": "query",
-            "description": "When set to true, the response will include a table with the Ticksizes for the instrument, default = false",
+            "description": "When set to true, the response will include a table with the TickSizes for the instrument, default = false",
             "required": false,
             "type": "boolean"
           },
@@ -785,7 +793,7 @@
           {
             "name": "includeTickSizes",
             "in": "query",
-            "description": "When set to true, the response will include a table with the Ticksizes for the instrument, default = false",
+            "description": "When set to true, the response will include a table with the TickSizes for the instrument, default = false",
             "required": false,
             "type": "boolean"
           },
@@ -1161,7 +1169,7 @@
           {
             "name": "instrumentIds",
             "in": "query",
-            "description": "Optional ids of the instruments to retrieve.\r\nIf there are multiple ids, separate them by comma's.",
+            "description": "Optional ids of the instruments to retrieve.\r\nIf there are multiple ids, separate them by commas.",
             "required": false,
             "type": "string"
           },
@@ -2153,7 +2161,7 @@
           {
             "name": "instrumentIds",
             "in": "query",
-            "description": "Ids of the instruments to retrieve. If there are multiple ids, separate them by comma's.",
+            "description": "Ids of the instruments to retrieve. If there are multiple ids, separate them by commas.",
             "required": true,
             "type": "string"
           },
@@ -3691,7 +3699,7 @@
           "type": "string"
         },
         "instrumentIds": {
-          "description": "Optional ids of the instruments to retrieve.\r\nIf there are multiple ids, separate them by comma's.",
+          "description": "Optional ids of the instruments to retrieve.\r\nIf there are multiple ids, separate them by commas.",
           "type": "string"
         }
       }
@@ -4881,7 +4889,7 @@
           "type": "string"
         },
         "instrumentIds": {
-          "description": "Ids of the instruments to retrieve. If there are multiple ids, separate them by comma's.",
+          "description": "Ids of the instruments to retrieve. If there are multiple ids, separate them by commas.",
           "type": "string"
         },
         "level": {
@@ -5575,7 +5583,8 @@
             "securitiesLendingDividendPayment",
             "securitiesLendingCouponPayment",
             "securitiesLendingInterestPayment",
-            "onlineMoneyTransfer"
+            "onlineMoneyTransfer",
+            "taxReclaimPayment"
           ],
           "type": "string"
         },

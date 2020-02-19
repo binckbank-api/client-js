@@ -284,15 +284,16 @@ The description of the available endpoints is located here: <https://developers.
 2. The secret will change periodically, keep it in a controlled environment.
 3. The customer login is on person level. This means if a customer has more than one account, the customer might need to select the account to use for the application. There are multiple account types, not all account types have trading options (example is the savings account).
 4. Request small portions of data, using paging. If you must display 10 transactions, request ten transactions.
-5. When placing an order, comply with the rules. Show the KID document if available, give an option to display ex ante costs.
+5. When placing an order, comply with the rules and regulations. Show the KID document if available, give an option to display the order costs.
 6. Be prepared for error messages. Never display the developer message, but your own one. Developer messages are for logging and trouble shooting.
 7. End user messages must be shown, they are in the locale language of the customer.
 8. When the systems of Binck are down, the error message is stating this. Sign in page shows a maintenance page.
 9. When requesting the login page, supply the locale of the customer. If not, the fallback might not be the desired language of the country.
 10. Instrument ids might change overnight. When caching, keep this in mind.
 11. The API has a limit of 50 requests per minute. If exceeded, the customer might be logged out, resulting in an UnAuthorized response.
-12. We respect a REST convention that trailing slashes are not allowed, so `https://api.sandbox.binck.com/api/v1/accounts` is the correct notation.
-13. Orders on sandbox won't go to the market. If you need a (partial) execution, send us an email with the details of the order you want to be executed.
+12. The token can be refreshed for 24 hours. After this, the customer must login again.
+13. We respect a REST convention that trailing slashes are not allowed, so `https://api.sandbox.binck.com/api/v1/accounts` is the correct notation.
+14. Orders on sandbox won't go to the market. If you need a (partial) execution, send us an email with the details of the order you want to be executed.
 
 ## <a name="realtime"></a>Get realtime data using the Binck API
 
