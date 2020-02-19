@@ -688,3 +688,4 @@ Example code (in JavaScript) can be found on GitHub: <https://github.com/binckba
 ### <a name="realtimeSuggestions"></a>Things to keep in mind developing the API
 
 1. Testing the connection can be done using the version endpoint: <https://realtime.sandbox.binck.com/version>.
+2. Binck allows one active connection per token. The second connection will be disconnected when subscribing for updates.
