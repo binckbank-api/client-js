@@ -81,8 +81,8 @@ function handleAuthenticationResponse($isRefresh, $realm, $code) {
         'ssl' => array(
             // This Mozilla CA certificate store is downloaded from:
             // https://curl.haxx.se/docs/caextract.html
-            // This bundle was generated at Wed Oct 16 03:12:09 2019 GMT.
-            'cafile' => 'cacert-2019-10-16.pem',
+            // This bundle was generated at Wed Jan 1 04:12:10 2020 GMT.
+            'cafile' => 'cacert-2020-01-01.pem',
             'verify_peer' => true,
             'verify_peer_name' => true
         )
@@ -102,7 +102,7 @@ function handleAuthenticationResponse($isRefresh, $realm, $code) {
         }
         echo $result;
     } else {
-        // Something bad happened, no json in resonse (won't be the case for Binck, but Saxo might have this issue)...
+        // Something bad happened, no json in response (404 Not Found?)
         handleErrorAndDie($result);
     }
 }

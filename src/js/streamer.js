@@ -234,8 +234,6 @@ function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallbac
 
     // Don't send the disconnect error when page is refreshed or browser navigates elsewhere
     window.addEventListener("beforeunload", function (event) {
-        event.preventDefault();
-        event.returnValue = "";
         isApplicationClosing = true;
     });
 
