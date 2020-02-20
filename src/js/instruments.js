@@ -229,14 +229,14 @@ function Instruments(requestCallback, requestCallbackDownload) {
      * @param {string} accountNumber The account number.
      * @param {function(Object)} successCallback When successful, this function is called.
      * @param {function(string)} errorCallback The function to be called in case of a failed request.
-     * @return {Object} The ajax request
+     * @return {void}
      */
     this.getKidDocumentLink = function (instrumentId, accountNumber, successCallback, errorCallback) {
         var data = {
             "accountNumber": accountNumber
         };
         console.log("Requesting instrument documentation link for instrument " + instrumentId + "..");
-        return requestCallback("GET", "instruments/" + instrumentId + "/kid", data, successCallback, errorCallback);
+        requestCallback("GET", "instruments/" + instrumentId + "/kid", data, successCallback, errorCallback);
     };
 
     /**

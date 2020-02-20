@@ -179,8 +179,9 @@ function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallbac
          */
         function logRefreshTime() {
             var currentTime = new Date();
+            var oneHour = 1 * 60 * 60 * 1000;
             // Session is extended with 60 minutes
-            currentTime.setTime(currentTime.getTime() + (1 * 60 * 60 * 1000));
+            currentTime.setTime(currentTime.getTime() + oneHour);
             console.log("Streamer subscription is extended to " + currentTime.toLocaleString());
         }
 
@@ -233,7 +234,7 @@ function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallbac
     streamerObject.quotes = new SubscriptionsForQuotes(getConnection, getSubscription, errorCallback);
 
     // Don't send the disconnect error when page is refreshed or browser navigates elsewhere
-    window.addEventListener("beforeunload", function (event) {
+    window.addEventListener("beforeunload", function () {
         isApplicationClosing = true;
     });
 

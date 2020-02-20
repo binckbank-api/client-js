@@ -108,7 +108,7 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
                 } else {
                     errorCallback(JSON.stringify(errorObjectJson) + " (" + textToDisplay + ")");
                 }
-            }).catch(function (ignore) {
+            }).catch(function () {
                 // Typically 401 (Unauthorized) has an empty response, this generates a SyntaxError.
                 errorCallback(textToDisplay);
             });
@@ -396,7 +396,7 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
                     } else {
                         errorCallback("Communication error in request to server.");
                     }
-                }).catch(function (ignore) {
+                }).catch(function () {
                     errorCallback("Communication error in request to server.");
                 });
             }
