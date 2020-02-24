@@ -375,8 +375,13 @@ $(function () {
             activeAccountNumber,
             instrumentId,
             function (data) {
-                var position = data.positionsCollection.positions[0];
-                window.alert("Position: " + position.instrument.name + ", average historical price " + currencyCodeToSymbol(position.currency) + " " + position.averageHistoricalPrice.toFixed(2));
+                var position;
+                if (data.positionsCollection.positions.length === 1) {
+                    position = data.positionsCollection.positions[0];
+                    window.alert("Position: " + position.instrument.name + ", average historical price " + currencyCodeToSymbol(position.currency) + " " + position.averageHistoricalPrice.toFixed(2));
+                } else {
+                    window.alert("Positions in response: " + data.positionsCollection.positions.length);
+                }
             },
             apiErrorCallback
         );
@@ -1421,32 +1426,6 @@ $(function () {
     function displayOrderKid() {
 
         /**
-         * Although KID is applicable, we are not sure if there is actually a document is the correct language. Search for it.
-         * @param {string} instrumentId The instrumentId where to find documents for.
-         * @param {Array<Object>} resultsArray The list of documents which can be downloaded.
-         * @return {Object} The ajax request.
-         */
-        function getKidDocumentLink(instrumentId, resultsArray) {
-            return api.instruments.getKidDocumentLink(
-                instrumentId,
-                activeAccountNumber,
-                function (data) {
-                    var kid;
-                    var i;
-                    for (i = 0; i < data.kidCollection.kids.length; i += 1) {
-                        kid = data.kidCollection.kids[i];
-                        resultsArray[resultsArray.length] = {
-                            "name": kid.name + ".pdf",
-                            "id": kid.kidId,
-                            "instrumentId": instrumentId
-                        };
-                    }
-                },
-                apiErrorCallback
-            );
-        }
-
-        /**
          * Download documentation about an instrument, to comply with PRIIPs.
          * @param {string} instrumentId Identification of the instrument.
          * @param {string} kidId Identification of the document.
@@ -1476,6 +1455,69 @@ $(function () {
             );
         }
 
+        /**
+         * Download the KID.
+         * @param {Array<Object>} resultsArray Array with name, kidId and instrumentId to download.
+         * @return {void}
+         */
+        function downloadKidDocuments(resultsArray) {
+            var documentsList = [];
+            var j;
+            if (resultsArray.length === 0) {
+                window.alert("No documents found.");
+            } else {
+                for (j = 0; j < resultsArray.length; j += 1) {
+                    documentsList[documentsList.length] = resultsArray[j].name;
+                    downloadKidDocument(resultsArray[j].instrumentId, resultsArray[j].id, resultsArray[j].name);
+                }
+                window.alert("Downloading document(s):\n\n" + documentsList.join("\n"));
+            }
+        }
+
+        /**
+         * Retrieve the names and ids of the KIDs.
+         * @param {Array<string>} kidApplicableInstruments Array of instrumentIds which might have KIDs.
+         * @return {void}
+         */
+        function getKidDocumentLinks(kidApplicableInstruments) {
+            var requestsForLinks = kidApplicableInstruments.length;
+            var resultsArray = [];
+            var i;
+            var instrumentId;
+
+            /**
+             * Process the responses and when all are received, download the KIDs.
+             * @param {Object} data The response of the request of KID names for an instrument.
+             * @return {void}
+             */
+            function processResponse(data) {
+                var kid;
+                var j;
+                for (j = 0; j < data.kidCollection.kids.length; j += 1) {
+                    kid = data.kidCollection.kids[j];
+                    resultsArray[resultsArray.length] = {
+                        "name": kid.name + ".pdf",
+                        "id": kid.kidId,
+                        "instrumentId": instrumentId
+                    };
+                }
+                requestsForLinks -= 1;
+                if (requestsForLinks === 0) {
+                    downloadKidDocuments(resultsArray);
+                }
+            }
+
+            for (i = 0; i < kidApplicableInstruments.length; i += 1) {
+                instrumentId = kidApplicableInstruments[i];
+                api.instruments.getKidDocumentLink(
+                    instrumentId,
+                    activeAccountNumber,
+                    processResponse,
+                    apiErrorCallback
+                );
+            }
+        }
+
         var newOrderObject = createNewOrderObject();
         var instrumentIds = getInstrumentsFromOrderObject(newOrderObject);
         alertIfActiveAccountIsReadOnly();
@@ -1485,8 +1527,6 @@ $(function () {
             activeAccountNumber,
             function (dataFromInstrument) {
                 var kidApplicableInstruments = [];
-                var promises = [];
-                var resultsArray = [];
                 var i;
                 for (i = 0; i < dataFromInstrument.instrumentsCollection.instruments.length; i += 1) {
                     if (dataFromInstrument.instrumentsCollection.instruments[i].isKidApplicable) {
@@ -1496,24 +1536,7 @@ $(function () {
                 }
                 if (kidApplicableInstruments.length > 0) {
                     if (window.confirm("There might be documentation available about the instrument(s) to trade. Do you want to search for documentation?")) {
-                        // Build the promise
-                        for (i = 0; i < kidApplicableInstruments.length; i += 1) {
-                            promises[promises.length] = getKidDocumentLink(kidApplicableInstruments[i], resultsArray);
-                        }
-                        // Wait for the search to complete..
-                        $.when.apply($, promises).done(function () {
-                            var documentsList = [];
-                            var j;
-                            for (j = 0; j < resultsArray.length; j += 1) {
-                                documentsList[documentsList.length] = resultsArray[j].name;
-                                downloadKidDocument(resultsArray[j].instrumentId, resultsArray[j].id, resultsArray[j].name);
-                            }
-                            if (documentsList.length > 0) {
-                                window.alert("Document(s) available for reading:\n\n" + documentsList.join("\n"));
-                            } else {
-                                window.alert("No documents found.");
-                            }
-                        });
+                        getKidDocumentLinks(kidApplicableInstruments);
                     }
                 } else {
                     window.alert("This instrument has no KID documentation (not KID applicable).");
@@ -1788,7 +1811,7 @@ $(function () {
     prefixConsoleLog();
     // This app cannot be loaded in the browser using the file: protocol (file:///C:/inetpub/wwwroot/index.html).
     if (location.protocol === "file:") {
-        window.alert("This app must run in a web server, since there is a backend involved.");
+        window.alert("This app must run on a web server (http://localhost?), since there is a backend (PHP) involved.");
         throw "Protocol 'file:' not allowed.";
     }
     // Retrieve the application configuration from the server

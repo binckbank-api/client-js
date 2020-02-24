@@ -233,7 +233,7 @@ function Streamer(streamerEndpoint, getSubscription, quotesCallback, newsCallbac
     streamerObject.quotes = new SubscriptionsForQuotes(getConnection, getSubscription, errorCallback);
 
     // Don't send the disconnect error when page is refreshed or browser navigates elsewhere
-    window.addEventListener("beforeunload", function (event) {
+    window.addEventListener("beforeunload", function () {
         isApplicationClosing = true;
     });
 

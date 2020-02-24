@@ -2109,12 +2109,6 @@
               "$ref": "#/definitions/ErrorMessageModel"
             }
           },
-          "404": {
-            "description": "[NotFound] The position is not found.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
-          },
           "400": {
             "description": "[Bad Request] The request is not valid. See response body for more detail.",
             "schema": {
