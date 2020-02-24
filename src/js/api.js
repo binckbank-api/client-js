@@ -396,7 +396,7 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
                     } else {
                         errorCallback("Communication error in request to server.");
                     }
-                }).catch(function (ignore) {
+                }).catch(function () {
                     errorCallback("Communication error in request to server.");
                 });
             }
