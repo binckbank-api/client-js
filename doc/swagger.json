@@ -1500,12 +1500,6 @@
             "schema": {
               "$ref": "#/definitions/ErrorMessageModel"
             }
-          },
-          "404": {
-            "description": "[NotFound] The order is not found.",
-            "schema": {
-              "$ref": "#/definitions/ErrorMessageModel"
-            }
           }
         },
         "security": [
@@ -3092,7 +3086,7 @@
         },
         "priceDecimals": {
           "format": "int64",
-          "description": "Number of decimals used to format the price",
+          "description": "Number of decimals used to format the price - this is the maximum number of decimals, price can come with less, if higher than a certain limit",
           "type": "integer"
         },
         "tickerSymbol": {
@@ -3261,7 +3255,7 @@
       "properties": {
         "from": {
           "format": "double",
-          "description": "From value for ticksize",
+          "description": "From value for tick size",
           "type": "number"
         },
         "size": {
