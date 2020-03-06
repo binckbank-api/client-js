@@ -328,6 +328,20 @@ $(function () {
     }
 
     /**
+     * Do something with instruments within a MIC (https://en.wikipedia.org/wiki/Market_Identifier_Code).
+     * @return {void}
+     */
+    function displayInstrumentsWithMic() {
+        api.instruments.getInstrumentsForMic(
+            $("#idEdtMicFilter").val().toString(),
+            activeAccountNumber,
+            null,
+            startStreamerWithInstruments,
+            apiErrorCallback
+        );
+    }
+
+    /**
      * Do something with requested certificates.
      * @return {void}
      */
@@ -1704,6 +1718,7 @@ $(function () {
             $("#idBtnOrderKID").on("click", displayOrderKid);
             $("#idBtnUpdateBonds").on("click", displayBonds);
             $("#idBtnUpdateLeveragedProducts").on("click", displayLeveragedProducts);
+            $("#idBtnUpdateMicFilter").on("click", displayInstrumentsWithMic);
             $("#idBtnUpdateCertificates").on("click", displayCertificates);
             $("#idBtnUpdateBalances").on("click", displayBalance);
             $("#idBtnUpdatePositions").on("click", displayPositions);

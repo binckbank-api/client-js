@@ -111,6 +111,27 @@ function Instruments(requestCallback, requestCallbackDownload) {
     };
 
     /**
+     * This function loads a filtered list of instruments.
+     * @param {string} mic The Market Identification Code.
+     * @param {string} accountNumber The account number.
+     * @param {null|string} range The range to be requested.
+     * @param {function(Object)} successCallback When successful, this function is called.
+     * @param {function(string)} errorCallback The function to be called in case of a failed request.
+     * @return {void}
+     */
+    this.getInstrumentsForMic = function (mic, accountNumber, range, successCallback, errorCallback) {
+        var data = {
+            "mic": mic,
+            "accountNumber": accountNumber
+        };
+        if (range !== null) {
+            data.range = range;
+        }
+        console.log("Requesting instruments with MIC " + mic + "..");
+        requestCallback("GET", "instruments/lists/allInstruments", data, successCallback, errorCallback);
+    };
+
+    /**
      * This function tries to find a stock by (part of) its name.
      * @param {string} q The search text.
      * @param {null|string} instrumentType The type of instrument (eg. equity, option, tracker, or index).

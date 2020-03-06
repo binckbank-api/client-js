@@ -206,6 +206,23 @@
             <input type="button" id="idBtnUpdateLeveragedProducts" value="Get"/>
         </p>
         <p>
+            Lookup instruments within a MIC:
+            <label>Market Identification Code: <select id="idEdtMicFilter">
+                <option value="CATS">CATS</option>
+                <option value="XCBO">CBOE Global Markets Inc</option>
+                <option value="XAMS">Euronext Amsterdam</option>
+                <option value="XEUE">Euronext EQF</option>
+                <option value="XMON">Euronext Paris Monep</option>
+                <option value="XPAR">Euronext Paris</option>
+                <option value="ETLX">EuroTLX</option>
+                <option value="XEUR">Eurex Germany</option>
+                <option value="XNAS">NASDAQ - All Markets</option>
+                <option value="XETR">Xetra</option>
+                <option value="-">More MICs @ https://www.iso20022.org/10383/iso-10383-market-identifier-codes</option>
+            </select></label>
+            <input type="button" id="idBtnUpdateMicFilter" value="Get"/>
+        </p>
+        <p>
             The instruments of a list:
             <div id="idInstrumentsList">
                 <div><span class="instrumentName">Instrument</span><span class="price">Last</span><span class="price">Bid</span><span class="price">Ask</span><span class="price">High</span><span class="price">Low</span><span class="price">Open</span><span class="price">Close</span><span class="price">Volume</span><span class="dateTime">Time</span></div>
