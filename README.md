@@ -33,7 +33,7 @@ This document describes how an application can get access to customers data, sen
 If you are not interested in developing software, but want to use the API in Excel, visit the [README for that example project](https://github.com/binckbank-api/client-excel#realtime-quotes-in-excel "Use Binck OpenApi with realtime quotes in Excel").
 
 Otherwise, continue reading and contact Binck with the announcement you want to develop an application using the API.\
-This can be done by submitting [this form](https://forms.office.com/Pages/ResponsePage.aspx?id=nKeZuuhuoEGdeKUD8EWjg-9UHL_YoBNNuZbAQHvFJJhUOFA3NTZaMVNIVUZLUFpPTjg2Q04zVTBDVi4u "Form to request a client able to connect with the OpenApi"), where you can enter the details of the application. Important are the name of the application, the required scopes (ordering, quotes, news, or only viewing) and the redirect URL. This is the URL used to redirect the user to, after signing in.
+This can be done by submitting [this form](https://forms.office.com/Pages/ResponsePage.aspx?id=nKeZuuhuoEGdeKUD8EWjg-9UHL_YoBNNuZbAQHvFJJhUOFA3NTZaMVNIVUZLUFpPTjg2Q04zVTBDVi4u "Form to request a client able to connect with the OpenApi"), where you can enter the details of the application. Important are the name of the application, the required scope (ordering, quotes, news, or only viewing) and the redirect URL. This is the URL used to redirect the user to, after signing in.
 
 ### Next step
 
@@ -71,7 +71,7 @@ For this example we use the sandbox environment, with predefined test users and 
 
 Create a 'Log in' link sending the user to:
 
-`https://login.sandbox.binck.com/am/oauth2/realms/{realm}/authorize?ui_locales={LOCALE}&client_id={CLIENT_ID}&scope={SCOPES}&state={1234zyx}&response_type={code}&redirect_uri={REDIRECT_URI}`
+`https://login.sandbox.binck.com/am/oauth2/realms/{realm}/authorize?ui_locales={LOCALE}&client_id={CLIENT_ID}&scope={SCOPE}&state={1234zyx}&response_type={code}&redirect_uri={REDIRECT_URI}`
 
 **realm** – The bincknlapi realm is used for the Dutch Binck customers\
 **ui_locales** - The language to be used for the login pages, examples: fr, it, or nlBE\
@@ -96,11 +96,11 @@ After logging in, the user sees a dialog to give access to the thirdparty, if ac
 
 If the user allows access, the service redirects the user back to your site (the _redirect_uri_) with an auth code in the query string.
 
-`https://{REDIRECT_URI}/?code={AUTH_CODE_HERE}&scope={SCOPES}&state={1234zyx}`
+`https://{REDIRECT_URI}/?code={AUTH_CODE_HERE}&scope={SCOPE}&state={1234zyx}`
 
 **code** - The server returns the authorization code in the query string\
 **state** - The server returns the same state value that you passed\
-**scope** - One or more scopes granted
+**scope** - The granted scope
 
 You should first compare this state value to ensure it matches the one you started with. You can typically store the state value in a cookie, and compare it when the user comes back. This ensures your redirection endpoint isn't able to be tricked into attempting to exchange arbitrary authorization codes.
 
@@ -306,13 +306,13 @@ Communication is done using WebSockets, Server-Sent Events, or Long Polling. Sig
 
 More info: <https://docs.microsoft.com/en-us/aspnet/core/signalr>.
 
-For SignalR are client libraries available in Java, Javascript and .NET. In this example Javascript is used, with the NPM package here: <https://www.npmjs.com/package/@microsoft/signalr>.
+For SignalR are client libraries available in Java, Javascript and .NET Core. In this example Javascript is used, with the NPM package here: <https://www.npmjs.com/package/@microsoft/signalr>.
 
 Prerequisites:
 
 - A token retrieved using the OAuth2 Authentication flow, as described in the chapter [Logon to Binck API using Oauth2](#logon).
 
-Scopes:
+Scope:
 
 - quotes (for instrument prices)
 - news (for news)
