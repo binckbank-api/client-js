@@ -772,8 +772,8 @@ $(function () {
                 "instrumentId": activeInstrument.id
             };
         }
-        newOrderObject.referenceId = "my correlation id";  // Better to make it unique..
-        $("#idEdtOrderModel").val(JSON.stringify(newOrderObject));
+        newOrderObject.referenceId = "my correlation id";  // Better is to make this unique..
+        $("#idEdtOrderModel").val(JSON.stringify(newOrderObject, null, 4));
         // Get recent news updates about this instrument
         displayNews(instrumentIdForNews);
         // And show the instrument
@@ -1263,7 +1263,7 @@ $(function () {
                         console.log("Validation code: " + dataFromValidateOrder.previewOrder.validationCode);
                         newOrderObject.validationCode = dataFromValidateOrder.previewOrder.validationCode;
                         // Replace the object with the one containing the validationCode
-                        $("#idEdtOrderModel").val(JSON.stringify(newOrderObject));
+                        $("#idEdtOrderModel").val(JSON.stringify(newOrderObject, null, 4));
                         // ..and continue
                         successCallback(newOrderObject);
                     }
@@ -1314,7 +1314,7 @@ $(function () {
                     console.log("Placed order with number: " + dataFromPlaceOrder.ordersCollection.orders[0].number);
                     delete internalNewOrderObject.validationCode;
                     // Replace the object with one without the validationCode
-                    $("#idEdtOrderModel").val(JSON.stringify(internalNewOrderObject));
+                    $("#idEdtOrderModel").val(JSON.stringify(internalNewOrderObject, null, 4));
                     if (!streamer.orders.isActive) {
                         displayOrdersActive();
                     }
