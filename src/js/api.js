@@ -185,7 +185,7 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
     function getUrlParameterByName(name) {
         // Get an argument of the URL like www.test.org/?arg=value
         name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+        var regex = new RegExp("[\\?&#]" + name + "=([^&#]*)");
         var results = regex.exec(window.location.href);
         return (
             results === null
@@ -442,11 +442,13 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
      */
     this.checkState = function (notAuthenticatedCallback, errorCallback) {
         var code = getUrlParameterByName("code");
+        var error;
         if (code === "") {
             notAuthenticatedCallback();
-            if (getUrlParameterByName("error") !== "") {
+            error = getUrlParameterByName("error");
+            if (error !== "") {
                 // An error occurred. User might not have authorized the request.
-                errorCallback("Login failed: \n" + getUrlParameterByName("error_description"));
+                errorCallback("Login failed: \n" + getUrlParameterByName("error_description") + " (" + error + ")");
             }
         } else {
             console.log("Received scope: " + getUrlParameterByName("scope"));
