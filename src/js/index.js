@@ -1065,6 +1065,7 @@ $(function () {
         twoDaysBack.setDate(twoDaysBack.getDate() - 2);
         internalDisplayHistoricalQuotes(twoDaysBack, "fifteenMinutes", $("#idHistoricalQuotesForInstrumentQuarter"));
         tenYearsBack.setFullYear(tenYearsBack.getFullYear() - 10);
+        tenYearsBack.setDate(tenYearsBack.getDate() + 1);
         internalDisplayHistoricalQuotes(tenYearsBack, "oneDay", $("#idHistoricalQuotesForInstrumentDay"));
         sixMonthsBack.setMonth(sixMonthsBack.getMonth() - 6);
         internalDisplayHistoricalQuotes(sixMonthsBack, "OneWeek", $("#idHistoricalQuotesForInstrumentWeek"));
