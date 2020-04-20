@@ -4141,11 +4141,11 @@
         },
         "cash": {
           "$ref": "#/definitions/NewOrderModelCash",
-          "description": "For cash orders (equities), this field is required"
+          "description": "For cash orders (equities, bonds), this field is required"
         },
         "srd": {
           "$ref": "#/definitions/NewOrderModelSrd",
-          "description": "For SRD orders (equities, France), this field is required"
+          "description": "For SRD orders (Service de Règlement Différé, France), this field is required"
         },
         "option": {
           "$ref": "#/definitions/NewOrderModelOption",
