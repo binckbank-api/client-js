@@ -60,15 +60,21 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
     function requestCallback(method, urlParams, data, successCallback, errorCallback) {
 
         /**
+         * If data is posted then a content header is required, as well as different parameter handling.
+         * @return {boolean} True for POST, PUT of PATCH.
+         */
+        function isPostBodyRequired() {
+            return method.toUpperCase() !== "GET" && method.toUpperCase() !== "DELETE";
+        }
+
+        /**
          * Return the authorization header with the Bearer token.
          * If the token is expired, the login page will be shown instead.
          * @return {Object} The constructed header, to be sent with a request.
          */
         function getAccessHeaders() {
             var header = {
-                "Accept": "application/json; charset=utf-8",
-                // We are sending JSON if using POST or PATCH. API is not accepting www-form-urlencoded.
-                "Content-Type": "application/json; charset=utf-8"
+                "Accept": "application/json; charset=utf-8"
             };
             if (urlParams === "version") {
                 return header;
@@ -83,6 +89,10 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
                 apiObject.navigateToLoginPage(apiObject.getState().realm);
             }
             header.Authorization = "Bearer " + accessToken;
+            if (isPostBodyRequired()) {
+                // We are sending JSON if using POST or PATCH. API is not accepting www-form-urlencoded.
+                header["Content-Type"] = "application/json; charset=utf-8";
+            }
             return header;
         }
 
@@ -92,7 +102,7 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
          * @return {void}
          */
         function getExtendedErrorInfo(errorObject) {
-            var textToDisplay = "Error with " + method.toUpperCase() + " /" + urlParams + " - status " + errorObject.status + " " + errorObject.statusText;
+            var textToDisplay = "Error with " + method + " /" + urlParams + " - status " + errorObject.status + " " + errorObject.statusText;
             console.error(textToDisplay);
             // Some errors have a JSON-response, containing explanation of what went wrong.
             errorObject.json().then(function (errorObjectJson) {
@@ -117,12 +127,14 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
         var url = getConfiguration().apiUrl + "/" + urlParams;
         var fetchInitOptions = {
             "headers": getAccessHeaders(),
-            "method": method.toUpperCase()
+            "method": method
         };
-        if (method.toUpperCase() === "GET" || method.toUpperCase() === "DELETE") {
-            url += convertObjectToQueryParameters(data);
-        } else {
+        if (isPostBodyRequired()) {
+            // Put parameters as json in the body of the request
             fetchInitOptions.body = JSON.stringify(data);
+        } else {
+            // Add parameters as query parameters
+            url += convertObjectToQueryParameters(data);
         }
         fetch(url, fetchInitOptions).then(function (response) {
             if (response.ok) {
