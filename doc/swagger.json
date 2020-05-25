@@ -594,7 +594,8 @@
               "citigroup",
               "commerzBank",
               "goldmanSachs",
-              "ing"
+              "ing",
+              "socGen"
             ]
           },
           {
@@ -3304,7 +3305,8 @@
             "citigroup",
             "commerzBank",
             "goldmanSachs",
-            "ing"
+            "ing",
+            "socGen"
           ],
           "type": "string"
         },
