@@ -6,7 +6,7 @@
     "description": "\r\nBinckBank OpenAPI is an API Platform to access BinckBank's trading services.\r\n\r\nCurious? Request your access key after reading the documentation on Github: https://github.com/binckbank-api/client-js#binck-openapi-documentation\r\n  "
   },
   "host": "api.sandbox.binck.com",
-    "schemes": [
+  "schemes": [
     "http"
   ],
   "paths": {
@@ -595,6 +595,8 @@
               "commerzBank",
               "goldmanSachs",
               "ing",
+              "unicredit",
+              "vontobelFinancialProducts",
               "socGen"
             ]
           },
@@ -3306,6 +3308,8 @@
             "commerzBank",
             "goldmanSachs",
             "ing",
+            "unicredit",
+            "vontobelFinancialProducts",
             "socGen"
           ],
           "type": "string"
@@ -4060,7 +4064,7 @@
           "type": "string"
         },
         "status": {
-          "description": "name of the status",
+          "description": "Name of the status",
           "enum": [
             "placed",
             "placementConfirmed",
