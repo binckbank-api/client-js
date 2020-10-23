@@ -289,11 +289,12 @@ The description of the available endpoints is located here: <https://developers.
 7. End user messages must be shown, they are in the locale language of the customer.
 8. When the systems of Binck are down, the error message is stating this. Sign in page shows a maintenance page.
 9. When requesting the login page, supply the locale of the customer. If not, the fallback might not be the desired language of the country.
-10. Instrument ids might change overnight. When caching, keep this in mind.
-11. The API has a limit of 50 requests per minute. If exceeded, the customer might be logged out, resulting in an UnAuthorized response.
-12. The token can be refreshed for 24 hours. After this, the customer must login again.
-13. We respect a REST convention that trailing slashes are not allowed, so `https://api.sandbox.binck.com/api/v1/accounts` is the correct notation.
-14. Orders on sandbox won't go to the market. If you need a (partial) execution, send us an email with the details of the order you want to be executed.
+10. Instrument IDs might change overnight. When caching, keep this in mind.
+11. The instrument IDs on sandbox differ from the ones on production.
+12. The API has a limit of 50 requests per minute. If exceeded, the customer might be logged out, resulting in an UnAuthorized response.
+13. The token can be refreshed for 24 hours. After this, the customer must login again.
+14. We respect a REST convention that trailing slashes are not allowed, so `https://api.sandbox.binck.com/api/v1/accounts` is the correct notation.
+15. Orders on sandbox won't go to the market. If you need a (partial) execution, send us an email with the details of the order you want to be executed.
 
 ## <a name="realtime"></a>Get realtime data using the Binck API
 
