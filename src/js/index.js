@@ -1663,9 +1663,6 @@ $(function () {
      */
     function populateLoginUrlFromCulture() {
         switch (getCultureForLogin()) {
-        case "fr":
-            $("#idEdtRealm").val("binckfrapi");
-            break;
         case "frBE":
         case "nlBE":
             $("#idEdtRealm").val("binckbeapi");
