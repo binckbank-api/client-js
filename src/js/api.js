@@ -393,6 +393,7 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
             configurationObject.appServerUrl,
             data,
             function (tokenObject) {
+                console.log("Received scope: " + tokenObject.scope);
                 tokenReceivedCallback(tokenObject, errorCallback);
             },
             function (errorResponse) {
@@ -463,7 +464,6 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
                 errorCallback("Login failed: \n" + getUrlParameterByName("error_description") + " (" + error + ")");
             }
         } else {
-            console.log("Received scope: " + getUrlParameterByName("scope"));
             verifyCsrfToken(errorCallback);
             getAccessToken(code, errorCallback);
         }
