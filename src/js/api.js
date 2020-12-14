@@ -368,6 +368,7 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
         accessToken = tokenObject.access_token;
         refreshToken = tokenObject.refresh_token;
         console.log("New token received: " + accessToken);
+        console.log("Received scope: " + tokenObject.scope);
         updateTokenExpirationTime(tokenObject.expires_in);
         // Start a timer, to refresh the token before it expires.
         console.log("Session will be refreshed at " + nextSessionRefreshTime.toLocaleString());
@@ -393,7 +394,6 @@ function Api(getConfiguration, newTokenCallback, expirationCounterCallback) {
             configurationObject.appServerUrl,
             data,
             function (tokenObject) {
-                console.log("Received scope: " + tokenObject.scope);
                 tokenReceivedCallback(tokenObject, errorCallback);
             },
             function (errorResponse) {
