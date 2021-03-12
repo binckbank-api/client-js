@@ -245,7 +245,6 @@ For realtime streams, see [documentation on realtime refresh](#realtime5) on how
 The sandbox functionality can be compared with the website. The website with the same data as sandbox can be accessed using these URLs:
 
 - Binck BE: <https://web.sandbox.binck.be/logon/>
-- Binck FR: <https://web.sandbox.binck.fr/logon/>
 - Binck IT: <https://web.sandbox.binck.it/logon/>
 - Binck NL: <https://web.sandbox.binck.nl/logon/>
 
