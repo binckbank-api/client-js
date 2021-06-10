@@ -32,8 +32,9 @@ This document describes how an application can get access to customers data, sen
 
 If you are not interested in developing software, but want to use the API in Excel, visit the [README for that example project](https://github.com/binckbank-api/client-excel#realtime-quotes-in-excel "Use Binck OpenApi with realtime quotes in Excel").
 
-Otherwise, continue reading and contact Binck with the announcement you want to develop an application using the API.\
-This can be done by submitting [this form](https://forms.office.com/Pages/ResponsePage.aspx?id=nKeZuuhuoEGdeKUD8EWjg-9UHL_YoBNNuZbAQHvFJJhUOFA3NTZaMVNIVUZLUFpPTjg2Q04zVTBDVi4u "Form to request a client able to connect with the OpenApi"), where you can enter the details of the application. Important are the name of the application, the required scope (ordering, quotes, news, or only viewing) and the redirect URL. This is the URL used to redirect the user to, after signing in.
+<s>Otherwise, continue reading and contact Binck with the announcement you want to develop an application using the API.\
+This can be done by submitting [this form](https://www.developer.saxo/openapi/learn "Form to request a client able to connect with the OpenApi"), where you can enter the details of the application. Important are the name of the application, the required scope (ordering, quotes, news, or only viewing) and the redirect URL. This is the URL used to redirect the user to, after signing in.</s>\
+In the coming months this API will be migrated to the OpenApi of Saxobank. This means the Binck OpenApi will be obsolete. Check the [new documentation](https://www.developer.saxo/openapi/learn "Developer docs of Saxobank") for more info. There are also [many samples on how to use the new API](https://saxobank.github.io/openapi-samples-js/ "Github samples on Saxobank API in JavaScript").
 
 ### Next step
 
