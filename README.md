@@ -1,5 +1,7 @@
 # <a name="documentation"></a>Binck OpenApi documentation
 
+:warning: **The Binck OpenApi has been decommissioned**: You can no longer use this Api, but you are welcome to consider the [Saxo OpenApi](https://saxobank.github.io/openapi-samples-js/)!
+
 This document describes how an application can get access to customers data, send orders to the market and retrieve streaming quotes, order events and news.
 
 ## Table of contents
